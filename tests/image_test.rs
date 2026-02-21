@@ -38,7 +38,7 @@ fn test_inline_image() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/image.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 
     println!("✅ Generated: /tmp/pydyf_test/image.pdf");
 }

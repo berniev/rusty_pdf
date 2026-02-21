@@ -1,17 +1,14 @@
 use std::fmt;
 
-/// PDF object status as specified in the cross-reference table.
-/// Maps directly to the single-character status in the PDF xref table.
+/// PDF object status as specified in the xref table.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObjectStatus {
-    /// Free object slot (deleted or never used) - outputs 'f' in xref table
-    Free,
-    /// In-use object (normal, active object) - outputs 'n' in xref table
-    InUse,
+    Free,  // deleted or never used
+    InUse, // normal, active object
 }
 
 impl ObjectStatus {
-    /// Returns the PDF character representation ('f' or 'n')
+    /// Returns the PDF character representation ('f' or 'n') for xref table
     pub fn as_char(&self) -> char {
         match self {
             ObjectStatus::Free => 'f',
@@ -28,20 +25,15 @@ impl fmt::Display for ObjectStatus {
 
 #[derive(Debug, Clone)]
 pub struct PdfMetadata {
-    /// Object number in the PDF (None for unassigned objects)
-    pub number: Option<usize>,
-
-    /// Byte offset in the PDF file (used in cross-reference table)
-    pub offset: usize,
-
-    /// PDF generation number. Almost always 0 for new objects.
-    /// - 0 = original/current version (standard for all new objects)
-    /// - 65535 = special value for the free object 0 (PDF spec requirement)
-    /// - 1+ = incremental updates (rarely used in modern PDFs)
-    pub generation: u32,
-
-    /// Object status: Free (deleted/unused) or InUse (normal)
+    pub number: Option<usize>, // None for unassigned objects
+    pub offset: usize, // used in xref table
     pub status: ObjectStatus,
+
+    /// PDF generation number.
+    ///     0 = original/current version (standard for all new objects)
+    /// 65535 = special value for the free object 0 (PDF spec requirement)
+    ///     1+ = incremental updates (rarely used in modern PDFs)
+    pub generation: u32,
 }
 
 impl Default for PdfMetadata {
@@ -49,8 +41,8 @@ impl Default for PdfMetadata {
         PdfMetadata {
             number: None,
             offset: 0,
-            generation: 0,
             status: ObjectStatus::InUse,
+            generation: 0,
         }
     }
 }
@@ -91,34 +83,24 @@ impl PdfObject for Object {
     }
 
     fn data(&self) -> Vec<u8> {
-        // Base Object has no data - used for free/placeholder objects
-        Vec::new()
+        Vec::new() // Base Object has no data - used for free/placeholder objects
     }
 
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
 
-    fn compressible(&self) -> bool {
+    fn is_compressible(&self) -> bool {
         self.metadata.generation == 0
     }
 }
 
-/// Common trait for PDF objects
 pub trait PdfObject {
-    /// Get immutable reference to metadata
     fn metadata(&self) -> &PdfMetadata;
-
-    /// Get mutable reference to metadata
     fn metadata_mut(&mut self) -> &mut PdfMetadata;
-
-    /// Get the object's data as bytes
     fn data(&self) -> Vec<u8>;
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any; // Downcast to Any for type checking
 
-    /// Downcast to Any for type checking
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
-
-    /// Indirect representation of an object.
     fn indirect(&self) -> Vec<u8> {
         let meta = self.metadata();
         let number = meta.number.unwrap_or(0);
@@ -129,7 +111,6 @@ pub trait PdfObject {
         result
     }
 
-    /// Object reference.
     fn reference(&self) -> Vec<u8> {
         let meta = self.metadata();
         let number = meta.number.unwrap_or(0);
@@ -142,7 +123,7 @@ pub trait PdfObject {
     /// Objects with generation > 0 (incremental updates) must be written directly.
     ///
     /// Note: Some object types (like Stream) override this to always return false.
-    fn compressible(&self) -> bool {
+    fn is_compressible(&self) -> bool {
         self.metadata().generation == 0
     }
 }

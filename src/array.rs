@@ -36,7 +36,7 @@ impl PdfObject for Array {
         self
     }
 
-    fn compressible(&self) -> bool {
+    fn is_compressible(&self) -> bool {
         self.metadata.generation == 0
     }
 }

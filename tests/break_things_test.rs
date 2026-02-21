@@ -22,7 +22,7 @@ fn test_empty_page() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_empty.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -43,7 +43,7 @@ fn test_massive_page_count() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_massive.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -74,7 +74,7 @@ fn test_extreme_coordinates() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_coords.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn test_very_long_text() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_longtext.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn test_special_characters_text() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_special_chars.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -152,7 +152,7 @@ fn test_huge_rectangle() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_huge.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -167,7 +167,7 @@ fn test_compressed_empty() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_compressed_empty.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -199,7 +199,7 @@ fn test_extreme_font_sizes() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_fonts.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -220,7 +220,7 @@ fn test_overlapping_operations() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_overlap.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 
 #[test]
@@ -229,5 +229,5 @@ fn test_no_pages() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_no_pages.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }

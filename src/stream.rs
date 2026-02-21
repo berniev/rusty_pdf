@@ -31,14 +31,10 @@ use crate::string::encode_pdf_string;
 /// stream.fill(false);
 /// ```
 pub struct Stream {
-    /// Object metadata
     pub metadata: PdfMetadata,
-    /// Stream content as sequence of operator calls
-    pub stream: Vec<Vec<u8>>,
-    /// Extra dictionary entries for the stream object
+    pub stream: Vec<Vec<u8>>, // sequence of operator calls
     pub extra: HashMap<String, Vec<u8>>,
-    /// Enable compression with flate
-    pub compress: bool,
+    pub compress: bool, // using flate
 }
 
 impl Stream {
@@ -620,7 +616,7 @@ impl PdfObject for Stream {
     }
 
     /// Stream objects are never compressible in PDF object streams.
-    fn compressible(&self) -> bool {
+    fn is_compressible(&self) -> bool {
         false
     }
 }

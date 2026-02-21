@@ -44,7 +44,7 @@
 //!
 //! // Write to file
 //! let mut file = File::create("output.pdf").unwrap();
-//! pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+//! pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 //! ```
 //!
 //! ## Features
@@ -100,6 +100,3 @@ pub use object::{Object, PdfObject, PdfMetadata, ObjectStatus};
 pub use pdf::{Identifier, PDF};
 pub use stream::Stream;
 pub use string::encode_pdf_string;
-
-/// UTF-16 Big Endian byte order mark
-pub const BOM_UTF16_BE: &[u8] = b"\xFE\xFF";

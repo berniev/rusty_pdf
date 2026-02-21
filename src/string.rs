@@ -2,16 +2,11 @@
 
 use regex::Regex;
 
-const BOM_UTF16_BE: [u8; 2] = [0xFE, 0xFF];
-
-/// Encode a string for PDF format.
-/// ASCII strings are escaped and wrapped in parentheses.
-/// Non-ASCII strings are UTF-16-BE encoded with BOM and hex-encoded.
 pub fn encode_pdf_string(string: &str) -> Vec<u8> {
     if string.is_ascii() {
-        encode_ascii(string)
+        encode_ascii(string) // escaped and wrapped in parentheses
     } else {
-        encode_non_ascii(string)
+        encode_non_ascii(string) // UTF-16BE encoded with BOM and hex-encoded
     }
 }
 
@@ -25,8 +20,7 @@ fn encode_ascii(string: &str) -> Vec<u8> {
 }
 
 fn encode_non_ascii(string: &str) -> Vec<u8> {
-    // Use UTF-16-BE with BOM
-    let mut encoded = BOM_UTF16_BE.to_vec();
+    let mut encoded = b"\xFE\xFF".to_vec();
     for ch in string.encode_utf16() {
         encoded.extend(&ch.to_be_bytes());
     }

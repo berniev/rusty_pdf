@@ -2,18 +2,15 @@ use std::collections::HashMap;
 use std::io::Write;
 
 use crate::dictionary::Dictionary;
-use crate::object::{Object, PdfObject, ObjectStatus};
+use crate::object::{Object, ObjectStatus, PdfObject};
 use crate::string::encode_pdf_string;
 
 /// PDF file identifier mode.
 ///
 /// Controls how the file identifier is generated in the PDF trailer.
 pub enum Identifier {
-    /// No identifier
     None,
-    /// Auto-generate identifier using MD5 hash
-    Auto,
-    /// Use custom identifier bytes
+    AutoMD5,
     Custom(Vec<u8>),
 }
 
@@ -30,31 +27,12 @@ pub enum Identifier {
 /// // Add objects and pages...
 /// ```
 pub struct PDF {
-    /// All PDF objects in the document
     pub objects: Vec<Box<dyn PdfObject>>,
-    /// Pages dictionary
     pub pages: Dictionary,
-    /// Document information dictionary
     pub info: Dictionary,
-    /// Document catalog dictionary
     pub catalog: Dictionary,
-    /// Current byte position in output stream
     pub current_position: usize,
-    /// Cross-reference table position
     pub xref_position: Option<usize>,
-}
-
-impl Default for PDF {
-    fn default() -> Self {
-        PDF {
-            objects: Vec::new(),
-            pages: Dictionary::new(None),
-            info: Dictionary::new(None),
-            catalog: Dictionary::new(None),
-            current_position: 0,
-            xref_position: None,
-        }
-    }
 }
 
 impl PDF {
@@ -63,7 +41,14 @@ impl PDF {
     /// Initializes the document with required structures including the catalog,
     /// pages tree, and object 0 sentinel.
     pub fn new() -> Self {
-        let mut pdf = Self::default();
+        let mut pdf = PDF {
+            objects: Vec::new(),
+            pages: Dictionary::new(None),
+            info: Dictionary::new(None),
+            catalog: Dictionary::new(None),
+            current_position: 0,
+            xref_position: None,
+        };
 
         // PDF spec requires object 0 to be free with generation 65535
         // This is a sentinel value marking the head of the free object list
@@ -106,8 +91,6 @@ impl PDF {
     /// pdf.add_page(page);
     /// ```
     pub fn add_page(&mut self, page: Dictionary) {
-        // Note: In Python this is simpler: self.pages['Count'] += 1
-        // But in Rust, Dictionary values are Vec<u8>, so we need to parse/format
         let count_bytes = self.pages.values.get("Count").unwrap();
         let count: i32 = String::from_utf8_lossy(count_bytes).trim().parse().unwrap();
         self.pages
@@ -129,17 +112,12 @@ impl PDF {
         self.pages.values.insert("Kids".to_string(), kids);
     }
 
-    /// Add an object to the document.
-    ///
-    /// Automatically assigns an object number and adds the object to the document.
     pub fn add_object(&mut self, mut object: Box<dyn PdfObject>) {
         object.metadata_mut().number = Some(self.objects.len());
         self.objects.push(object);
     }
 
-    /// Get references to all pages in the document.
     pub fn page_references(&self) -> Vec<Vec<u8>> {
-        // Extract page references from Kids array
         let kids_str = self
             .pages
             .values
@@ -188,7 +166,7 @@ impl PDF {
     ///
     /// let mut pdf = PDF::new();
     /// let mut file = File::create("output.pdf").unwrap();
-    /// pdf.write(&mut file, Some(b"1.7"), Identifier::Auto, false).unwrap();
+    /// pdf.write(&mut file, Some(b"1.7"), Identifier::AutoMD5, false).unwrap();
     /// ```
     ///
     /// # Arguments
@@ -212,12 +190,18 @@ impl PDF {
         resources.metadata.number = Some(resources_number);
 
         let mut font_dict_values = HashMap::new();
-        font_dict_values.insert("Helvetica".to_string(),
-            b"<</Type /Font/Subtype /Type1/BaseFont /Helvetica>>".to_vec());
-        font_dict_values.insert("Helvetica-Bold".to_string(),
-            b"<</Type /Font/Subtype /Type1/BaseFont /Helvetica-Bold>>".to_vec());
-        font_dict_values.insert("Courier".to_string(),
-            b"<</Type /Font/Subtype /Type1/BaseFont /Courier>>".to_vec());
+        font_dict_values.insert(
+            "Helvetica".to_string(),
+            b"<</Type /Font/Subtype /Type1/BaseFont /Helvetica>>".to_vec(),
+        );
+        font_dict_values.insert(
+            "Helvetica-Bold".to_string(),
+            b"<</Type /Font/Subtype /Type1/BaseFont /Helvetica-Bold>>".to_vec(),
+        );
+        font_dict_values.insert(
+            "Courier".to_string(),
+            b"<</Type /Font/Subtype /Type1/BaseFont /Courier>>".to_vec(),
+        );
 
         let mut font_dict_bytes = b"<<".to_vec();
         for (name, def) in &font_dict_values {
@@ -245,7 +229,8 @@ impl PDF {
                 if let Some(dict) = obj.as_any_mut().downcast_mut::<Dictionary>() {
                     if dict.values.get("Type").map(|v| v.as_slice()) == Some(b"/Page") {
                         dict.values.insert("Parent".to_string(), pages_ref.clone());
-                        dict.values.insert("Resources".to_string(), resources_ref.clone());
+                        dict.values
+                            .insert("Resources".to_string(), resources_ref.clone());
                     }
                 }
             }
@@ -281,15 +266,13 @@ impl PDF {
         self.write_line(b"%\xf0\x9f\x96\xa4", output)?;
 
         if version >= b"1.5" && compress {
-            // Compressed PDF using object streams and xref streams
-            self.write_compressed(output, compress)?;
+            self.write_compressed(output, compress)?; // using object streams and xref streams
         } else {
-            // Write all non-free PDF objects
             // First pass: set offsets and collect indirect data
             let mut indirect_objects = Vec::new();
             for obj in &mut self.objects {
                 if obj.metadata().status == ObjectStatus::Free {
-                    continue;
+                    continue; // don't write free objects
                 }
                 obj.metadata_mut().offset = self.current_position;
                 let indirect = obj.indirect();
@@ -316,7 +299,10 @@ impl PDF {
                 .iter()
                 .map(|obj| {
                     let meta = obj.metadata();
-                    format!("{:010} {:05} {} ", meta.offset, meta.generation, meta.status)
+                    format!(
+                        "{:010} {:05} {} ",
+                        meta.offset, meta.generation, meta.status
+                    )
                 })
                 .collect();
 
@@ -341,10 +327,9 @@ impl PDF {
                 self.write_line(&info_line, output)?;
             }
 
-            // Handle identifier
             match identifier {
                 Identifier::None => {}
-                Identifier::Auto | Identifier::Custom(_) => {
+                Identifier::AutoMD5 | Identifier::Custom(_) => {
                     // Collect all non-free object data
                     let mut all_data = Vec::new();
                     for obj in &self.objects {
@@ -358,7 +343,7 @@ impl PDF {
                     let data_hash = format!("{:x}", hash_result).into_bytes();
 
                     let id_value = match identifier {
-                        Identifier::Auto => &data_hash,
+                        Identifier::AutoMD5 => &data_hash,
                         Identifier::Custom(ref bytes) => bytes,
                         _ => unreachable!(),
                     };
@@ -388,12 +373,16 @@ impl PDF {
     }
 
     /// Write compressed PDF using object streams and cross-reference streams (PDF 1.5+)
-    fn write_compressed<W: Write>(&mut self, output: &mut W, compress: bool) -> std::io::Result<()> {
+    fn write_compressed<W: Write>(
+        &mut self,
+        output: &mut W,
+        compress: bool,
+    ) -> std::io::Result<()> {
         use crate::array::Array;
         use crate::stream::Stream;
 
         // Separate compressible objects from non-compressible ones
-        let mut compressed_data: Vec<(usize, Vec<u8>)> = Vec::new();  // (obj_num, data)
+        let mut compressed_data: Vec<(usize, Vec<u8>)> = Vec::new(); // (obj_num, data)
         let mut indirect_to_write = Vec::new();
 
         let catalog_num = self.catalog.metadata.number;
@@ -408,7 +397,7 @@ impl PDF {
             // Don't compress Catalog, Pages, or inherently non-compressible objects (streams)
             let is_catalog_or_pages = meta.number == catalog_num || meta.number == pages_num;
 
-            if obj.compressible() && !is_catalog_or_pages {
+            if obj.is_compressible() && !is_catalog_or_pages {
                 // Collect data for compression
                 compressed_data.push((meta.number.unwrap_or(0), obj.data()));
             } else {
@@ -443,8 +432,14 @@ impl PDF {
 
         let mut extra = HashMap::new();
         extra.insert("Type".to_string(), b"/ObjStm".to_vec());
-        extra.insert("N".to_string(), compressed_data.len().to_string().into_bytes());
-        extra.insert("First".to_string(), (stream_parts[0].len() + 1).to_string().into_bytes());
+        extra.insert(
+            "N".to_string(),
+            compressed_data.len().to_string().into_bytes(),
+        );
+        extra.insert(
+            "First".to_string(),
+            (stream_parts[0].len() + 1).to_string().into_bytes(),
+        );
 
         let obj_stream_number = self.objects.len();
         let mut object_stream = Stream::new(Some(stream_parts), Some(extra), compress);
@@ -470,7 +465,11 @@ impl PDF {
                 xref.push((2, obj_stream_number, pos as u32));
             } else {
                 // Type 1: normal object or Type 0: free
-                let flag = if meta.status == ObjectStatus::Free { 0 } else { 1 };
+                let flag = if meta.status == ObjectStatus::Free {
+                    0
+                } else {
+                    1
+                };
                 xref.push((flag, meta.offset, meta.generation));
             }
         }
@@ -488,7 +487,11 @@ impl PDF {
         let max_generation = xref.iter().map(|(_, _, g)| *g).max().unwrap_or(0);
         let max_index = compressed_data.len().max(1) as u32;
         let max_field3 = max_generation.max(max_index);
-        let field3_size = if max_field3 == 0 { 1 } else { (max_field3 as f64).log(256.0).ceil() as usize  };
+        let field3_size = if max_field3 == 0 {
+            1
+        } else {
+            (max_field3 as f64).log(256.0).ceil() as usize
+        };
 
         // Build xref stream data
         let mut xref_stream_data = Vec::new();
