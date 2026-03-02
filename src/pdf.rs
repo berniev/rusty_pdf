@@ -152,11 +152,7 @@ impl PDF {
             .objects
             .iter()
             .map(|obj| {
-                let meta = obj.metadata();
-                format!(
-                    "{:010} {:05} {} ",
-                    meta.offset, meta.generation, meta.status
-                )
+                obj.metadata().format_xref_entry()
             })
             .collect();
 
@@ -179,34 +175,8 @@ impl PDF {
             )?;
         }
 
-        match identifier {
-            Identifier::None => {}
-            Identifier::AutoMD5 | Identifier::Custom(_) => {
-                let hash_result = Self::calculate_identifier_hash(&self.objects);
-                let data_hash = hash_result
-                    .iter()
-                    .map(|b| format!("{:02x}", b))
-                    .collect::<String>()
-                    .into_bytes();
-
-                let id_bytes = match identifier {
-                    Identifier::AutoMD5 => &data_hash,
-                    Identifier::Custom(ref bytes) => bytes,
-                    _ => unreachable!(),
-                };
-
-                let s1 = encode_pdf_string(&String::from_utf8_lossy(id_bytes));
-                let s2 = encode_pdf_string(&String::from_utf8_lossy(&data_hash));
-                self.write_line(
-                    &format!(
-                        "/ID [{} {}]",
-                        String::from_utf8_lossy(&s1),
-                        String::from_utf8_lossy(&s2)
-                    )
-                    .into_bytes(),
-                    output,
-                )?;
-            }
+        if let Some(id_line) = Self::format_identifier(&self.objects, &identifier) {
+            self.write_line(&id_line, output)?;
         }
         self.write_line(b">>", output)?;
         Ok(())
@@ -229,16 +199,50 @@ impl PDF {
         font_dict.into_bytes()
     }
 
-    fn calculate_identifier_hash(objects: &[Box<dyn PdfObject>]) -> [u8; 16] {
-        let mut context = md5::Context::new();
-        for obj in objects {
-            if obj.metadata().status != ObjectStatus::Free {
-                context.consume(obj.data());
+    /// Generates the fully formatted PDF /ID line based on the identifier mode.
+    fn format_identifier(
+        objects: &[Box<dyn PdfObject>],
+        identifier: &Identifier,
+    ) -> Option<Vec<u8>> {
+        match identifier {
+            Identifier::None => None,
+            Identifier::AutoMD5 | Identifier::Custom(_) => {
+                // Calculate MD5 hash of all non-free objects
+                let mut context = md5::Context::new();
+                for obj in objects {
+                    if obj.metadata().status != ObjectStatus::Free {
+                        context.consume(obj.data());
+                    }
+                }
+                let hash_result = context.finalize().0;
+
+                // Convert hash to hex string for the permanent part of the ID
+                let data_hash_hex: String =
+                    hash_result.iter().map(|b| format!("{:02x}", b)).collect();
+                let data_hash_bytes = data_hash_hex.as_bytes();
+
+                // Select bytes for the first ID (Custom or Auto-MD5)
+                let id_bytes = match identifier {
+                    Identifier::AutoMD5 => data_hash_bytes,
+                    Identifier::Custom(bytes) => bytes,
+                    _ => unreachable!(),
+                };
+
+                // Wrap IDs in PDF string escaping (handling (), etc.)
+                let s1 = encode_pdf_string(&String::from_utf8_lossy(id_bytes));
+                let s2 = encode_pdf_string(&String::from_utf8_lossy(data_hash_bytes));
+
+                Some(
+                    format!(
+                        "/ID [{} {}]",
+                        String::from_utf8_lossy(&s1),
+                        String::from_utf8_lossy(&s2)
+                    )
+                    .into_bytes(),
+                )
             }
         }
-        context.finalize().0
     }
-
 
     fn write_legacy_objects<W: Write>(
         objects: &mut Vec<Box<dyn PdfObject>>,
@@ -340,11 +344,11 @@ impl PDF {
             self.write_compressed(output)?;
         } else {
             Self::write_legacy_objects(&mut self.objects, &mut self.current_position, output)?;
-            
+
             // Re-calculate positions for Catalog and Info since they were pushed to objects
             // The original logic used self.catalog.reference(), but that only works if catalog.number is set.
             // In our refactor, we push a CLONE of self.catalog, so self.catalog itself might not have the ID.
-            
+
             self.write_legacy_xref_and_trailer(output, id_mode)?;
         }
 
@@ -453,8 +457,8 @@ impl PDF {
             }
         }
 
-        xref.push((1, object_stream.metadata.offset, 0));        // Add object stream itself as type 1
-        xref.push((1, self.current_position, 0));        // Add xref stream itself as type 1
+        xref.push((1, object_stream.metadata.offset, 0)); // Add object stream itself as type 1
+        xref.push((1, self.current_position, 0)); // Add xref stream itself as type 1
 
         let field2_size = ((self.current_position + 1) as f64).log(256.0).ceil() as usize;
 

@@ -58,6 +58,15 @@ impl PdfMetadata {
             ..Default::default()
         }
     }
+
+    /// Formats the metadata as a 19-character PDF xref entry string.
+    /// Example: "0000000010 00000 n "
+    pub fn format_xref_entry(&self) -> String {
+        format!(
+            "{:010} {:05} {} ",
+            self.offset, self.generation, self.status
+        )
+    }
 }
 
 #[derive(Debug, Clone)]
