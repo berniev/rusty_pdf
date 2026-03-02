@@ -17,15 +17,6 @@ pub enum Identifier {
 /// Main PDF document structure.
 ///
 /// Represents a complete PDF document with objects, pages, and metadata.
-///
-/// # Example
-///
-/// ```rust
-/// use pydyf::PDF;
-///
-/// let mut pdf = PDF::new();
-/// // Add objects and pages...
-/// ```
 pub struct PDF {
     pub objects: Vec<Box<dyn PdfObject>>,
     pub pages: Dictionary,
@@ -100,8 +91,6 @@ impl PDF {
         // Parent reference will be set at write time
         self.add_object(Box::new(page));
 
-        // Note: In Python this is simpler: self.pages['Kids'].extend([page.number, 0, 'R'])
-        // In Rust, we need to reconstruct the Kids array as bytes
         let page_number = self.objects.len() - 1;
         let mut kids = self.pages.values.get("Kids").unwrap().clone();
         kids.pop(); // Remove ']'
@@ -143,7 +132,6 @@ impl PDF {
             .collect()
     }
 
-    /// Write a line to output and track byte position.
     pub fn write_line<W: Write>(&mut self, content: &[u8], output: &mut W) -> std::io::Result<()> {
         self.current_position += content.len() + 1;
         output.write_all(content)?;
@@ -151,250 +139,220 @@ impl PDF {
         Ok(())
     }
 
-    /// Write the PDF document to output.
-    ///
-    /// # Arguments
-    ///
-    /// * `output` - Output writer (e.g., File)
-    /// * `version` - PDF version (e.g., `Some(b"1.7")` or `None` for default 1.3)
-    /// * `identifier` - File identifier mode
-    /// * `compress` - Enable stream compression with flate
-    ///
-    /// # Example
-    ///
-    /// ```rust,no_run
-    /// use pydyf::{PDF, Identifier};
-    /// use std::fs::File;
-    ///
-    /// let mut pdf = PDF::new();
-    /// let mut file = File::create("output.pdf").unwrap();
-    /// pdf.write(&mut file, Some(b"1.7"), Identifier::AutoMD5, false).unwrap();
-    /// ```
-    ///
-    /// # Arguments
-    /// * `output` - Output stream
-    /// * `version` - PDF version (default: b"1.7")
-    /// * `identifier` - PDF file identifier. None to exclude, Auto to generate, or Custom bytes
-    /// * `compress` - Whether the PDF uses a compressed object stream
+    fn write_legacy_xref_and_trailer<W: Write>(
+        &mut self,
+        output: &mut W,
+        identifier: Identifier,
+    ) -> std::io::Result<()> {
+        self.xref_position = Some(self.current_position);
+        self.write_line(b"xref", output)?;
+        self.write_line(format!("0 {}", self.objects.len()).as_bytes(), output)?;
+
+        let xref_entries: Vec<String> = self
+            .objects
+            .iter()
+            .map(|obj| {
+                let meta = obj.metadata();
+                format!(
+                    "{:010} {:05} {} ",
+                    meta.offset, meta.generation, meta.status
+                )
+            })
+            .collect();
+
+        for entry in xref_entries {
+            self.write_line(entry.as_bytes(), output)?;
+        }
+
+        self.write_line(b"trailer", output)?;
+        self.write_line(b"<<", output)?;
+        self.write_line(format!("/Size {}", self.objects.len()).as_bytes(), output)?;
+        self.write_line(
+            &format!("/Root {} 0 R", self.catalog.metadata().number.unwrap()).into_bytes(),
+            output,
+        )?;
+
+        if !self.info.values.is_empty() {
+            self.write_line(
+                &format!("/Info {} 0 R", self.info.metadata().number.unwrap()).into_bytes(),
+                output,
+            )?;
+        }
+
+        match identifier {
+            Identifier::None => {}
+            Identifier::AutoMD5 | Identifier::Custom(_) => {
+                let hash_result = Self::calculate_identifier_hash(&self.objects);
+                let data_hash = hash_result
+                    .iter()
+                    .map(|b| format!("{:02x}", b))
+                    .collect::<String>()
+                    .into_bytes();
+
+                let id_bytes = match identifier {
+                    Identifier::AutoMD5 => &data_hash,
+                    Identifier::Custom(ref bytes) => bytes,
+                    _ => unreachable!(),
+                };
+
+                let s1 = encode_pdf_string(&String::from_utf8_lossy(id_bytes));
+                let s2 = encode_pdf_string(&String::from_utf8_lossy(&data_hash));
+                self.write_line(
+                    &format!(
+                        "/ID [{} {}]",
+                        String::from_utf8_lossy(&s1),
+                        String::from_utf8_lossy(&s2)
+                    )
+                    .into_bytes(),
+                    output,
+                )?;
+            }
+        }
+        self.write_line(b">>", output)?;
+        Ok(())
+    }
+
+    fn get_standard_fonts() -> Vec<u8> {
+        let mut font_dict = String::from("<<");
+        let fonts = [
+            ("Helvetica", "Type1"),
+            ("Helvetica-Bold", "Type1"),
+            ("Courier", "Type1"),
+        ];
+        for (name, subtype) in fonts {
+            font_dict.push_str(&format!(
+                " /{} << /Type /Font /Subtype /{} /BaseFont /{} >>",
+                name, subtype, name
+            ));
+        }
+        font_dict.push_str(" >>");
+        font_dict.into_bytes()
+    }
+
+    fn calculate_identifier_hash(objects: &[Box<dyn PdfObject>]) -> [u8; 16] {
+        let mut context = md5::Context::new();
+        for obj in objects {
+            if obj.metadata().status != ObjectStatus::Free {
+                context.consume(obj.data());
+            }
+        }
+        context.finalize().0
+    }
+
+
+    fn write_legacy_objects<W: Write>(
+        objects: &mut Vec<Box<dyn PdfObject>>,
+        current_position: &mut usize,
+        output: &mut W,
+    ) -> std::io::Result<()> {
+        let mut indirect_objects = Vec::new();
+        for obj in objects.iter_mut() {
+            if obj.metadata().status == ObjectStatus::Free {
+                continue;
+            }
+            obj.metadata_mut().offset = *current_position;
+            let indirect = obj.indirect();
+            let len = indirect.len();
+            indirect_objects.push(indirect);
+            *current_position += len + 1;
+        }
+
+        for indirect_obj in &indirect_objects {
+            output.write_all(indirect_obj)?;
+            output.write_all(b"\n")?;
+        }
+        Ok(())
+    }
+
     pub fn write<W: Write>(
         &mut self,
         output: &mut W,
         version: Option<&[u8]>,
-        identifier: Identifier,
+        id_mode: Identifier,
         compress: bool,
     ) -> std::io::Result<()> {
-        // Convert version to bytes, default to "1.7"
         let version = version.unwrap_or(b"1.7");
 
-        // Create and add Resources dictionary with standard fonts
+        let font_resources = Self::get_standard_fonts();
         let resources_number = self.objects.len();
         let mut resources = Dictionary::new(None);
         resources.metadata.number = Some(resources_number);
-
-        let mut font_dict_values = HashMap::new();
-        font_dict_values.insert(
-            "Helvetica".to_string(),
-            b"<</Type /Font/Subtype /Type1/BaseFont /Helvetica>>".to_vec(),
-        );
-        font_dict_values.insert(
-            "Helvetica-Bold".to_string(),
-            b"<</Type /Font/Subtype /Type1/BaseFont /Helvetica-Bold>>".to_vec(),
-        );
-        font_dict_values.insert(
-            "Courier".to_string(),
-            b"<</Type /Font/Subtype /Type1/BaseFont /Courier>>".to_vec(),
-        );
-
-        let mut font_dict_bytes = b"<<".to_vec();
-        for (name, def) in &font_dict_values {
-            font_dict_bytes.extend(b"/");
-            font_dict_bytes.extend(name.as_bytes());
-            font_dict_bytes.extend(b" ");
-            font_dict_bytes.extend(def);
-        }
-        font_dict_bytes.extend(b">>");
-
         resources
             .values
-            .insert("Font".to_string(), font_dict_bytes.clone());
+            .insert("Font".to_string(), font_resources.clone());
         self.objects.push(Box::new(resources));
 
-        let resources_ref = format!("{} 0 R", resources_number).into_bytes();
-
-        // Add Pages object if not already added
         if self.pages.metadata.number.is_none() {
             let pages_number = self.objects.len();
             self.pages.metadata.number = Some(pages_number);
-
-            // Update all page objects to point to this Pages object and add Resources
             let pages_ref = format!("{} 0 R", pages_number).into_bytes();
+            let res_ref = format!("{} 0 R", resources_number).into_bytes();
+
             for obj in &mut self.objects {
-                // Check if this is a page object (has /Type /Page)
                 if let Some(dict) = obj.as_any_mut().downcast_mut::<Dictionary>() {
                     if dict.values.get("Type").map(|v| v.as_slice()) == Some(b"/Page") {
                         dict.values.insert("Parent".to_string(), pages_ref.clone());
 
-                        // Merge resources instead of overwriting
-                        if let Some(existing_resources) = dict.values.get("Resources").cloned() {
-                            // Parse existing resources and merge with font resources
-                            let existing_str = String::from_utf8_lossy(&existing_resources);
-                            if existing_str.starts_with("<<") && existing_str.ends_with(">>") {
-                                // Existing resources is inline dictionary - merge it with fonts
-                                let mut merged = existing_str.trim_end_matches(">>").to_string();
-                                // Add space before /Font if needed
-                                if !merged.ends_with(' ') {
-                                    merged.push(' ');
-                                }
-                                merged.push_str("/Font ");
-                                merged.push_str(&String::from_utf8_lossy(&font_dict_bytes));
+                        if let Some(res) = dict.values.get("Resources").cloned() {
+                            let res_str = String::from_utf8_lossy(&res);
+                            if res_str.starts_with("<<") {
+                                let mut merged = res_str.trim_end_matches(">>").to_string();
+                                merged.push_str(" /Font ");
+                                merged.push_str(&String::from_utf8_lossy(&font_resources));
                                 merged.push_str(" >>");
                                 dict.values
                                     .insert("Resources".to_string(), merged.into_bytes());
-                            } else {
-                                // Existing resources is likely a reference - keep it
-                                // (this shouldn't happen with current usage but handle it gracefully)
                             }
                         } else {
-                            // No existing resources - use font-only resources
-                            dict.values
-                                .insert("Resources".to_string(), resources_ref.clone());
+                            dict.values.insert("Resources".to_string(), res_ref.clone());
                         }
                     }
                 }
             }
-
             let pages_copy = self.pages.clone();
             self.objects.push(Box::new(pages_copy));
         }
 
-        // Add Catalog object if not already added
         if self.catalog.metadata.number.is_none() {
             let catalog_number = self.objects.len();
             self.catalog.metadata.number = Some(catalog_number);
-
-            // Set catalog to point to pages
             let pages_ref = self.pages.reference();
             self.catalog.values.insert("Pages".to_string(), pages_ref);
-
             let catalog_copy = self.catalog.clone();
             self.objects.push(Box::new(catalog_copy));
         }
 
-        // Add info object if needed
+        // Add Info if needed
         if !self.info.values.is_empty() && self.info.metadata.number.is_none() {
             self.info.metadata.number = Some(self.objects.len());
             let info_copy = self.info.clone();
             self.objects.push(Box::new(info_copy));
         }
 
-        // Write header
-        let mut header = b"%PDF-".to_vec();
-        header.extend(version);
-        self.write_line(&header, output)?;
+        // --- SCOPE 2: PDF Printing Phase (The Writing Phase) ---
+        self.write_line(
+            &format!("%PDF-{}", String::from_utf8_lossy(version)).into_bytes(),
+            output,
+        )?;
         self.write_line(b"%\xf0\x9f\x96\xa4", output)?;
 
         if version >= b"1.5" && compress {
-            self.write_compressed(output)?; // using object streams and xref streams
+            self.write_compressed(output)?;
         } else {
-            // First pass: set offsets and collect indirect data
-            let mut indirect_objects = Vec::new();
-            for obj in &mut self.objects {
-                if obj.metadata().status == ObjectStatus::Free {
-                    continue; // don't write free objects
-                }
-                obj.metadata_mut().offset = self.current_position;
-                let indirect = obj.indirect();
-                let len = indirect.len();
-                indirect_objects.push(indirect);
-                self.current_position += len + 1; // +1 for newline
-            }
-
-            // Second pass: write the objects
-            for indirect_obj in &indirect_objects {
-                output.write_all(indirect_obj)?;
-                output.write_all(b"\n")?;
-            }
-
-            // Write cross-reference table
-            self.xref_position = Some(self.current_position);
-            self.write_line(b"xref", output)?;
-
-            let xref_header = format!("0 {}", self.objects.len());
-            self.write_line(xref_header.as_bytes(), output)?;
-
-            let xref_entries: Vec<String> = self
-                .objects
-                .iter()
-                .map(|obj| {
-                    let meta = obj.metadata();
-                    format!(
-                        "{:010} {:05} {} ",
-                        meta.offset, meta.generation, meta.status
-                    )
-                })
-                .collect();
-
-            for xref_entry in &xref_entries {
-                self.write_line(xref_entry.as_bytes(), output)?;
-            }
-
-            // Write trailer
-            self.write_line(b"trailer", output)?;
-            self.write_line(b"<<", output)?;
-
-            let size_line = format!("/Size {}", self.objects.len());
-            self.write_line(size_line.as_bytes(), output)?;
-
-            let mut root_line = b"/Root ".to_vec();
-            root_line.extend(self.catalog.reference());
-            self.write_line(&root_line, output)?;
-
-            if !self.info.values.is_empty() {
-                let mut info_line = b"/Info ".to_vec();
-                info_line.extend(self.info.reference());
-                self.write_line(&info_line, output)?;
-            }
-
-            match identifier {
-                Identifier::None => {}
-                Identifier::AutoMD5 | Identifier::Custom(_) => {
-                    // Collect all non-free object data
-                    let mut all_data = Vec::new();
-                    for obj in &self.objects {
-                        if obj.metadata().status != ObjectStatus::Free {
-                            all_data.extend(obj.data());
-                        }
-                    }
-
-                    // Calculate MD5 hash
-                    let hash_result = md5::compute(&all_data);
-                    let data_hash = format!("{:x}", hash_result).into_bytes();
-
-                    let id_value = match identifier {
-                        Identifier::AutoMD5 => &data_hash,
-                        Identifier::Custom(ref bytes) => bytes,
-                        _ => unreachable!(),
-                    };
-
-                    let string1 = encode_pdf_string(&String::from_utf8_lossy(id_value));
-                    let string2 = encode_pdf_string(&String::from_utf8_lossy(&data_hash));
-
-                    let mut id_line = b"/ID [".to_vec();
-                    id_line.extend(&string1);
-                    id_line.push(b' ');
-                    id_line.extend(&string2);
-                    id_line.push(b']');
-                    self.write_line(&id_line, output)?;
-                }
-            }
-
-            self.write_line(b">>", output)?;
+            Self::write_legacy_objects(&mut self.objects, &mut self.current_position, output)?;
+            
+            // Re-calculate positions for Catalog and Info since they were pushed to objects
+            // The original logic used self.catalog.reference(), but that only works if catalog.number is set.
+            // In our refactor, we push a CLONE of self.catalog, so self.catalog itself might not have the ID.
+            
+            self.write_legacy_xref_and_trailer(output, id_mode)?;
         }
 
-        // Write footer
         self.write_line(b"startxref", output)?;
-        let xref_pos = format!("{}", self.xref_position.unwrap_or(0));
-        self.write_line(xref_pos.as_bytes(), output)?;
+        self.write_line(
+            self.xref_position.unwrap_or(0).to_string().as_bytes(),
+            output,
+        )?;
         self.write_line(b"%%EOF", output)?;
 
         Ok(())
@@ -422,7 +380,6 @@ impl PDF {
             let is_catalog_or_pages = meta.number == catalog_num || meta.number == pages_num;
 
             if obj.is_compressible() && !is_catalog_or_pages {
-                // Collect data for compression
                 compressed_data.push((meta.number.unwrap_or(0), obj.data()));
             } else {
                 // Write non-compressible objects directly
@@ -476,7 +433,6 @@ impl PDF {
         output.write_all(b"\n")?;
         self.current_position += len + 1;
 
-        // Build cross-reference stream
         let mut xref: Vec<(u8, usize, u32)> = Vec::new();
 
         for obj in &self.objects {
@@ -488,23 +444,18 @@ impl PDF {
                 // Type 2: compressed object
                 xref.push((2, obj_stream_number, pos as u32));
             } else {
-                // Type 1: normal object or Type 0: free
                 let flag = if meta.status == ObjectStatus::Free {
-                    0
+                    0 // free
                 } else {
-                    1
+                    1 // normal object
                 };
                 xref.push((flag, meta.offset, meta.generation));
             }
         }
 
-        // Add object stream itself as type 1
-        xref.push((1, object_stream.metadata.offset, 0));
+        xref.push((1, object_stream.metadata.offset, 0));        // Add object stream itself as type 1
+        xref.push((1, self.current_position, 0));        // Add xref stream itself as type 1
 
-        // Add xref stream itself as type 1
-        xref.push((1, self.current_position, 0));
-
-        // Calculate field sizes (bytes needed to store values)
         let field2_size = ((self.current_position + 1) as f64).log(256.0).ceil() as usize;
 
         // field3 needs to handle max generation (65535 for free objects) and max index
@@ -517,7 +468,6 @@ impl PDF {
             (max_field3 as f64).log(256.0).ceil() as usize
         };
 
-        // Build xref stream data
         let mut xref_stream_data = Vec::new();
         for (flag, field2, field3) in &xref {
             xref_stream_data.push(*flag);
