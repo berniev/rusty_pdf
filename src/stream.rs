@@ -3,11 +3,10 @@ use flate2::write::ZlibEncoder;
 use std::collections::HashMap;
 use std::io::Write as IoWrite;
 
-use crate::array::Array;
 use crate::dictionary::Dictionary;
-use crate::encoding::{ascii85_encode, to_bytes_num};
+use crate::encoding::{ascii85_encode, to_pdf_num};
 use crate::error::{PdfError, Result};
-use crate::object::{PdfObject, PdfMetadata};
+use crate::object::{PdfMetadata, PdfObject};
 use crate::string::encode_pdf_string;
 
 /// PDF content stream.
@@ -25,7 +24,7 @@ use crate::string::encode_pdf_string;
 /// ```rust
 /// use pydyf::Stream;
 ///
-/// let mut stream = Stream::new(None, None, false);
+/// let mut stream = Stream::new();
 /// stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap();
 /// stream.rectangle(100.0, 100.0, 200.0, 150.0);
 /// stream.fill(false);
@@ -37,37 +36,62 @@ pub struct Stream {
     pub compress: bool, // using flate
 }
 
-impl Stream {
-    /// Create a new content stream.
-    ///
-    /// # Arguments
-    ///
-    /// * `stream` - Optional pre-existing stream content
-    /// * `extra` - Optional extra dictionary entries
-    /// * `compress` - Enable flate compression
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use pydyf::Stream;
-    ///
-    /// // Simple uncompressed stream
-    /// let stream = Stream::new(None, None, false);
-    ///
-    /// // Compressed stream
-    /// let compressed = Stream::new(None, None, true);
-    /// ```
-    pub fn new(
-        stream: Option<Vec<Vec<u8>>>,
-        extra: Option<HashMap<String, Vec<u8>>>,
-        compress: bool,
-    ) -> Self {
+impl Default for Stream {
+    fn default() -> Self {
         Stream {
             metadata: PdfMetadata::default(),
-            stream: stream.unwrap_or_default(),
-            extra: extra.unwrap_or_default(),
-            compress,
+            stream: Vec::new(),
+            extra: HashMap::new(),
+            compress: false,
         }
+    }
+}
+
+/// to specify stream and dictionary, use with_data()
+impl Stream {
+    pub fn new() -> Self {
+        Stream {
+            compress: false,
+            ..Default::default()
+        }
+    }
+
+    pub fn new_compressed() -> Self {
+        let mut s = Self::new();
+        s.compress = true;
+        s
+    }
+
+    /// * `stream` - Optional pre-existing stream content
+    /// * `extra` - Optional extra dictionary entries
+    /// ```
+    pub fn with_data(
+        mut self,
+        stream: Option<Vec<Vec<u8>>>,
+        extra: Option<HashMap<String, Vec<u8>>>,
+    ) -> Self {
+        if let Some(s) = stream {
+            self.stream = s;
+        }
+        if let Some(e) = extra {
+            self.extra = e;
+        }
+        self
+    }
+
+    fn validate_color(&self, values: &[f64]) -> Result<()> {
+        for &v in values {
+            if !(0.0..=1.0).contains(&v) {
+                return Err(PdfError::InvalidColor { r: v, g: v, b: v }); // map to first error
+            }
+        }
+        Ok(())
+    }
+
+    fn push_op(&mut self, operands: &[f64], operator: &str) {
+        let mut cmd_parts: Vec<String> = operands.iter().map(|&n| to_pdf_num(n)).collect();
+        cmd_parts.push(operator.to_string());
+        self.stream.push(cmd_parts.join(" ").into_bytes());
     }
 
     fn cmd(&mut self, cmd: char) {
@@ -75,18 +99,16 @@ impl Stream {
     }
 
     fn windable_cmd(&mut self, cmd: char, even_odd: bool) {
-        let mut cmd = vec![cmd as u8];
+        let mut op_bytes = vec![cmd as u8];
         if even_odd {
-            cmd.push(b'*');
+            op_bytes.push(b'*');
         }
-        self.stream.push(cmd);
+        self.stream.push(op_bytes);
     }
 
     fn float_cmd(&mut self, string: &str, value: f64) {
-        let mut cmd = to_bytes_num(value);
-        cmd.push(b' ');
-        cmd.extend(string.as_bytes());
-        self.stream.push(cmd);
+        self.stream
+            .push(format!("{} {}", to_pdf_num(value), string).into_bytes());
     }
 
     fn int_cmd(&mut self, string: &str, value: i32) {
@@ -94,13 +116,17 @@ impl Stream {
     }
 
     pub fn begin_marked_content(&mut self, tag: &str, property_list: Option<Vec<u8>>) {
-        self.stream.push(format!("/{tag}").into_bytes());
+        match property_list {
+            None => {
+                self.stream.push(format!("/{tag} BMC").into_bytes());
+            }
 
-        if let Some(props) = property_list {
-            self.stream.push(props);
-            self.stream.push(b"BDC".to_vec());
-        } else {
-            self.stream.push(b"BMC".to_vec());
+            Some(props) => {
+                let mut cmd = format!("/{tag} ").into_bytes();
+                cmd.extend(props);
+                cmd.extend(b" BDC");
+                self.stream.push(cmd);
+            }
         }
     }
 
@@ -131,16 +157,7 @@ impl Stream {
     /// The curve shall extend from `(x3, y3)` using `(x1, y1)` and `(x2, y2)`
     /// as the Bézier control points.
     pub fn curve_to(&mut self, x1: f64, y1: f64, x2: f64, y2: f64, x3: f64, y3: f64) {
-        let parts = vec![
-            to_bytes_num(x1),
-            to_bytes_num(y1),
-            to_bytes_num(x2),
-            to_bytes_num(y2),
-            to_bytes_num(x3),
-            to_bytes_num(y3),
-            b"c".to_vec(),
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[x1, y1, x2, y2, x3, y3], "c");
     }
 
     /// Add cubic Bézier curve to current path.
@@ -148,14 +165,7 @@ impl Stream {
     /// The curve shall extend to `(x3, y3)` using the current point and
     /// `(x2, y2)` as the Bézier control points.
     pub fn curve_start_to(&mut self, x2: f64, y2: f64, x3: f64, y3: f64) {
-        let parts = vec![
-            to_bytes_num(x2),
-            to_bytes_num(y2),
-            to_bytes_num(x3),
-            to_bytes_num(y3),
-            b"v".to_vec(),
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[x2, y2, x3, y3], "v");
     }
 
     /// Add cubic Bézier curve to current path.
@@ -163,22 +173,12 @@ impl Stream {
     /// The curve shall extend to `(x3, y3)` using `(x1, y1)` and `(x3, y3)`
     /// as the Bézier control points.
     pub fn curve_end_to(&mut self, x1: f64, y1: f64, x3: f64, y3: f64) {
-        let parts = vec![
-            to_bytes_num(x1),
-            to_bytes_num(y1),
-            to_bytes_num(x3),
-            to_bytes_num(y3),
-            b"y".to_vec(),
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[x1, y1, x3, y3], "y");
     }
 
     /// Draw object given by reference.
     pub fn draw_x_object(&mut self, reference: &str) {
-        let mut cmd = b"/".to_vec();
-        cmd.extend(reference.as_bytes());
-        cmd.extend(b" Do");
-        self.stream.push(cmd);
+        self.stream.push(format!("/{} Do", reference).into_bytes());
     }
 
     /// End path without filling or stroking.
@@ -196,16 +196,16 @@ impl Stream {
         self.stream.push(b"ET".to_vec());
     }
 
-     pub fn fill(&mut self, even_odd: bool) {
+    pub fn fill(&mut self, even_odd: bool) {
         self.windable_cmd('f', even_odd);
     }
 
     pub fn fill_and_stroke(&mut self, even_odd: bool) {
-        self.windable_cmd('S', even_odd);
+        self.windable_cmd('B', even_odd);
     }
 
     pub fn fill_stroke_and_close(&mut self, even_odd: bool) {
-        self.windable_cmd('s', even_odd);
+        self.windable_cmd('b', even_odd);
     }
 
     /// Add an inline image from raw pixel data.
@@ -224,23 +224,22 @@ impl Stream {
         bits_per_component: u8,
         raw_pixel_data: &[u8],
     ) -> Result<()> {
-
-        // Validate dimensions
         if width == 0 || height == 0 {
-            return Err(PdfError::InvalidImage(
-                format!("Invalid image dimensions: {}x{}", width, height)
-            ));
+            return Err(PdfError::InvalidImage(format!(
+                "Invalid image dimensions: {}x{}",
+                width, height
+            )));
         }
 
-        // Validate color space
         let valid_spaces = ["RGB", "Gray", "CMYK"];
         if !valid_spaces.contains(&color_space) {
-            return Err(PdfError::InvalidImage(
-                format!("Invalid color space: {}. Must be one of: RGB, Gray, CMYK", color_space)
-            ));
+            return Err(PdfError::InvalidImage(format!(
+                "Invalid color space: {}. Must be one of: RGB, Gray, CMYK",
+                color_space
+            )));
         }
 
-        let data = if self.compress {
+        let data_to_encode = if self.compress {
             let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
             encoder.write_all(raw_pixel_data)?;
             encoder.finish()?
@@ -248,37 +247,27 @@ impl Stream {
             raw_pixel_data.to_vec()
         };
 
-        let mut a85_data = ascii85_encode(&data);
-        a85_data.extend(b"~>");
+        let mut encoded_data = ascii85_encode(&data_to_encode);
+        encoded_data.extend(b"~>"); // Required PDF ASCII85 end marker
 
-        let mut parts = vec![
-            b"BI".to_vec(),
-            b"/W".to_vec(),
-            to_bytes_num(width as f64),
-            b"/H".to_vec(),
-            to_bytes_num(height as f64),
-            b"/BPC".to_vec(),
-            to_bytes_num(bits_per_component as f64),
-            b"/CS".to_vec(),
-        ];
+        let filters = if self.compress { "/A85 /Fl" } else { "/A85" };
 
-        let mut device = b"/Device".to_vec();
-        device.extend(color_space.as_bytes());
-        parts.push(device);
+        let header_string = format!(
+            "BI /W {} /H {} /BPC {} /CS /Device{} /F {} /L {} ID ",
+            to_pdf_num(width as f64),
+            to_pdf_num(height as f64),
+            to_pdf_num(bits_per_component as f64),
+            color_space,
+            filters,
+            encoded_data.len()
+        );
 
-        parts.push(b"/F".to_vec());
-        parts.push( b"/A85".to_vec());
-        if self.compress {
-            parts.push(b" /Fl".to_vec());
-        };
+        let mut final_command_bytes = header_string.into_bytes();
+        final_command_bytes.extend(encoded_data); // image data
+        final_command_bytes.extend(b" EI"); // End Image marker
 
-        parts.push(b"/L".to_vec());
-        parts.push(to_bytes_num(a85_data.len() as f64));
-        parts.push(b"ID".to_vec());
-        parts.push(a85_data);
-        parts.push(b"EI".to_vec());
+        self.stream.push(final_command_bytes);
 
-        self.stream.push(parts.join(&b' '));
         Ok(())
     }
 
@@ -290,7 +279,7 @@ impl Stream {
     /// # Example
     /// ```no_run
     /// # use pydyf::Stream;
-    /// let mut stream = Stream::new(None, None, false);
+    /// let mut stream = Stream::new();
     /// stream.push_state();
     /// stream.set_matrix(200.0, 0.0, 0.0, 200.0, 50.0, 500.0); // Scale to 200x200 at (50, 500)
     /// stream.inline_image_from_file("photo.jpg").unwrap();
@@ -315,20 +304,17 @@ impl Stream {
 
     /// Add line from current point to point `(x, y)`.
     pub fn line_to(&mut self, x: f64, y: f64) {
-        let parts = vec![to_bytes_num(x), to_bytes_num(y), b"l".to_vec()];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[x, y], "l");
     }
 
     /// Begin new subpath by moving current point to `(x, y)`.
     pub fn move_to(&mut self, x: f64, y: f64) {
-        let parts = vec![to_bytes_num(x), to_bytes_num(y), b"m".to_vec()];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[x, y], "m");
     }
 
     /// Move text to next line at `(x, y)` distance from previous line.
     pub fn move_text_to(&mut self, x: f64, y: f64) {
-        let parts = vec![to_bytes_num(x), to_bytes_num(y), b"Td".to_vec()];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[x, y], "T*");
     }
 
     /// Paint shape and color shading using shading dictionary `name`.
@@ -353,14 +339,7 @@ impl Stream {
     ///
     /// `(x, y)` is the lower-left corner and width and height the dimensions.
     pub fn rectangle(&mut self, x: f64, y: f64, width: f64, height: f64) {
-        let parts = vec![
-            to_bytes_num(x),
-            to_bytes_num(y),
-            to_bytes_num(width),
-            to_bytes_num(height),
-            b"re".to_vec(),
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[x, y, width, height], "re");
     }
 
     /// Set RGB color for non-stroking operations.
@@ -368,23 +347,9 @@ impl Stream {
     /// Set RGB color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if color values are not in range 0.0-1.0.
     pub fn set_color_rgb(&mut self, r: f64, g: f64, b: f64, stroke: bool) -> Result<()> {
-
-        // Validate color values
-        if !(0.0..=1.0).contains(&r) || !(0.0..=1.0).contains(&g) || !(0.0..=1.0).contains(&b) {
-            return Err(PdfError::InvalidColor { r, g, b });
-        }
-
-        let parts = vec![
-            to_bytes_num(r),
-            to_bytes_num(g),
-            to_bytes_num(b),
-            if stroke {
-                b"RG".to_vec()
-            } else {
-                b"rg".to_vec()
-            },
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.validate_color(&[r, g, b])?;
+        let operator = if stroke { "RG" } else { "rg" };
+        self.push_op(&[r, g, b], operator);
         Ok(())
     }
 
@@ -393,24 +358,9 @@ impl Stream {
     /// Set CMYK color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if color values are not in range 0.0-1.0.
     pub fn set_color_cmyk(&mut self, c: f64, m: f64, y: f64, k: f64, stroke: bool) -> Result<()> {
-        // Validate color values
-        if !(0.0..=1.0).contains(&c) || !(0.0..=1.0).contains(&m)
-            || !(0.0..=1.0).contains(&y) || !(0.0..=1.0).contains(&k) {
-            return Err(PdfError::InvalidColor { r: c, g: m, b: y });
-        }
-
-        let parts = vec![
-            to_bytes_num(c),
-            to_bytes_num(m),
-            to_bytes_num(y),
-            to_bytes_num(k),
-            if stroke {
-                b"K".to_vec()
-            } else {
-                b"k".to_vec()
-            },
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.validate_color(&[c, m, y, k])?;
+        let operator = if stroke { "K" } else { "k" };
+        self.push_op(&[c, m, y, k], operator);
         Ok(())
     }
 
@@ -419,20 +369,9 @@ impl Stream {
     /// Set grayscale color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if gray value is not in range 0.0-1.0.
     pub fn set_color_gray(&mut self, gray: f64, stroke: bool) -> Result<()> {
-        // Validate gray value
-        if !(0.0..=1.0).contains(&gray) {
-            return Err(PdfError::InvalidColor { r: gray, g: gray, b: gray });
-        }
-
-        let parts = vec![
-            to_bytes_num(gray),
-            if stroke {
-                b"G".to_vec()
-            } else {
-                b"g".to_vec()
-            },
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.validate_color(&[gray])?;
+        let operator = if stroke { "G" } else { "g" };
+        self.push_op(&[gray], operator);
         Ok(())
     }
 
@@ -440,48 +379,38 @@ impl Stream {
     ///
     /// If stroke is set to `true`, set the stroking color space instead.
     pub fn set_color_space(&mut self, space: &str, stroke: bool) {
-        let mut cmd = b"/".to_vec();
-        cmd.extend(space.as_bytes());
-        cmd.push(b' ');
-        cmd.extend(if stroke { b"CS" } else { b"cs" });
-        self.stream.push(cmd);
+        let operator = if stroke { "CS" } else { "cs" };
+        self.stream
+            .push(format!("/ {} {}", space, operator).into_bytes());
     }
 
     /// Set special color for non-stroking operations.
     ///
     /// Set special color for stroking operation if `stroke` is set to `true`.
     pub fn set_color_special(&mut self, name: Option<&str>, stroke: bool, operands: &[f64]) {
-        let mut parts: Vec<Vec<u8>> = operands.iter().map(|&op| to_bytes_num(op)).collect();
-
+        let mut cmd_parts: Vec<String> = operands.iter().map(|&n| to_pdf_num(n)).collect();
         if let Some(n) = name {
-            let mut name_part = b"/".to_vec();
-            name_part.extend(n.as_bytes());
-            parts.push(name_part);
+            cmd_parts.push(format!("/{}", n));
         }
-
-        let mut cmd = parts.join(&b' ');
-        cmd.push(b' ');
-        cmd.extend(if stroke { b"SCN" } else { b"scn" });
-        self.stream.push(cmd);
+        cmd_parts.push((if stroke { "SCN" } else { "scn" }).to_string());
+        self.stream.push(cmd_parts.join(" ").into_bytes());
     }
 
     /// Set dash line pattern.
     pub fn set_dash(&mut self, dash_array: &[f64], dash_phase: i32) {
-        let array = Array::new(Some(dash_array.to_vec()));
-        let parts = vec![array.data(), to_bytes_num(dash_phase as f64), b"d".to_vec()];
-        self.stream.push(parts.join(&b' '));
-    }
+        // Build the [n n n] part directly
+        let array_str: Vec<String> = dash_array.iter().map(|&n| to_pdf_num(n)).collect();
 
-    /// Set font name and size.
-    pub fn set_font_size(&mut self, font: &str, size: f64) {
-        let mut cmd = b"/".to_vec();
-        cmd.extend(font.as_bytes());
-        cmd.push(b' ');
-        cmd.extend(to_bytes_num(size));
-        cmd.extend(b" Tf");
+        // Build the entire command in one single allocation
+        let cmd = format!("[{}] {} d", array_str.join(" "), dash_phase).into_bytes();
+
         self.stream.push(cmd);
     }
-
+    /// Set font name and size.
+    pub fn set_font_size(&mut self, font: &str, size: f64) {
+        self.stream
+            .push(format!("/{} {} Tf", font, to_pdf_num(size)).into_bytes());
+    }
     /// Set text rendering mode.
     pub fn set_text_rendering(&mut self, mode: i32) {
         self.int_cmd("Tr", mode);
@@ -509,16 +438,7 @@ impl Stream {
 
     /// Set current transformation matrix.
     pub fn set_matrix(&mut self, a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) {
-        let parts = vec![
-            to_bytes_num(a),
-            to_bytes_num(b),
-            to_bytes_num(c),
-            to_bytes_num(d),
-            to_bytes_num(e),
-            to_bytes_num(f),
-            b"cm".to_vec(),
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[a, b, c, d, e, f], "cm");
     }
 
     /// Set miter limit.
@@ -528,32 +448,16 @@ impl Stream {
 
     /// Set specified parameters in graphic state.
     pub fn set_state(&mut self, state_name: &str) {
-        let mut cmd = b"/".to_vec();
-        cmd.extend(state_name.as_bytes());
-        cmd.extend(b" gs");
-        self.stream.push(cmd);
+        self.stream.push(format!("/{state_name} gs").into_bytes());
     }
-
     /// Set current text and text line transformation matrix.
     pub fn set_text_matrix(&mut self, a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) {
-        let parts = vec![
-            to_bytes_num(a),
-            to_bytes_num(b),
-            to_bytes_num(c),
-            to_bytes_num(d),
-            to_bytes_num(e),
-            to_bytes_num(f),
-            b"Tm".to_vec(),
-        ];
-        self.stream.push(parts.join(&b' '));
+        self.push_op(&[a, b, c, d, e, f], "Tm");
     }
 
     /// Show text strings with individual glyph positioning.
     pub fn show_text(&mut self, text: &str) {
-        let mut cmd = b"[".to_vec();
-        cmd.extend(text.as_bytes());
-        cmd.extend(b"] TJ");
-        self.stream.push(cmd);
+        self.stream.push(format!("[{text}] TJ").into_bytes());
     }
 
     /// Show single text string.
@@ -572,6 +476,142 @@ impl Stream {
     pub fn stroke_and_close(&mut self) {
         self.stream.push(b"s".to_vec());
     }
+
+    /// Draw a rounded rectangle using Bezier curves.
+    ///
+    /// Creates a rectangle with rounded corners at the specified position and size.
+    /// Corner radii can be specified individually for each corner.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X coordinate of the rectangle (left edge)
+    /// * `y` - Y coordinate of the rectangle (bottom edge in PDF coordinates)
+    /// * `width` - Width of the rectangle
+    /// * `height` - Height of the rectangle
+    /// * `top_left` - Radius of the top-left corner
+    /// * `top_right` - Radius of the top-right corner
+    /// * `bottom_right` - Radius of the bottom-right corner
+    /// * `bottom_left` - Radius of the bottom-left corner
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use pydyf::Stream;
+    ///
+    /// let mut stream = Stream::new();
+    /// stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap();
+    /// stream.rounded_rectangle(100.0, 100.0, 200.0, 150.0, 10.0, 10.0, 10.0, 10.0);
+    /// stream.fill(false);
+    /// ```
+    pub fn rounded_rectangle(
+        &mut self,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+        top_left: f64,
+        top_right: f64,
+        bottom_right: f64,
+        bottom_left: f64,
+    ) {
+        // If no radius, draw simple rectangle
+        if top_left == 0.0 && top_right == 0.0 && bottom_right == 0.0 && bottom_left == 0.0 {
+            self.rectangle(x, y, width, height);
+            return;
+        }
+
+        // KAPPA constant for circular arcs with cubic Bezier
+        // This is the magic number that makes a cubic Bezier curve approximate a circular arc
+        const KAPPA: f64 = 0.5522847498307933;
+
+        // Start at top-left corner (after radius)
+        self.move_to(x + top_left, y + height);
+
+        // Top edge and top-right corner
+        if top_right > 0.0 {
+            self.line_to(x + width - top_right, y + height);
+            self.curve_to(
+                x + width - top_right + top_right * KAPPA,
+                y + height,
+                x + width,
+                y + height - top_right + top_right * KAPPA,
+                x + width,
+                y + height - top_right,
+            );
+        } else {
+            self.line_to(x + width, y + height);
+        }
+
+        // Right edge and bottom-right corner
+        if bottom_right > 0.0 {
+            self.line_to(x + width, y + bottom_right);
+            self.curve_to(
+                x + width,
+                y + bottom_right - bottom_right * KAPPA,
+                x + width - bottom_right + bottom_right * KAPPA,
+                y,
+                x + width - bottom_right,
+                y,
+            );
+        } else {
+            self.line_to(x + width, y);
+        }
+
+        // Bottom edge and bottom-left corner
+        if bottom_left > 0.0 {
+            self.line_to(x + bottom_left, y);
+            self.curve_to(
+                x + bottom_left - bottom_left * KAPPA,
+                y,
+                x,
+                y + bottom_left - bottom_left * KAPPA,
+                x,
+                y + bottom_left,
+            );
+        } else {
+            self.line_to(x, y);
+        }
+
+        // Left edge and top-left corner
+        if top_left > 0.0 {
+            self.line_to(x, y + height - top_left);
+            self.curve_to(
+                x,
+                y + height - top_left + top_left * KAPPA,
+                x + top_left - top_left * KAPPA,
+                y + height,
+                x + top_left,
+                y + height,
+            );
+        } else {
+            self.line_to(x, y + height);
+        }
+
+        self.close();
+    }
+
+    /// Apply a gradient pattern to the stream.
+    ///
+    /// Sets the color space to Pattern and applies the specified pattern for fill or stroke.
+    /// If a graphics state name is provided (for transparency), it will be applied first.
+    ///
+    /// # Arguments
+    ///
+    /// * `pattern_name` - Name of the pattern resource (e.g., "P0")
+    /// * `stroke` - Whether to apply for stroke (true) or fill (false)
+    /// * `gs_name` - Optional graphics state name for transparency
+    pub fn apply_pattern(&mut self, pattern_name: &str, stroke: bool, gs_name: Option<&str>) {
+        // Apply soft mask graphics state if provided
+        if let Some(gs) = gs_name {
+            self.set_state(gs);
+        }
+
+        // Set Pattern color space
+        self.set_color_space("Pattern", stroke);
+
+        // Apply the pattern
+        self.set_color_special(Some(pattern_name), stroke, &[]);
+    }
 }
 
 impl PdfObject for Stream {
@@ -584,33 +624,33 @@ impl PdfObject for Stream {
     }
 
     fn data(&self) -> Vec<u8> {
-        // Use the existing Stream::data() implementation
-        let stream_data: Vec<Vec<u8>> = self.stream.iter().map(|item| item.clone()).collect();
-        let mut stream = stream_data.join(&b'\n');
+        let mut stream_bytes = self.stream.join(&b'\n');
         let mut extra = self.extra.clone();
 
         if self.compress {
             extra.insert("Filter".to_string(), b"/FlateDecode".to_vec());
-            let mut encoder = ZlibEncoder::new(Vec::new(), Compression::new(9));
-            encoder.write_all(&stream).unwrap();
-            stream = encoder.finish().unwrap();
+            let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(&stream_bytes).unwrap();
+            stream_bytes = encoder.finish().unwrap();
         }
 
-        extra.insert("Length".to_string(), stream.len().to_string().into_bytes());
+        extra.insert(
+            "Length".to_string(),
+            stream_bytes.len().to_string().into_bytes(),
+        );
+
         let extra_dict = Dictionary {
             metadata: PdfMetadata::default(),
             values: extra,
         };
 
-        let parts = vec![
-            extra_dict.data(),
-            b"stream".to_vec(),
-            stream,
-            b"endstream".to_vec(),
-        ];
-        parts.join(&b'\n')
-    }
+        let mut result = extra_dict.data();
+        result.extend(b"\nstream\n");
+        result.extend(stream_bytes);
+        result.extend(b"\nendstream");
 
+        result
+    }
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }

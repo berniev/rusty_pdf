@@ -18,7 +18,7 @@ fn test_create_pdf() {
 #[test]
 fn test_add_page() {
     let mut pdf = PDF::new();
-    let stream = Stream::new(None, None, false);
+    let stream = Stream::new();
     pdf.add_object(Box::new(stream));
 
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -30,7 +30,7 @@ fn test_add_page() {
 
 #[test]
 fn test_stream_operations() {
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new_compressed();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(100.0, 100.0, 200.0, 150.0);
@@ -41,13 +41,13 @@ fn test_stream_operations() {
 
 #[test]
 fn test_compressed_stream() {
-    let stream = Stream::new(None, None, true);
+    let stream = Stream::new_compressed();
     assert!(stream.compress);
 }
 
 #[test]
 fn test_text_operations() {
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     stream.begin_text();
     stream.set_font_size("Helvetica", 12.0);

@@ -26,7 +26,7 @@ fn test_external_image_from_file() {
     img.save("/tmp/pydyf_test/gradient.png").unwrap();
 
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     stream.push_state();
     stream.set_matrix(200.0, 0.0, 0.0, 200.0, 50.0, 500.0);

@@ -13,7 +13,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 #[test]
 fn test_inline_image() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let image_data = vec![
         255, 0, 0,    255, 0, 0,

@@ -112,9 +112,11 @@ impl PDF {
         self.pages.values.insert("Kids".to_string(), kids);
     }
 
-    pub fn add_object(&mut self, mut object: Box<dyn PdfObject>) {
-        object.metadata_mut().number = Some(self.objects.len());
+    pub fn add_object(&mut self, mut object: Box<dyn PdfObject>) -> usize {
+        let number = self.objects.len();
+        object.metadata_mut().number = Some(number);
         self.objects.push(object);
+        number
     }
 
     pub fn page_references(&self) -> Vec<Vec<u8>> {
@@ -212,7 +214,9 @@ impl PDF {
         }
         font_dict_bytes.extend(b">>");
 
-        resources.values.insert("Font".to_string(), font_dict_bytes);
+        resources
+            .values
+            .insert("Font".to_string(), font_dict_bytes.clone());
         self.objects.push(Box::new(resources));
 
         let resources_ref = format!("{} 0 R", resources_number).into_bytes();
@@ -229,8 +233,32 @@ impl PDF {
                 if let Some(dict) = obj.as_any_mut().downcast_mut::<Dictionary>() {
                     if dict.values.get("Type").map(|v| v.as_slice()) == Some(b"/Page") {
                         dict.values.insert("Parent".to_string(), pages_ref.clone());
-                        dict.values
-                            .insert("Resources".to_string(), resources_ref.clone());
+
+                        // Merge resources instead of overwriting
+                        if let Some(existing_resources) = dict.values.get("Resources").cloned() {
+                            // Parse existing resources and merge with font resources
+                            let existing_str = String::from_utf8_lossy(&existing_resources);
+                            if existing_str.starts_with("<<") && existing_str.ends_with(">>") {
+                                // Existing resources is inline dictionary - merge it with fonts
+                                let mut merged = existing_str.trim_end_matches(">>").to_string();
+                                // Add space before /Font if needed
+                                if !merged.ends_with(' ') {
+                                    merged.push(' ');
+                                }
+                                merged.push_str("/Font ");
+                                merged.push_str(&String::from_utf8_lossy(&font_dict_bytes));
+                                merged.push_str(" >>");
+                                dict.values
+                                    .insert("Resources".to_string(), merged.into_bytes());
+                            } else {
+                                // Existing resources is likely a reference - keep it
+                                // (this shouldn't happen with current usage but handle it gracefully)
+                            }
+                        } else {
+                            // No existing resources - use font-only resources
+                            dict.values
+                                .insert("Resources".to_string(), resources_ref.clone());
+                        }
                     }
                 }
             }
@@ -266,7 +294,7 @@ impl PDF {
         self.write_line(b"%\xf0\x9f\x96\xa4", output)?;
 
         if version >= b"1.5" && compress {
-            self.write_compressed(output, compress)?; // using object streams and xref streams
+            self.write_compressed(output)?; // using object streams and xref streams
         } else {
             // First pass: set offsets and collect indirect data
             let mut indirect_objects = Vec::new();
@@ -373,11 +401,7 @@ impl PDF {
     }
 
     /// Write compressed PDF using object streams and cross-reference streams (PDF 1.5+)
-    fn write_compressed<W: Write>(
-        &mut self,
-        output: &mut W,
-        compress: bool,
-    ) -> std::io::Result<()> {
+    fn write_compressed<W: Write>(&mut self, output: &mut W) -> std::io::Result<()> {
         use crate::array::Array;
         use crate::stream::Stream;
 
@@ -442,7 +466,7 @@ impl PDF {
         );
 
         let obj_stream_number = self.objects.len();
-        let mut object_stream = Stream::new(Some(stream_parts), Some(extra), compress);
+        let mut object_stream = Stream::new_compressed().with_data(Some(stream_parts), Some(extra));
         object_stream.metadata.number = Some(obj_stream_number);
         object_stream.metadata.offset = self.current_position;
 
@@ -520,7 +544,8 @@ impl PDF {
         xref_extra.insert("Size".to_string(), total_size.to_string().into_bytes());
         xref_extra.insert("Root".to_string(), self.catalog.reference());
 
-        let mut xref_stream = Stream::new(Some(vec![xref_stream_data]), Some(xref_extra), compress);
+        let mut xref_stream =
+            Stream::new_compressed().with_data(Some(vec![xref_stream_data]), Some(xref_extra));
         xref_stream.metadata.number = Some(xref_stream_number);
         self.xref_position = Some(self.current_position);
         xref_stream.metadata.offset = self.current_position;

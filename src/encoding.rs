@@ -7,6 +7,19 @@ pub fn to_bytes_num(n: f64) -> Vec<u8> {
     }
 }
 
+/// Convert numeric values to String for PDF formatting
+pub fn to_pdf_num(n: f64) -> String {
+    if n.fract() == 0.0 {
+        format!("{}", n as i64)
+    } else {
+        // Use precision to avoid excessive digits, and trim zeros
+        format!("{:.4}", n)
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string()
+    }
+}
+
 /// Convert string to bytes
 pub fn to_bytes_str(s: &str) -> Vec<u8> {
     s.as_bytes().to_vec()

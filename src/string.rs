@@ -1,32 +1,40 @@
 //! PDF String encoding functions
 
-use regex::Regex;
-
 pub fn encode_pdf_string(string: &str) -> Vec<u8> {
     if string.is_ascii() {
-        encode_ascii(string) // escaped and wrapped in parentheses
+        encode_ascii(string) // escape and wrap in parentheses
     } else {
-        encode_non_ascii(string) // UTF-16BE encoded with BOM and hex-encoded
+        encode_non_ascii(string) // UTF-16BE encode with BOM and hex-encode
     }
 }
 
-fn encode_ascii(string: &str) -> Vec<u8> {
-    let re = Regex::new(r"([\\()])").unwrap();
-    let escaped = re.replace_all(string, r"\$1");
-    let mut result = b"(".to_vec();
-    result.extend(escaped.as_bytes());
+pub fn encode_ascii(string: &str) -> Vec<u8> {
+    let mut result = Vec::with_capacity(string.len() + 4);
+    result.push(b'(');
+    for &byte in string.as_bytes() {
+        match byte {
+            // These characters ONLY exist as single bytes in UTF-8
+            b'\\' | b'(' | b')' => {
+                result.push(b'\\');
+                result.push(byte);
+            }
+            // Everything else is pushed as-is (including multi-byte UTF-8)
+            _ => {
+                result.push(byte);
+            }
+        }
+    }
+
     result.push(b')');
     result
 }
-
-fn encode_non_ascii(string: &str) -> Vec<u8> {
-    let mut encoded = b"\xFE\xFF".to_vec();
+pub fn encode_non_ascii(string: &str) -> Vec<u8> {
+    let mut hex_content = String::with_capacity(string.len() * 4 + 4);
+    hex_content.push_str("FEFF");
     for ch in string.encode_utf16() {
-        encoded.extend(&ch.to_be_bytes());
+        // Build the hex string directly: {:04X} means "4 digits, hex, uppercase"
+        hex_content.push_str(&format!("{:04X}", ch));
     }
-    let hex_string = hex::encode(&encoded);
-    let mut result = b"<".to_vec();
-    result.extend(hex_string.as_bytes());
-    result.push(b'>');
-    result
+
+    format!("<{}>", hex_content).into_bytes()
 }

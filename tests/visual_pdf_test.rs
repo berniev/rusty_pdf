@@ -13,7 +13,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 #[test]
 fn test_generate_simple_uncompressed_pdf() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(100.0, 100.0, 200.0, 150.0);
@@ -40,7 +40,7 @@ fn test_generate_simple_uncompressed_pdf() {
 #[test]
 fn test_generate_circle_over_rectangle() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 1.0, false);
     stream.rectangle(50.0, 650.0, 200.0, 100.0);
@@ -71,7 +71,7 @@ fn test_generate_circle_over_rectangle() {
 fn test_multipage_pdf() {
     let mut pdf = PDF::new();
 
-    let mut stream1 = Stream::new(None, None, false);
+    let mut stream1 = Stream::new();
     let _ = stream1.set_color_rgb(1.0, 0.0, 0.0, false);
     stream1.rectangle(50.0, 650.0, 200.0, 100.0);
     stream1.fill(false);
@@ -80,7 +80,7 @@ fn test_multipage_pdf() {
     let page1 = create_page_with_content(content_ref1);
     pdf.add_page(page1);
 
-    let mut stream2 = Stream::new(None, None, false);
+    let mut stream2 = Stream::new();
     let _ = stream2.set_color_rgb(0.0, 1.0, 0.0, false);
     stream2.rectangle(150.0, 550.0, 200.0, 100.0);
     stream2.fill(false);
@@ -89,7 +89,7 @@ fn test_multipage_pdf() {
     let page2 = create_page_with_content(content_ref2);
     pdf.add_page(page2);
 
-    let mut stream3 = Stream::new(None, None, false);
+    let mut stream3 = Stream::new();
     let _ = stream3.set_color_rgb(0.0, 0.0, 1.0, false);
     stream3.rectangle(250.0, 450.0, 200.0, 100.0);
     stream3.fill(false);
@@ -108,7 +108,7 @@ fn test_multipage_pdf() {
 #[test]
 fn test_graphics_operations() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(50.0, 700.0, 100.0, 50.0);
@@ -167,7 +167,7 @@ fn test_graphics_operations() {
 #[test]
 fn test_comparison_uncompressed() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.9, 0.9, 0.9, false);
     stream.rectangle(50.0, 50.0, 512.0, 692.0);
@@ -199,7 +199,7 @@ fn test_comparison_uncompressed() {
 #[test]
 fn test_comparison_compressed() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, true);
+    let mut stream = Stream::new_compressed();
 
     let _ = stream.set_color_rgb(0.9, 0.9, 0.9, false);
     stream.rectangle(50.0, 50.0, 512.0, 692.0);

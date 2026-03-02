@@ -13,7 +13,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 #[test]
 fn test_cmyk_colors() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_cmyk(1.0, 0.0, 0.0, 0.0, false);
     stream.rectangle(50.0, 650.0, 100.0, 100.0);
@@ -57,7 +57,7 @@ fn test_cmyk_colors() {
 #[test]
 fn test_grayscale_colors() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_gray(0.0, false);
     stream.rectangle(50.0, 650.0, 80.0, 80.0);
@@ -106,7 +106,7 @@ fn test_grayscale_colors() {
 #[test]
 fn test_mixed_color_spaces() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(50.0, 650.0, 100.0, 100.0);

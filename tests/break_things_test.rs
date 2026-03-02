@@ -13,7 +13,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 #[test]
 fn test_empty_page() {
     let mut pdf = PDF::new();
-    let stream = Stream::new(None, None, false);
+    let stream = Stream::new();
 
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -30,7 +30,7 @@ fn test_massive_page_count() {
     let mut pdf = PDF::new();
 
     for _ in 0..500 {
-        let mut stream = Stream::new(None, None, false);
+        let mut stream = Stream::new();
         let _ = stream.set_color_rgb(0.5, 0.5, 0.5, false);
         stream.rectangle(50.0, 50.0, 100.0, 100.0);
         stream.fill(false);
@@ -49,7 +49,7 @@ fn test_massive_page_count() {
 #[test]
 fn test_extreme_coordinates() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(-1000.0, -1000.0, 100.0, 100.0);
@@ -80,7 +80,7 @@ fn test_extreme_coordinates() {
 #[test]
 fn test_very_long_text() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
     stream.begin_text();
@@ -106,7 +106,7 @@ fn test_very_long_text() {
 #[test]
 fn test_special_characters_text() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
     stream.begin_text();
@@ -139,7 +139,7 @@ fn test_special_characters_text() {
 #[test]
 fn test_huge_rectangle() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(0.0, 0.0, 5000.0, 5000.0);
@@ -158,7 +158,7 @@ fn test_huge_rectangle() {
 #[test]
 fn test_compressed_empty() {
     let mut pdf = PDF::new();
-    let stream = Stream::new(None, None, true);
+    let stream = Stream::new_compressed();
 
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -173,7 +173,7 @@ fn test_compressed_empty() {
 #[test]
 fn test_extreme_font_sizes() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
     stream.begin_text();
@@ -205,7 +205,7 @@ fn test_extreme_font_sizes() {
 #[test]
 fn test_overlapping_operations() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     stream.begin_text();
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);

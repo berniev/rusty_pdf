@@ -15,7 +15,7 @@
 //! let mut pdf = PDF::new();
 //!
 //! // Create a content stream
-//! let mut stream = Stream::new(None, None, false);
+//! let mut stream = Stream::new();
 //!
 //! // Draw a red rectangle
 //! stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap();
@@ -60,7 +60,7 @@
 //!
 //! ```rust
 //! # use pydyf::Stream;
-//! # let mut stream = Stream::new(None, None, false);
+//! # let mut stream = Stream::new();
 //! // RGB colors (values 0.0-1.0)
 //! stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap();
 //!
@@ -75,7 +75,7 @@
 //!
 //! ```rust,no_run
 //! # use pydyf::Stream;
-//! # let mut stream = Stream::new(None, None, false);
+//! # let mut stream = Stream::new();
 //! // Load from file (PNG or JPEG)
 //! stream.push_state();
 //! stream.set_matrix(200.0, 0.0, 0.0, 200.0, 50.0, 500.0); // Scale and position
@@ -87,16 +87,24 @@ pub mod array;
 pub mod dictionary;
 pub mod encoding;
 pub mod error;
+pub mod gradient;
+pub mod graphics_state;
 pub mod object;
 pub mod pdf;
+pub mod resources;
 pub mod stream;
 pub mod string;
+pub mod text;
 
 // Re-export main types for convenience
 pub use array::Array;
 pub use dictionary::Dictionary;
 pub use error::{PdfError, Result};
+pub use gradient::{ColorStop, LinearGradient, RadialGradient};
+pub use graphics_state::GraphicsStateManager;
 pub use object::{Object, PdfObject, PdfMetadata, ObjectStatus};
 pub use pdf::{Identifier, PDF};
+pub use resources::ResourceDictionary;
 pub use stream::Stream;
 pub use string::encode_pdf_string;
+pub use text::{wrap_text, StandardFont, WrapMode};

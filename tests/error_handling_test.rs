@@ -2,7 +2,7 @@ use pydyf::{Stream, PdfError};
 
 #[test]
 fn test_invalid_color_values() {
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let result = stream.set_color_rgb(1.5, 0.5, 0.5, false);
     assert!(result.is_err());
@@ -19,7 +19,7 @@ fn test_invalid_color_values() {
 
 #[test]
 fn test_invalid_cmyk_values() {
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let result = stream.set_color_cmyk(1.5, 0.0, 0.0, 0.0, false);
     assert!(result.is_err());
@@ -30,7 +30,7 @@ fn test_invalid_cmyk_values() {
 
 #[test]
 fn test_invalid_gray_values() {
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     let result = stream.set_color_gray(1.5, false);
     assert!(result.is_err());
@@ -41,7 +41,7 @@ fn test_invalid_gray_values() {
 
 #[test]
 fn test_invalid_image_dimensions() {
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
     let data = vec![255, 0, 0];
 
     let result = stream.inline_image(0, 100, "RGB", 8, &data);
@@ -53,7 +53,7 @@ fn test_invalid_image_dimensions() {
 
 #[test]
 fn test_invalid_color_space() {
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
     let data = vec![255, 0, 0];
 
     let result = stream.inline_image(1, 1, "INVALID", 8, &data);
