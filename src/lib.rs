@@ -102,7 +102,7 @@ pub use dictionary::Dictionary;
 pub use error::{PdfError, Result};
 pub use gradient::{ColorStop, LinearGradient, RadialGradient};
 pub use graphics_state::GraphicsStateManager;
-pub use object::{Object, PdfObject, PdfMetadata, ObjectStatus};
+pub use object::{BaseObject, PdfObject, PdfMetadata, ObjectStatus};
 pub use pdf::{Identifier, PDF};
 pub use resources::ResourceDictionary;
 pub use stream::Stream;

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::Write;
 
 use crate::dictionary::Dictionary;
-use crate::object::{Object, ObjectStatus, PdfObject};
+use crate::object::{BaseObject, ObjectStatus, PdfObject};
 use crate::string::encode_pdf_string;
 
 /// PDF file identifier mode.
@@ -41,11 +41,7 @@ impl PDF {
             xref_position: None,
         };
 
-        // PDF spec requires object 0 to be free with generation 65535
-        // This is a sentinel value marking the head of the free object list
-        let mut zero_object = Object::new();
-        zero_object.metadata.generation = 65535;
-        zero_object.metadata.status = ObjectStatus::Free;
+        let zero_object = BaseObject::sentinel();
         pdf.add_object(Box::new(zero_object));
 
         let mut pages_values = HashMap::new();
@@ -151,9 +147,7 @@ impl PDF {
         let xref_entries: Vec<String> = self
             .objects
             .iter()
-            .map(|obj| {
-                obj.metadata().format_xref_entry()
-            })
+            .map(|obj| obj.metadata().format_xref_entry())
             .collect();
 
         for entry in xref_entries {
