@@ -67,13 +67,6 @@ impl PDF {
         pdf
     }
 
-    /// Set the default page size for the document.
-    pub fn with_default_page_size(mut self, size: PageSize) -> Self {
-        self.default_page_size = size;
-        self.pages.values.insert("MediaBox".to_string(), size.to_mediabox());
-        self
-    }
-
     /// Preferred API: add a strongly-typed Page
     pub fn add_page(&mut self, page: Page) {
         let count_bytes = self.pages.values.get("Count").unwrap();

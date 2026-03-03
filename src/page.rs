@@ -18,8 +18,8 @@ impl Default for PageSize {
 }
 
 impl PageSize {
-    /// Returns the [width, height] in PDF points (1/72 inch).
-    /// Returns (0.0, 0.0) for negative dimensions in Custom.
+    /// Returns the [width, height] in PDF points (1 PDF point = 1/72 inch).
+    /// Returns 0.0 for negative custom dimensions.
     pub fn dimensions(&self) -> (f64, f64) {
         match self {
             PageSize::A4 => (595.0, 842.0),
@@ -30,14 +30,12 @@ impl PageSize {
         }
     }
 
-    /// Helper to generate the PDF MediaBox string: [0 0 width height]
     pub fn to_mediabox(&self) -> Vec<u8> {
         let (w, h) = self.dimensions();
-        format!("[0 0 {} {}]", w, h).into_bytes()
+        format!("[0 0 {w} {h}]").into_bytes()
     }
 }
 
-/// Represents a single page in a PDF document.
 #[derive(Debug, Clone)]
 pub struct Page {
     pub metadata: PdfMetadata,
@@ -48,7 +46,7 @@ pub struct Page {
 }
 
 impl Page {
-    /// Create a new page.
+
     pub fn new() -> Self {
         Page {
             metadata: PdfMetadata::default(),
@@ -59,22 +57,18 @@ impl Page {
         }
     }
 
-    /// Set the page size.
     pub fn set_size(&mut self, size: PageSize) {
         self.size = Some(size);
     }
 
-    /// Set the page contents (reference to content stream).
     pub fn set_contents(&mut self, contents: Vec<u8>) {
         self.contents = contents;
     }
 
-    /// Set the page resources.
     pub fn set_resources(&mut self, resources: Dictionary) {
         self.resources = Some(resources);
     }
 
-    /// Convert the Page to a Dictionary for PDF output.
     pub fn to_dictionary(&self) -> Dictionary {
         let mut values = self.other.clone();
         values.insert("Type".to_string(), b"/Page".to_vec());

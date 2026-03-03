@@ -7,7 +7,7 @@
 //! ## Quick Start
 //!
 //! ```rust
-//! use pydyf::{PDF, Stream, Dictionary, PageSize};
+//! use pydyf::{PDF, Stream, Dictionary, PageSize, Page};
 //! use std::collections::HashMap;
 //! use std::fs::File;
 //!
@@ -34,7 +34,7 @@
 //!
 //! // Create page
 //! let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-//! let mut page = pydyf::Page::new();
+//! let mut page = Page::new();
 //! page.set_contents(content_ref);
 //!
 //! pdf.add_page(page);
@@ -56,8 +56,9 @@
 //! ## Color Spaces
 //!
 //! ```rust
-//! # use pydyf::Stream;
-//! # let mut stream = Stream::new();
+//! use pydyf::Stream;
+//! fn main() {
+//! let mut stream = Stream::new();
 //! // RGB colors (values 0.0-1.0)
 //! stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap();
 //!
@@ -66,18 +67,21 @@
 //!
 //! // Grayscale (value 0.0-1.0)
 //! stream.set_color_gray(0.5, false).unwrap();
+//! }
 //! ```
 //!
 //! ## Images
 //!
 //! ```rust,no_run
-//! # use pydyf::Stream;
-//! # let mut stream = Stream::new();
+//! use pydyf::Stream;
+//! fn main() {
+//! let mut stream = Stream::new();
 //! // Load from file (PNG or JPEG)
 //! stream.push_state();
 //! stream.set_matrix(200.0, 0.0, 0.0, 200.0, 50.0, 500.0); // Scale and position
 //! stream.inline_image_from_file("image.png").unwrap();
 //! stream.pop_state();
+//! }
 //! ```
 
 pub mod array;

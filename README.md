@@ -57,45 +57,70 @@ fn main() {
 ### RGB Colors
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
 // RGB values from 0.0 to 1.0
+// stream.set_color_rgb(r, g, b, stroke)
 stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap(); // Red fill
 stream.set_color_rgb(0.0, 1.0, 0.0, true).unwrap();  // Green stroke
+}
 ```
 
 ### CMYK Colors
 
 ```rust
+use pydyf::{PDF, Stream, Page, PageSize};
+use std::fs::File;
+fn main() {
+   let mut pdf = PDF::new(PageSize::A4);
+   let mut stream = Stream::new();
 // CMYK values from 0.0 to 1.0
+// stream.set_color_cmyk(c, m, y, k, stroke)
 stream.set_color_cmyk(1.0, 0.0, 0.0, 0.0, false).unwrap(); // Cyan
 stream.set_color_cmyk(0.0, 1.0, 0.0, 0.0, false).unwrap(); // Magenta
 stream.set_color_cmyk(0.0, 0.0, 1.0, 0.0, false).unwrap(); // Yellow
 stream.set_color_cmyk(0.0, 0.0, 0.0, 1.0, false).unwrap(); // Black (key)
+}
 ```
 
 ### Grayscale
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
 // Gray value from 0.0 (black) to 1.0 (white)
+// stream.set_color_gray(gray, stroke)
 stream.set_color_gray(0.0, false).unwrap();  // Black
 stream.set_color_gray(0.5, false).unwrap();  // 50% gray
 stream.set_color_gray(1.0, false).unwrap();  // White
+}
 ```
 
 ## Images
 
 ### Load from File
 
-```rust
+```rust,no_run
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
 // Load PNG or JPEG image from file
 stream.push_state();
+// set_matrix(a, b, c, d, e, f)
 stream.set_matrix(200.0, 0.0, 0.0, 200.0, 50.0, 500.0); // Scale to 200x200 at position (50, 500)
 stream.inline_image_from_file("image.png").unwrap();
 stream.pop_state();
+}
 ```
 
 ### Inline Image Data
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
 // Raw RGB pixel data
 let image_data = vec![
     255, 0, 0,    // Red pixel
@@ -105,9 +130,12 @@ let image_data = vec![
 ];
 
 stream.push_state();
+// set_matrix(a, b, c, d, e, f)
 stream.set_matrix(100.0, 0.0, 0.0, 100.0, 50.0, 500.0);
+// inline_image(width, height, color_space, bits_per_component, data)
 stream.inline_image(2, 2, "RGB", 8, &image_data).unwrap();
 stream.pop_state();
+}
 ```
 
 ## Graphics
@@ -115,24 +143,40 @@ stream.pop_state();
 ### Rectangles
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
+// (x, y, width, height)
+let (x, y, width, height) = (50.0, 500.0, 100.0, 150.0);
 stream.rectangle(x, y, width, height);
 stream.fill(false); // false = non-zero winding rule
+}
 ```
 
 ### Lines and Paths
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
+// Move to (x, y), line to (x, y)
 stream.move_to(100.0, 100.0);
 stream.line_to(200.0, 200.0);
 stream.stroke();
+}
 ```
 
 ### Curves
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
+// Bezier curve: move_to(x1, y1), curve_to(x1, y1, x2, y2, x3, y3)
 stream.move_to(100.0, 100.0);
 stream.curve_to(150.0, 200.0, 200.0, 200.0, 250.0, 100.0);
 stream.stroke();
+}
 ```
 
 ## Text
@@ -140,11 +184,16 @@ stream.stroke();
 ### Basic Text
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
+// text_matrix(a, b, c, d, e, f)
 stream.begin_text();
 stream.set_font_size("Helvetica", 18.0);
 stream.set_text_matrix(1.0, 0.0, 0.0, 1.0, 100.0, 700.0); // Position at (100, 700)
 stream.show_text_string("Hello, World!");
 stream.end_text();
+}
 ```
 
 ### Available Standard Fonts
@@ -156,10 +205,13 @@ stream.end_text();
 
 ## Compression
 
-Enable stream compression with the third parameter:
+Use `Stream::new_compressed()` to enable Flate compression:
 
 ```rust
-let stream = Stream::new(None, None, true); // true = enable flate compression
+use pydyf::Stream;
+fn main() {
+let stream = Stream::new_compressed();
+}
 ```
 
 ## Error Handling
@@ -167,6 +219,9 @@ let stream = Stream::new(None, None, true); // true = enable flate compression
 Most operations return `Result<()>` for validation:
 
 ```rust
+use pydyf::Stream;
+fn main() {
+let mut stream = Stream::new();
 // Color validation (must be 0.0-1.0)
 match stream.set_color_rgb(1.5, 0.0, 0.0, false) {
     Ok(_) => println!("Success"),
@@ -174,9 +229,11 @@ match stream.set_color_rgb(1.5, 0.0, 0.0, false) {
 }
 
 // Image validation
-match stream.inline_image(0, 100, "RGB", 8, &data) {
+let data = vec![0; 4]; // Example dummy data
+match stream.inline_image(2, 2, "RGB", 8, &data) {
     Ok(_) => println!("Success"),
-    Err(e) => println!("Error: Invalid dimensions"),
+    Err(e) => println!("Error: {}", e),
+}
 }
 ```
 
