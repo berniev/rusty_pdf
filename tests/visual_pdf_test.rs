@@ -1,4 +1,4 @@
-use pydyf::{PDF, Dictionary, Stream, Identifier};
+use pydyf::{PDF, PageSize, Dictionary, Stream, Identifier};
 use std::collections::HashMap;
 use std::fs::File;
 
@@ -12,7 +12,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 
 #[test]
 fn test_generate_simple_uncompressed_pdf() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
@@ -39,7 +39,7 @@ fn test_generate_simple_uncompressed_pdf() {
 
 #[test]
 fn test_generate_circle_over_rectangle() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 1.0, false);
@@ -69,7 +69,7 @@ fn test_generate_circle_over_rectangle() {
 
 #[test]
 fn test_multipage_pdf() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
 
     let mut stream1 = Stream::new();
     let _ = stream1.set_color_rgb(1.0, 0.0, 0.0, false);
@@ -107,7 +107,7 @@ fn test_multipage_pdf() {
 
 #[test]
 fn test_graphics_operations() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
@@ -166,7 +166,7 @@ fn test_graphics_operations() {
 
 #[test]
 fn test_comparison_uncompressed() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.9, 0.9, 0.9, false);
@@ -198,7 +198,7 @@ fn test_comparison_uncompressed() {
 
 #[test]
 fn test_comparison_compressed() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new_compressed();
 
     let _ = stream.set_color_rgb(0.9, 0.9, 0.9, false);

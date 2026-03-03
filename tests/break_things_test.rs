@@ -1,4 +1,4 @@
-use pydyf::{PDF, Dictionary, Stream};
+use pydyf::{PDF, PageSize, Dictionary, Stream};
 use std::collections::HashMap;
 use std::fs::File;
 
@@ -12,7 +12,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 
 #[test]
 fn test_empty_page() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let stream = Stream::new();
 
     pdf.add_object(Box::new(stream));
@@ -27,7 +27,7 @@ fn test_empty_page() {
 
 #[test]
 fn test_massive_page_count() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
 
     for _ in 0..500 {
         let mut stream = Stream::new();
@@ -48,7 +48,7 @@ fn test_massive_page_count() {
 
 #[test]
 fn test_extreme_coordinates() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
@@ -79,7 +79,7 @@ fn test_extreme_coordinates() {
 
 #[test]
 fn test_very_long_text() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
@@ -105,7 +105,7 @@ fn test_very_long_text() {
 
 #[test]
 fn test_special_characters_text() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
@@ -138,7 +138,7 @@ fn test_special_characters_text() {
 
 #[test]
 fn test_huge_rectangle() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
@@ -157,7 +157,7 @@ fn test_huge_rectangle() {
 
 #[test]
 fn test_compressed_empty() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let stream = Stream::new_compressed();
 
     pdf.add_object(Box::new(stream));
@@ -172,7 +172,7 @@ fn test_compressed_empty() {
 
 #[test]
 fn test_extreme_font_sizes() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
@@ -204,7 +204,7 @@ fn test_extreme_font_sizes() {
 
 #[test]
 fn test_overlapping_operations() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     stream.begin_text();
@@ -225,7 +225,7 @@ fn test_overlapping_operations() {
 
 #[test]
 fn test_no_pages() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_no_pages.pdf").unwrap();

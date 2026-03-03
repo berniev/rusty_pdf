@@ -1,4 +1,4 @@
-use pydyf::{PDF, Dictionary, Stream};
+use pydyf::{PDF, PageSize, Dictionary, Stream};
 use std::collections::HashMap;
 use std::fs::File;
 use image::{RgbImage, Rgb};
@@ -25,7 +25,7 @@ fn test_external_image_from_file() {
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     img.save("/tmp/pydyf_test/gradient.png").unwrap();
 
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     stream.push_state();

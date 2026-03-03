@@ -44,12 +44,7 @@ impl Default for PDF {
 
 impl PDF {
 
-    pub fn new() -> Self {
-        Self::new_with_size(PageSize::default())
-    }
-
-    /// Create a new PDF document with a specific default page size.
-    pub fn new_with_size(size: PageSize) -> Self {
+    pub fn new(size: PageSize) -> Self {
         let mut pdf = PDF {
             default_page_size: size,
             ..Default::default()
@@ -62,6 +57,7 @@ impl PDF {
         pages_values.insert("Type".to_string(), b"/Pages".to_vec());
         pages_values.insert("Kids".to_string(), b"[]".to_vec());
         pages_values.insert("Count".to_string(), b"0".to_vec());
+        pages_values.insert("MediaBox".to_string(), size.to_mediabox());
         pdf.pages = Dictionary::new(Some(pages_values));
 
         let mut catalog_values = HashMap::new();
@@ -74,6 +70,7 @@ impl PDF {
     /// Set the default page size for the document.
     pub fn with_default_page_size(mut self, size: PageSize) -> Self {
         self.default_page_size = size;
+        self.pages.values.insert("MediaBox".to_string(), size.to_mediabox());
         self
     }
 
@@ -87,10 +84,10 @@ impl PDF {
     /// # Example
     ///
     /// ```rust
-    /// use pydyf::{PDF, Dictionary};
+    /// use pydyf::{PDF, Dictionary, PageSize};
     /// use std::collections::HashMap;
     ///
-    /// let mut pdf = PDF::new();
+    /// let mut pdf = PDF::new(PageSize::A4);
     /// let mut page_values = HashMap::new();
     /// page_values.insert("Type".to_string(), b"/Page".to_vec());
     /// page_values.insert("MediaBox".to_string(), b"[0 0 612 792]".to_vec());
@@ -118,10 +115,11 @@ impl PDF {
     }
 
     pub fn add_page_simple(&mut self, size: Option<PageSize>, contents: &[u8]) {
-        let page_size = size.unwrap_or(self.default_page_size);
         let mut page_values = HashMap::new();
         page_values.insert("Type".to_string(), b"/Page".to_vec());
-        page_values.insert("MediaBox".to_string(), page_size.to_mediabox());
+        if let Some(page_size) = size {
+            page_values.insert("MediaBox".to_string(), page_size.to_mediabox());
+        }
         page_values.insert("Contents".to_string(), contents.to_vec());
 
         self.add_page(Dictionary::new(Some(page_values)));

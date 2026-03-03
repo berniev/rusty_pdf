@@ -7,12 +7,12 @@
 //! ## Quick Start
 //!
 //! ```rust
-//! use pydyf::{PDF, Stream, Dictionary};
+//! use pydyf::{PDF, Stream, Dictionary, PageSize};
 //! use std::collections::HashMap;
 //! use std::fs::File;
 //!
 //! // Create a new PDF document
-//! let mut pdf = PDF::new();
+//! let mut pdf = PDF::new(PageSize::A4);
 //!
 //! // Create a content stream
 //! let mut stream = Stream::new();

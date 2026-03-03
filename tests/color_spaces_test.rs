@@ -1,4 +1,4 @@
-use pydyf::{PDF, Dictionary, Stream};
+use pydyf::{PDF, PageSize, Dictionary, Stream};
 use std::collections::HashMap;
 use std::fs::File;
 
@@ -12,7 +12,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 
 #[test]
 fn test_cmyk_colors() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_cmyk(1.0, 0.0, 0.0, 0.0, false);
@@ -56,7 +56,7 @@ fn test_cmyk_colors() {
 
 #[test]
 fn test_grayscale_colors() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_gray(0.0, false);
@@ -105,7 +105,7 @@ fn test_grayscale_colors() {
 
 #[test]
 fn test_mixed_color_spaces() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let mut stream = Stream::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);

@@ -1,4 +1,4 @@
-use pydyf::{PDF, Dictionary, Stream, PageSize};
+use pydyf::{PDF, PageSize, Dictionary, Stream};
 use std::collections::HashMap;
 
 fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
@@ -11,13 +11,13 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
 
 #[test]
 fn test_create_pdf() {
-    let pdf = PDF::new();
+    let pdf = PDF::new(PageSize::A4);
     assert_eq!(pdf.objects.len(), 1);
 }
 
 #[test]
 fn test_add_page() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let stream = Stream::new();
     pdf.add_object(Box::new(stream));
 
@@ -58,7 +58,7 @@ fn test_text_operations() {
 
 #[test]
 fn test_add_page_simple_with_pagesize() {
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
     let stream = Stream::new();
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -70,25 +70,35 @@ fn test_add_page_simple_with_pagesize() {
     let data = page_obj.data();
     let data_str = String::from_utf8_lossy(&data);
 
+    // Should contain MediaBox because it was explicitly provided
     assert!(data_str.contains("/MediaBox [0 0 595 842]"));
     assert!(data_str.contains("/Type /Page"));
 }
 
 #[test]
 fn test_add_page_simple_default_size() {
-    let mut pdf = PDF::new_with_size(PageSize::Letter);
+    let mut pdf = PDF::new(PageSize::Letter);
     let stream = Stream::new();
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
 
-    // Should use Letter size (612x792)
+    // Should use Letter size (612x792) inherited from root
     pdf.add_page_simple(None, &content_ref);
 
     let page_obj = pdf.objects.last().unwrap();
     let data = page_obj.data();
     let data_str = String::from_utf8_lossy(&data);
 
-    assert!(data_str.contains("/MediaBox [0 0 612 792]"));
+    // Should NOT contain MediaBox because it's inherited
+    assert!(!data_str.contains("/MediaBox"));
+}
+
+#[test]
+fn test_root_mediabox_inheritance() {
+    let pdf = PDF::new(PageSize::A4);
+    let pages_dict = &pdf.pages;
+    let mediabox = pages_dict.values.get("MediaBox").unwrap();
+    assert_eq!(String::from_utf8_lossy(mediabox), "[0 0 595 842]");
 }
 
 #[test]

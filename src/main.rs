@@ -11,6 +11,6 @@ fn main() {
     println!("Ported from Python pydyf library");
 
     // Example usage:
-    let pdf = PDF::new().with_default_page_size(PageSize::A4);
+    let pdf = PDF::new(PageSize::A4);
     println!("Created new PDF with {} objects", pdf.objects.len());
 }
