@@ -3,18 +3,8 @@
 // Main entry point for pydyf
 // This is a simple example/test program
 
-mod array;
-mod dictionary;
-mod encoding;
-mod error;
-mod object;
-mod page;
-mod pdf;
-mod stream;
-mod string;
-
-use pdf::PDF;
-use page::PageSize;
+use pydyf::PDF;
+use pydyf::PageSize;
 
 fn main() {
     println!("PyDyf - PDF library for Rust");
