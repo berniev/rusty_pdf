@@ -93,7 +93,7 @@ fn test_add_page_simple_default_size() {
 #[test]
 fn test_root_mediabox_inheritance() {
     let pdf = PDF::new(PageSize::A4);
-    let pages_dict = &pdf.pages;
+    let pages_dict = &pdf.page_tree;
     let mediabox = pages_dict.values.get("MediaBox").unwrap();
     assert_eq!(String::from_utf8_lossy(mediabox), "[0 0 595 842]");
 }

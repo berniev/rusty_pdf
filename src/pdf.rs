@@ -20,7 +20,7 @@ pub enum Identifier {
 /// Represents a complete PDF document with objects, pages, and metadata.
 pub struct PDF {
     pub objects: Vec<Box<dyn PdfObject>>,
-    pub pages: Dictionary,
+    pub page_tree: Dictionary,
     pub info: Dictionary,
     pub catalog: Dictionary,
     pub current_position: usize,
@@ -32,7 +32,7 @@ impl Default for PDF {
     fn default() -> Self {
         PDF {
             objects: Vec::new(),
-            pages: Dictionary::new(None),
+            page_tree: Dictionary::new(None),
             info: Dictionary::new(None),
             catalog: Dictionary::new(None),
             current_position: 0,
@@ -58,7 +58,7 @@ impl PDF {
         pages_values.insert("Kids".to_string(), b"[]".to_vec());
         pages_values.insert("Count".to_string(), b"0".to_vec());
         pages_values.insert("MediaBox".to_string(), size.to_mediabox());
-        pdf.pages = Dictionary::new(Some(pages_values));
+        pdf.page_tree = Dictionary::new(Some(pages_values));
 
         let mut catalog_values = HashMap::new();
         catalog_values.insert("Type".to_string(), b"/Catalog".to_vec());
@@ -67,24 +67,31 @@ impl PDF {
         pdf
     }
 
+    /// Set the default page size for the document.
+    pub fn with_default_page_size(mut self, size: PageSize) -> Self {
+        self.default_page_size = size;
+        self.page_tree.values.insert("MediaBox".to_string(), size.to_mediabox());
+        self
+    }
+
     /// Preferred API: add a strongly-typed Page
     pub fn add_page(&mut self, page: Page) {
-        let count_bytes = self.pages.values.get("Count").unwrap();
+        let count_bytes = self.page_tree.values.get("Count").unwrap();
         let count: i32 = String::from_utf8_lossy(count_bytes).trim().parse().unwrap();
-        self.pages
+        self.page_tree
             .values
             .insert("Count".to_string(), (count + 1).to_string().into_bytes());
 
         self.add_object(Box::new(page));
 
         let page_number = self.objects.len() - 1;
-        let mut kids = self.pages.values.get("Kids").unwrap().clone();
+        let mut kids = self.page_tree.values.get("Kids").unwrap().clone();
         kids.pop();
         if kids.len() > 1 {
             kids.push(b' ');
         }
         kids.extend(format!("{} 0 R]", page_number).as_bytes());
-        self.pages.values.insert("Kids".to_string(), kids);
+        self.page_tree.values.insert("Kids".to_string(), kids);
     }
 
     pub fn add_page_simple(&mut self, size: Option<PageSize>, contents: &[u8]) {
@@ -103,7 +110,7 @@ impl PDF {
 
     pub fn page_references(&self) -> Vec<Vec<u8>> {
         let kids_str = self
-            .pages
+            .page_tree
             .values
             .get("Kids")
             .map(|v| String::from_utf8_lossy(v).to_string())
@@ -277,9 +284,9 @@ impl PDF {
             .insert("Font".to_string(), font_resources.clone());
         self.objects.push(Box::new(resources));
 
-        if self.pages.metadata.number.is_none() {
+        if self.page_tree.metadata.number.is_none() {
             let pages_number = self.objects.len();
-            self.pages.metadata.number = Some(pages_number);
+            self.page_tree.metadata.number = Some(pages_number);
             let pages_ref = format!("{} 0 R", pages_number).into_bytes();
             let res_ref = format!("{} 0 R", resources_number).into_bytes();
 
@@ -303,14 +310,14 @@ impl PDF {
                     }
                 }
             }
-            let pages_copy = self.pages.clone();
+            let pages_copy = self.page_tree.clone();
             self.objects.push(Box::new(pages_copy));
         }
 
         if self.catalog.metadata.number.is_none() {
             let catalog_number = self.objects.len();
             self.catalog.metadata.number = Some(catalog_number);
-            let pages_ref = self.pages.reference();
+            let pages_ref = self.page_tree.reference();
             self.catalog.values.insert("Pages".to_string(), pages_ref);
             let catalog_copy = self.catalog.clone();
             self.objects.push(Box::new(catalog_copy));
@@ -362,7 +369,7 @@ impl PDF {
         let mut indirect_to_write = Vec::new();
 
         let catalog_num = self.catalog.metadata.number;
-        let pages_num = self.pages.metadata.number;
+        let pages_num = self.page_tree.metadata.number;
 
         for obj in &mut self.objects {
             let meta = obj.metadata();
