@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
 
 use crate::{PdfError, Result};
 use crate::dictionary::Dictionary;
@@ -27,10 +26,11 @@ impl Catalog {
         self.pages_ref = Some(pages_ref);
     }
 
-    pub fn set_other(&mut self, key: String, value: Vec<u8>) -> crate::error::Result<()> {
+    pub fn set_other(&mut self, key: String, value: Vec<u8>) -> Result<()> {
         if self.other.insert(key, value).is_some() {
             return Err(PdfError::StructureError("Duplicate key in Catalog".to_string()));
         }
+        Ok(())
     }
 
     pub fn to_dictionary(&self) -> Dictionary {

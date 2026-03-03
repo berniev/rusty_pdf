@@ -97,6 +97,7 @@ pub mod stream;
 pub mod string;
 pub mod text;
 pub mod page;
+pub mod catalog;
 
 // Re-export main types for convenience
 pub use array::Array;
@@ -111,3 +112,4 @@ pub use stream::Stream;
 pub use string::encode_pdf_string;
 pub use text::{wrap_text, StandardFont, WrapMode};
 pub use page::{Page, PageSize};
+pub use catalog::Catalog;
