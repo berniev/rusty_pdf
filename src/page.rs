@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use crate::dictionary::Dictionary;
+use crate::object::{PdfMetadata, PdfObject};
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PageSize {
     A4,
@@ -30,5 +34,90 @@ impl PageSize {
     pub fn to_mediabox(&self) -> Vec<u8> {
         let (w, h) = self.dimensions();
         format!("[0 0 {} {}]", w, h).into_bytes()
+    }
+}
+
+/// Represents a single page in a PDF document.
+#[derive(Debug, Clone)]
+pub struct Page {
+    pub metadata: PdfMetadata,
+    pub size: Option<PageSize>,
+    pub contents: Vec<u8>,
+    pub resources: Option<Dictionary>,
+    pub other: HashMap<String, Vec<u8>>,
+}
+
+impl Page {
+    /// Create a new page.
+    pub fn new() -> Self {
+        Page {
+            metadata: PdfMetadata::default(),
+            size: None,
+            contents: Vec::new(),
+            resources: None,
+            other: HashMap::new(),
+        }
+    }
+
+    /// Set the page size.
+    pub fn set_size(&mut self, size: PageSize) {
+        self.size = Some(size);
+    }
+
+    /// Set the page contents (reference to content stream).
+    pub fn set_contents(&mut self, contents: Vec<u8>) {
+        self.contents = contents;
+    }
+
+    /// Set the page resources.
+    pub fn set_resources(&mut self, resources: Dictionary) {
+        self.resources = Some(resources);
+    }
+
+    /// Convert the Page to a Dictionary for PDF output.
+    pub fn to_dictionary(&self) -> Dictionary {
+        let mut values = self.other.clone();
+        values.insert("Type".to_string(), b"/Page".to_vec());
+        if let Some(size) = self.size {
+            values.insert("MediaBox".to_string(), size.to_mediabox());
+        }
+        if !self.contents.is_empty() {
+            values.insert("Contents".to_string(), self.contents.clone());
+        }
+        if let Some(resources) = &self.resources {
+            values.insert("Resources".to_string(), resources.data());
+        }
+
+        let mut dict = Dictionary::new(Some(values));
+        dict.metadata = self.metadata.clone();
+        dict
+    }
+}
+
+impl Default for Page {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PdfObject for Page {
+    fn metadata(&self) -> &PdfMetadata {
+        &self.metadata
+    }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
+    }
+
+    fn data(&self) -> Vec<u8> {
+        self.to_dictionary().data()
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+
+    fn is_compressible(&self) -> bool {
+        self.metadata.generation == 0
     }
 }

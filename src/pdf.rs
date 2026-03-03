@@ -3,7 +3,7 @@ use std::io::Write;
 
 use crate::dictionary::Dictionary;
 use crate::object::{BaseObject, ObjectStatus, PdfObject};
-use crate::page::PageSize;
+use crate::page::{PageSize, Page};
 use crate::string::encode_pdf_string;
 
 /// PDF file identifier mode.
@@ -74,39 +74,19 @@ impl PDF {
         self
     }
 
-    /// Add a page to the document.
-    ///
-    /// The page dictionary should contain at minimum:
-    /// - `Type`: `/Page`
-    /// - `MediaBox`: Page dimensions (e.g., `[0 0 612 792]`)
-    /// - `Contents`: Reference to content stream
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// use pydyf::{PDF, Dictionary, PageSize};
-    /// use std::collections::HashMap;
-    ///
-    /// let mut pdf = PDF::new(PageSize::A4);
-    /// let mut page_values = HashMap::new();
-    /// page_values.insert("Type".to_string(), b"/Page".to_vec());
-    /// page_values.insert("MediaBox".to_string(), b"[0 0 612 792]".to_vec());
-    /// let page = Dictionary::new(Some(page_values));
-    /// pdf.add_page(page);
-    /// ```
-    pub fn add_page(&mut self, page: Dictionary) {
+    /// Preferred API: add a strongly-typed Page
+    pub fn add_page(&mut self, page: Page) {
         let count_bytes = self.pages.values.get("Count").unwrap();
         let count: i32 = String::from_utf8_lossy(count_bytes).trim().parse().unwrap();
         self.pages
             .values
             .insert("Count".to_string(), (count + 1).to_string().into_bytes());
 
-        // Parent reference will be set at write time
         self.add_object(Box::new(page));
 
         let page_number = self.objects.len() - 1;
         let mut kids = self.pages.values.get("Kids").unwrap().clone();
-        kids.pop(); // Remove ']'
+        kids.pop();
         if kids.len() > 1 {
             kids.push(b' ');
         }
@@ -115,14 +95,10 @@ impl PDF {
     }
 
     pub fn add_page_simple(&mut self, size: Option<PageSize>, contents: &[u8]) {
-        let mut page_values = HashMap::new();
-        page_values.insert("Type".to_string(), b"/Page".to_vec());
-        if let Some(page_size) = size {
-            page_values.insert("MediaBox".to_string(), page_size.to_mediabox());
-        }
-        page_values.insert("Contents".to_string(), contents.to_vec());
-
-        self.add_page(Dictionary::new(Some(page_values)));
+        let mut page = Page::new();
+        if let Some(s) = size { page.set_size(s); }
+        page.set_contents(contents.to_vec());
+        self.add_page(page);
     }
 
     pub fn add_object(&mut self, mut object: Box<dyn PdfObject>) -> usize {
@@ -315,23 +291,22 @@ impl PDF {
             let res_ref = format!("{} 0 R", resources_number).into_bytes();
 
             for obj in &mut self.objects {
-                if let Some(dict) = obj.as_any_mut().downcast_mut::<Dictionary>() {
-                    if dict.values.get("Type").map(|v| v.as_slice()) == Some(b"/Page") {
-                        dict.values.insert("Parent".to_string(), pages_ref.clone());
-
-                        if let Some(res) = dict.values.get("Resources").cloned() {
-                            let res_str = String::from_utf8_lossy(&res);
-                            if res_str.starts_with("<<") {
-                                let mut merged = res_str.trim_end_matches(">>").to_string();
-                                merged.push_str(" /Font ");
-                                merged.push_str(&String::from_utf8_lossy(&font_resources));
-                                merged.push_str(" >>");
-                                dict.values
-                                    .insert("Resources".to_string(), merged.into_bytes());
-                            }
-                        } else {
-                            dict.values.insert("Resources".to_string(), res_ref.clone());
+                if let Some(page) = obj.as_any_mut().downcast_mut::<Page>() {
+                    // Set Parent on Page by injecting into its 'other' map
+                    page.other.insert("Parent".to_string(), pages_ref.clone());
+                    // Merge or set Resources
+                    if let Some(resources) = page.resources.clone() {
+                        let res_bytes = resources.data();
+                        let res_str = String::from_utf8_lossy(&res_bytes);
+                        if res_str.starts_with("<<") {
+                            let mut merged = res_str.trim_end_matches(">>").to_string();
+                            merged.push_str(" /Font ");
+                            merged.push_str(&String::from_utf8_lossy(&font_resources));
+                            merged.push_str(" >>");
+                            page.other.insert("Resources".to_string(), merged.into_bytes());
                         }
+                    } else {
+                        page.other.insert("Resources".to_string(), res_ref.clone());
                     }
                 }
             }

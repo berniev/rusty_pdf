@@ -1,13 +1,10 @@
-use pydyf::{PDF, PageSize, Dictionary, Stream};
-use std::collections::HashMap;
+use pydyf::{PDF, PageSize, Page, Stream};
 use std::fs::File;
 
-fn create_page_with_content(content_stream_ref: Vec<u8>) -> Dictionary {
-    let mut page_values = HashMap::new();
-    page_values.insert("Type".to_string(), b"/Page".to_vec());
-    page_values.insert("MediaBox".to_string(), b"[0 0 612 792]".to_vec());
-    page_values.insert("Contents".to_string(), content_stream_ref);
-    Dictionary::new(Some(page_values))
+fn create_page_with_content(content_stream_ref: Vec<u8>) -> Page {
+    let mut page = Page::new();
+    page.set_contents(content_stream_ref);
+    page
 }
 
 #[test]

@@ -34,11 +34,8 @@
 //!
 //! // Create page
 //! let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-//! let mut page_values = HashMap::new();
-//! page_values.insert("Type".to_string(), b"/Page".to_vec());
-//! page_values.insert("MediaBox".to_string(), b"[0 0 612 792]".to_vec());
-//! page_values.insert("Contents".to_string(), content_ref);
-//! let page = Dictionary::new(Some(page_values));
+//! let mut page = pydyf::Page::new();
+//! page.set_contents(content_ref);
 //!
 //! pdf.add_page(page);
 //!
@@ -109,4 +106,4 @@ pub use resources::ResourceDictionary;
 pub use stream::Stream;
 pub use string::encode_pdf_string;
 pub use text::{wrap_text, StandardFont, WrapMode};
-pub use page::PageSize;
+pub use page::{Page, PageSize};

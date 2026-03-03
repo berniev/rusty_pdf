@@ -14,16 +14,15 @@ A low-level PDF generation library ported from python at [pydyf](https://github.
 ## Quick Start
 
 ```rust
-use pydyf::{PDF, Stream, Dictionary};
-use std::collections::HashMap;
+use pydyf::{PDF, Stream, Page, PageSize};
 use std::fs::File;
 
 fn main() {
     // Create a new PDF document
-    let mut pdf = PDF::new();
+    let mut pdf = PDF::new(PageSize::A4);
 
     // Create a content stream
-    let mut stream = Stream::new(None, None, false);
+    let mut stream = Stream::new();
 
     // Draw a red rectangle
     stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap();
@@ -42,17 +41,14 @@ fn main() {
 
     // Create page
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let mut page_values = HashMap::new();
-    page_values.insert("Type".to_string(), b"/Page".to_vec());
-    page_values.insert("MediaBox".to_string(), b"[0 0 612 792]".to_vec());
-    page_values.insert("Contents".to_string(), content_ref);
-    let page = Dictionary::new(Some(page_values));
+    let mut page = Page::new();
+    page.set_contents(content_ref);
 
     pdf.add_page(page);
 
     // Write to file
     let mut file = File::create("output.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::Auto, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
 }
 ```
 
