@@ -1,73 +1,228 @@
-use flate2::Compression;
-use flate2::write::ZlibEncoder;
-use std::collections::HashMap;
-use std::io::Write as IoWrite;
-
 use crate::encoding::{ascii85_encode, to_pdf_num};
 use crate::error::{PdfError, Result};
 use crate::objects::metadata::PdfMetadata;
 use crate::objects::string::encode_pdf_string;
 use crate::{DictionaryObject, PdfObject};
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
+use std::collections::HashMap;
+use std::io::Write as IoWrite;
 
+trait ToPdf {
+    fn to_pdf(&self) -> String;
+}
+
+impl ToPdf for f64 {
+    fn to_pdf(&self) -> String {
+        format!("{}", to_pdf_num(*self))
+    }
+}
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum StrokeOrFill {
+pub enum StrokeOrFill {
     Stroke,
     Fill,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum EvenOdd {
+pub enum EvenOdd {
     Even,
     Odd,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum CompressionMethod {
+pub enum CompressionMethod {
     None,
     Flate,
 }
 
-/*pub struct StreamObject {
-    pub metadata: PdfMetadata,
-    pub values: Vec<u8>,
+#[derive(Debug)]
+pub struct Color {
+    pub color: f64,
 }
 
-impl StreamObject {
-    pub fn new(values: Vec<u8>) -> Self {
-        Self {
-            metadata: PdfMetadata::default(),
-            values,
+impl Color {
+    pub fn validate(&self) -> Result<()> {
+        if !(0.0..=1.0).contains(&self.color) {
+            return Err(PdfError::InvalidColorChannel {
+                color: { Color { color: self.color } },
+            });
         }
+
+        Ok(())
     }
 }
 
-impl PdfObject for StreamObject {
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
-    }
-
-    fn data(&self) -> Vec<u8> {
-        let mut result = b"<< /Length ".to_vec();
-        result.extend(self.values.len().to_string().as_bytes());
-        result.extend(b" >>\nstream\n");
-        result.extend(&self.values);
-        result.extend(b"\nendstream");
-        result
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn is_compressible(&self) -> bool {
-        false // Streams are not usually compressible in object streams
+impl ToPdf for Color {
+    fn to_pdf(&self) -> String {
+        format!("{}", to_pdf_num(self.color))
     }
 }
-*/
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RGB {
+    pub red: f64,
+    pub green: f64,
+    pub blue: f64,
+}
+
+impl RGB {
+    pub fn validate(&self) -> Result<()> {
+        for &v in &[self.red, self.green, self.blue] {
+            if !(0.0..=1.0).contains(&v) {
+                return Err(PdfError::InvalidRGB {
+                    rgb: RGB {
+                        red: self.red,
+                        green: self.green,
+                        blue: self.blue,
+                    },
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
+impl ToPdf for RGB {
+    fn to_pdf(&self) -> String {
+        format!(
+            "{} {} {}",
+            to_pdf_num(self.red),
+            to_pdf_num(self.green),
+            to_pdf_num(self.blue),
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RGBA {
+    pub red: f64,
+    pub green: f64,
+    pub blue: f64,
+    pub alpha: f64,
+}
+
+impl RGBA {
+    pub fn validate(&self) -> Result<()> {
+        for &v in &[self.red, self.green, self.blue, self.alpha] {
+            if !(0.0..=1.0).contains(&v) {
+                return Err(PdfError::InvalidRGBA {
+                    rgb: RGBA {
+                        red: self.red,
+                        green: self.green,
+                        blue: self.blue,
+                        alpha: self.alpha,
+                    },
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
+impl ToPdf for RGBA {
+    fn to_pdf(&self) -> String {
+        format!(
+            "{} {} {} {}",
+            to_pdf_num(self.red),
+            to_pdf_num(self.green),
+            to_pdf_num(self.blue),
+            to_pdf_num(self.alpha)
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CMYK {
+    pub cyan: f64,
+    pub magenta: f64,
+    pub yellow: f64,
+    pub black: f64,
+}
+
+impl CMYK {
+    pub fn validate(&self) -> Result<()> {
+        for &v in &[self.cyan, self.magenta, self.yellow, self.black] {
+            if !(0.0..=1.0).contains(&v) {
+                return Err(PdfError::InvalidCMYK {
+                    cmyk: CMYK {
+                        cyan: self.cyan,
+                        magenta: self.magenta,
+                        yellow: self.yellow,
+                        black: self.black,
+                    },
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
+impl ToPdf for CMYK {
+    fn to_pdf(&self) -> String {
+        format!(
+            "{} {} {} {}",
+            to_pdf_num(self.cyan),
+            to_pdf_num(self.magenta),
+            to_pdf_num(self.yellow),
+            to_pdf_num(self.black)
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PosnXY {
+    pub x: f64,
+    pub y: f64,
+}
+
+impl ToPdf for PosnXY {
+    fn to_pdf(&self) -> String {
+        format!("{} {}", to_pdf_num(self.x), to_pdf_num(self.y),)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Matrix {
+    pub a: f64,
+    pub b: f64,
+    pub c: f64,
+    pub d: f64,
+    pub e: f64,
+    pub f: f64,
+}
+
+impl Matrix {
+    pub fn new(a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) -> Self {
+        Matrix { a, b, c, d, e, f }
+    }
+}
+
+impl ToPdf for Matrix {
+    fn to_pdf(&self) -> String {
+        format!(
+            "{} {} {} {} {} {}",
+            to_pdf_num(self.a),
+            to_pdf_num(self.b),
+            to_pdf_num(self.c),
+            to_pdf_num(self.d)
+            to_pdf_num(self.e)
+            to_pdf_num(self.f)
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Size {
+    pub width: f64,
+    pub height: f64,
+}
+
+impl ToPdf for Size {
+    fn to_pdf(&self) -> String {
+        format!("{} {}", to_pdf_num(self.width), to_pdf_num(self.height),)
+    }
+}
+
 /// PDF content stream.
 ///
 /// A Stream represents a sequence of PDF graphics and text operators.
@@ -126,17 +281,9 @@ impl StreamObject {
         self
     }
 
-    fn validate_color(&self, values: &[f64]) -> Result<()> {
-        for &v in values {
-            if !(0.0..=1.0).contains(&v) {
-                return Err(PdfError::InvalidColor { r: v, g: v, b: v }); // map to first error
-            }
-        }
-        Ok(())
-    }
+    fn push_op(&mut self, operands: &[&dyn ToPdf], operator: &str) {
+        let mut cmd_parts: Vec<String> = operands.iter().map(|n| n.to_pdf()).collect();
 
-    fn push_op(&mut self, operands: &[f64], operator: &str) {
-        let mut cmd_parts: Vec<String> = operands.iter().map(|&n| to_pdf_num(n)).collect();
         cmd_parts.push(operator.to_string());
         self.stream.push(cmd_parts.join(" ").into_bytes());
     }
@@ -200,22 +347,22 @@ impl StreamObject {
     /// Add cubic Bézier curve to current path.
     ///
     /// extend curve from `(x3, y3)` using `(x1, y1)` and `(x2, y2)` as Bézier control points.
-    pub fn curve_to(&mut self, x1: f64, y1: f64, x2: f64, y2: f64, x3: f64, y3: f64) {
-        self.push_op(&[x1, y1, x2, y2, x3, y3], "c");
+    pub fn curve_to(&mut self, pos1: PosnXY, pos2: PosnXY, pos3: PosnXY) {
+        self.push_op(&[&pos1, &pos2, &pos3], "c");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
     /// Extend curve to `(x3, y3)` using current point, and `(x2, y2)` as Bézier control points.
-    pub fn curve_start_to(&mut self, x2: f64, y2: f64, x3: f64, y3: f64) {
-        self.push_op(&[x2, y2, x3, y3], "v");
+    pub fn curve_start_to(&mut self, pos2: PosnXY, pos3: PosnXY) {
+        self.push_op(&[&pos2, &pos3], "v");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
     /// extend curve to `(x3, y3)` using `(x1, y1)`, and `(x3, y3)` as Bézier control points.
-    pub fn curve_end_to(&mut self, x1: f64, y1: f64, x3: f64, y3: f64) {
-        self.push_op(&[x1, y1, x3, y3], "y");
+    pub fn curve_end_to(&mut self, pos1: PosnXY, pos3: PosnXY) {
+        self.push_op(&[&pos1, &pos3], "y");
     }
 
     pub fn draw_x_object(&mut self, reference: &str) {
@@ -227,7 +374,6 @@ impl StreamObject {
         self.stream.push(b"n".to_vec());
     }
 
-    /// End marked-content sequence.
     pub fn end_marked_content(&mut self) {
         self.stream.push(b"EMC".to_vec());
     }
@@ -279,23 +425,22 @@ impl StreamObject {
             )));
         }
 
-        let data_to_encode =
-            match self.compress {
-                CompressionMethod::Flate => {
-                    let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-                    encoder.write_all(raw_pixel_data)?;
-                    encoder.finish()?
-                }
-                CompressionMethod::None =>
-                    raw_pixel_data.to_vec()
-            };
+        let data_to_encode = match self.compress {
+            CompressionMethod::Flate => {
+                let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+                encoder.write_all(raw_pixel_data)?;
+                encoder.finish()?
+            }
+            CompressionMethod::None => raw_pixel_data.to_vec(),
+        };
 
         let mut encoded_data = ascii85_encode(&data_to_encode);
         encoded_data.extend(b"~>"); // ASCII85 end marker
 
-        let filters = match self.compress{
-            CompressionMethod::Flate => "/A85 /Fl" ,
-            CompressionMethod::None => "/A85" };
+        let filters = match self.compress {
+            CompressionMethod::Flate => "/A85 /Fl",
+            CompressionMethod::None => "/A85",
+        };
 
         let header_string = format!(
             "BI /W {} /H {} /BPC {} /CS /Device{} /F {} /L {} ID ",
@@ -337,18 +482,18 @@ impl StreamObject {
         self.inline_image(width, height, "RGB", 8, &raw_data)
     }
 
-    pub fn line_to_x_y(&mut self, x: f64, y: f64) {
-        self.push_op(&[x, y], "l");
+    pub fn line_to_x_y(&mut self, posn: PosnXY) {
+        self.push_op(&[&posn], "l");
     }
 
     /// Begin new subpath by moving current point to `(x, y)`.
-    pub fn move_to_x_y(&mut self, x: f64, y: f64) {
-        self.push_op(&[x, y], "m");
+    pub fn move_to_x_y(&mut self, posn: PosnXY) {
+        self.push_op(&[&posn], "m");
     }
 
     /// Move text to next line at `(x, y)` distance from previous line.
-    pub fn move_text_to_x_y(&mut self, x: f64, y: f64) {
-        self.push_op(&[x, y], "T*");
+    pub fn move_text_to_x_y(&mut self, posn: PosnXY) {
+        self.push_op(&[&posn], "T*");
     }
 
     /// Paint shape and color shading using shading dictionary `name`.
@@ -369,22 +514,22 @@ impl StreamObject {
 
     /// Add rectangle to current path as complete subpath.
     ///
-    /// `(x, y)` is the lower-left corner and width and height the dimensions.
-    pub fn rectangle(&mut self, x: f64, y: f64, width: f64, height: f64) {
-        self.push_op(&[x, y, width, height], "re");
+    /// `posn` is the lower-left corner and `size` the dimensions.
+    pub fn rectangle(&mut self, posn: PosnXY, size: Size) {
+        self.push_op(&[&posn, &size], "re");
     }
 
     /// Set RGB color for non-stroking operations.
     ///
     /// Set RGB color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if color values are not in range 0.0-1.0.
-    pub fn set_color_rgb(&mut self, r: f64, g: f64, b: f64, stroke: StrokeOrFill) -> Result<()> {
-        self.validate_color(&[r, g, b])?;
+    pub fn set_color_rgb(&mut self, rgb: RGB, stroke: StrokeOrFill) -> Result<()> {
+        rgb.validate()?;
         let operator = match stroke {
             StrokeOrFill::Stroke => "RG",
             StrokeOrFill::Fill => "rg",
         };
-        self.push_op(&[r, g, b], operator);
+        self.push_op(&[&rgb], operator);
         Ok(())
     }
 
@@ -392,20 +537,13 @@ impl StreamObject {
     ///
     /// Set CMYK color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if color values are not in range 0.0-1.0.
-    pub fn set_color_cmyk(
-        &mut self,
-        c: f64,
-        m: f64,
-        y: f64,
-        k: f64,
-        stroke: StrokeOrFill,
-    ) -> Result<()> {
-        self.validate_color(&[c, m, y, k])?;
+    pub fn set_color_cmyk(&mut self, cmyk: CMYK, stroke: StrokeOrFill) -> Result<()> {
+        cmyk.validate()?;
         let operator = match stroke {
             StrokeOrFill::Stroke => "K",
             StrokeOrFill::Fill => "k",
         };
-        self.push_op(&[c, m, y, k], operator);
+        self.push_op(&[&cmyk], operator);
         Ok(())
     }
 
@@ -413,13 +551,13 @@ impl StreamObject {
     ///
     /// Set grayscale color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if gray value is not in range 0.0-1.0.
-    pub fn set_color_gray(&mut self, gray: f64, stroke: StrokeOrFill) -> Result<()> {
-        self.validate_color(&[gray])?;
+    pub fn set_color_grayscale(&mut self, grayscale: Color, stroke: StrokeOrFill) -> Result<()> {
+        grayscale.validate()?;
         let operator = match stroke {
             StrokeOrFill::Stroke => "G",
             StrokeOrFill::Fill => "g",
         };
-        self.push_op(&[gray], operator);
+        self.push_op(&[&grayscale], operator);
         Ok(())
     }
 
@@ -449,7 +587,7 @@ impl StreamObject {
                 StrokeOrFill::Stroke => "SCN",
                 StrokeOrFill::Fill => "scn",
             })
-                .to_string(),
+            .to_string(),
         );
         self.stream.push(cmd_parts.join(" ").into_bytes());
     }
@@ -489,8 +627,8 @@ impl StreamObject {
         self.float_cmd("w", width);
     }
 
-    pub fn set_transformation_matrix(&mut self, a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) {
-        self.push_op(&[a, b, c, d, e, f], "cm");
+    pub fn set_transformation_matrix(&mut self, matrix: Matrix) {
+        self.push_op(&[&matrix], "cm");
     }
 
     pub fn set_miter_limit(&mut self, miter_limit: f64) {
@@ -502,8 +640,8 @@ impl StreamObject {
         self.stream.push(format!("/{state_name} gs").into_bytes());
     }
     /// Set current text and text line transformation matrix.
-    pub fn set_text_matrix(&mut self, a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) {
-        self.push_op(&[a, b, c, d, e, f], "Tm");
+    pub fn set_text_matrix(&mut self, matrix: Matrix) {
+        self.push_op(&[&matrix], "Tm");
     }
 
     pub fn show_text_strings(&mut self, text: &str) {
@@ -526,10 +664,8 @@ impl StreamObject {
 
     pub fn rounded_rectangle(
         &mut self,
-        pos_x: f64,
-        pos_y: f64,
-        width: f64,
-        height: f64,
+        posn: PosnXY,
+        size: Size,
         radius_top_left: f64,
         radius_top_right: f64,
         radius_bottom_right: f64,
@@ -542,47 +678,72 @@ impl StreamObject {
 
             const KAPPA: f64 = 0.5522847498307933; // makes cubic Bezier curve like circular arc
             s.curve_to(
-                pos_x + width - radius + radius * KAPPA,
-                pos_y + height,
-                pos_x + width,
-                pos_y + height - radius + radius * KAPPA,
-                pos_x + width,
-                pos_y + height - radius,
+                PosnXY {
+                    x: posn.x + size.width - radius + radius * KAPPA,
+                    y: posn.y + size.height,
+                },
+                PosnXY {
+                    x: posn.x + size.width,
+                    y: posn.y + size.height - radius + radius * KAPPA,
+                },
+                PosnXY {
+                    x: posn.x + size.width,
+                    y: posn.y + size.height - radius,
+                },
             );
         };
 
-        self.move_to_x_y(pos_x + radius_top_left, pos_y + height);
+        self.move_to_x_y(PosnXY {
+            x: posn.x + radius_top_left,
+            y: posn.y + size.height,
+        });
 
-        draw_corner(self, radius_top_left, [width, height]); // top right
-        self.line_to_x_y(pos_x + width - radius_top_right, pos_y + height); // right
-        draw_corner(self, radius_top_right, [width, 0.0]); // bottom right
-        self.line_to_x_y(pos_x + width, pos_y + radius_bottom_right); // bottom
-        draw_corner(self, radius_bottom_right, [0.0, 0.0]); // bottom left
-        self.line_to_x_y(pos_x + width, pos_y); // left
-        draw_corner(self, radius_bottom_left, [0.0, height]); // top left
-        self.line_to_x_y(pos_x + radius_bottom_left, pos_y); // top
+        // top right
+        draw_corner(self, radius_top_left, [size.width, size.height]);
+        // right
+        self.line_to_x_y(PosnXY {
+            x: posn.x + size.width - radius_top_right,
+            y: posn.y + size.height,
+        });
+
+        // bottom right
+        draw_corner(self, radius_top_right, [size.width, 0.0]);
+
+        // bottom
+        self.line_to_x_y(PosnXY {
+            x: posn.x + size.width,
+            y: posn.y + radius_bottom_right,
+        });
+
+        // bottom left
+        draw_corner(self, radius_bottom_right, [0.0, 0.0]);
+
+        // left
+        self.line_to_x_y(PosnXY {
+            x: posn.x + size.width,
+            y: posn.y,
+        });
+
+        // top left
+        draw_corner(self, radius_bottom_left, [0.0, size.height]);
+
+        // top
+        self.line_to_x_y(PosnXY {
+            x: posn.x + radius_bottom_left,
+            y: posn.y,
+        });
 
         self.close();
     }
 
-    /// Apply a gradient pattern
-    ///
-    /// Sets the color space to Pattern and applies the specified pattern for fill or stroke.
-    /// If a graphics state name is provided (for transparency), it will be applied first.
-    ///
-    /// # Arguments
-    ///
-    /// * `pattern_name` - Name of the pattern resource (e.g., "P0")
-    /// * `stroke` - Whether to apply for stroke (true) or fill (false)
-    /// * `gs_name` - Optional graphics state name for transparency
     pub fn apply_gradient_pattern(
         &mut self,
         pattern_name: &str,
         stroke: StrokeOrFill,
-        gs_name: Option<&str>,
+        graphics_state_name: Option<&str>,
     ) {
-        if let Some(gs) = gs_name {
-            self.set_state(gs); // Apply soft mask graphics state if provided
+        if let Some(gs) = graphics_state_name {
+            self.set_state(gs); // Apply provided soft mask graphics state
         }
         self.set_color_space("Pattern", stroke);
         self.set_color_special(Some(pattern_name), stroke, &[]);
@@ -602,12 +763,13 @@ impl PdfObject for StreamObject {
         let mut stream_bytes = self.stream.join(&b'\n');
         let mut extra = self.extra.clone();
 
-        match self.compress {CompressionMethod::Flate => {
-            let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-            encoder.write_all(&stream_bytes).unwrap();
-            stream_bytes = encoder.finish().unwrap();
-        }
-        CompressionMethod::None => {}
+        match self.compress {
+            CompressionMethod::Flate => {
+                let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+                encoder.write_all(&stream_bytes).unwrap();
+                stream_bytes = encoder.finish().unwrap();
+            }
+            CompressionMethod::None => {}
         };
 
         extra.insert(
@@ -636,4 +798,3 @@ impl PdfObject for StreamObject {
         false
     }
 }
-

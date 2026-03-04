@@ -7,7 +7,7 @@ fn test_invalid_color_values() {
     let result = stream.set_color_rgb(1.5, 0.5, 0.5, false);
     assert!(result.is_err());
     match result {
-        Err(PdfError::InvalidColor { r, g: _, b: _ }) => {
+        Err(PdfError::InvalidRGB { r, g: _, b: _ }) => {
             assert_eq!(r, 1.5);
         }
         _ => panic!("Expected InvalidColor error"),

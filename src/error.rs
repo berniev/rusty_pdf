@@ -1,4 +1,4 @@
-//! Error types for PDF operations
+use crate::objects;
 
 use std::fmt;
 use std::io;
@@ -18,9 +18,18 @@ pub enum PdfError {
     /// Invalid font name or configuration
     InvalidFont(String),
 
-    /// Invalid color values (out of range 0.0-1.0)
-    InvalidColor { r: f64, g: f64, b: f64 },
-
+    InvalidColorChannel {
+        color: objects::stream::Color,
+    },
+    InvalidRGB {
+        rgb: objects::stream::RGB,
+    },
+    InvalidRGBA {
+        rgb: objects::stream::RGBA,
+    },
+    InvalidCMYK {
+        cmyk: objects::stream::CMYK,
+    },
     /// Invalid image data
     InvalidImage(String),
 
@@ -37,8 +46,29 @@ impl fmt::Display for PdfError {
             }
             PdfError::CompressionError(msg) => write!(f, "Compression error: {}", msg),
             PdfError::InvalidFont(msg) => write!(f, "Invalid font: {}", msg),
-            PdfError::InvalidColor { r, g, b } => {
-                write!(f, "Invalid color values: r={}, g={}, b={} (must be 0.0-1.0)", r, g, b)
+            PdfError::InvalidColorChannel { color } => {
+                write!(f, "Invalid color channel: {:?}", color)
+            }
+            PdfError::InvalidRGB { rgb } => {
+                write!(
+                    f,
+                    "Invalid color values: r={}, g={}, b={} (must be 0.0-1.0)",
+                    rgb.red, rgb.green, rgb.blue
+                )
+            }
+            PdfError::InvalidRGBA { rgb } => {
+                write!(
+                    f,
+                    "Invalid color values: r={}, g={}, b={}, a={} (must be 0.0-1.0)",
+                    rgb.red, rgb.green, rgb.blue, rgb.alpha
+                )
+            }
+            PdfError::InvalidCMYK { cmyk } => {
+                write!(
+                    f,
+                    "Invalid color values: c={}, m={}, y={}, k={} (must be 0.0-1.0)",
+                    cmyk.cyan, cmyk.magenta, cmyk.yellow, cmyk.black
+                )
             }
             PdfError::InvalidImage(msg) => write!(f, "Invalid image: {}", msg),
             PdfError::StructureError(msg) => write!(f, "PDF structure error: {}", msg),
