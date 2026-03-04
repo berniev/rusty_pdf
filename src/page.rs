@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use crate::dictionary::Dictionary;
+use crate::{DictionaryObject, PdfObject};
 use crate::object::{PdfMetadata, PdfObject};
+use crate::objects::metadata::PdfMetadata;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PageSize {
@@ -41,7 +43,7 @@ pub struct Page {
     pub metadata: PdfMetadata,
     pub size: Option<PageSize>,
     pub contents: Vec<u8>,
-    pub resources: Option<Dictionary>,
+    pub resources: Option<DictionaryObject>,
     pub other: HashMap<String, Vec<u8>>,
 }
 
@@ -65,11 +67,11 @@ impl Page {
         self.contents = contents;
     }
 
-    pub fn set_resources(&mut self, resources: Dictionary) {
+    pub fn set_resources(&mut self, resources: DictionaryObject) {
         self.resources = Some(resources);
     }
 
-    pub fn to_dictionary(&self) -> Dictionary {
+    pub fn to_dictionary(&self) -> DictionaryObject {
         let mut values = self.other.clone();
         values.insert("Type".to_string(), b"/Page".to_vec());
         if let Some(size) = self.size {
@@ -82,7 +84,7 @@ impl Page {
             values.insert("Resources".to_string(), resources.data());
         }
 
-        let mut dict = Dictionary::new(Some(values));
+        let mut dict = DictionaryObject::new(Some(values));
         dict.metadata = self.metadata.clone();
         dict
     }

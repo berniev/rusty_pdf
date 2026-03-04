@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use crate::dictionary::Dictionary;
+use crate::DictionaryObject;
+use crate::objects::stream::StreamObject;
 use crate::pdf::PDF;
 
 /// Represents a color stop in a gradient.
@@ -185,7 +186,7 @@ impl LinearGradient {
                 alpha_shading_values.insert("Function".to_string(), alpha_function_str.into_bytes());
                 alpha_shading_values.insert("Extend".to_string(), b"[true true]".to_vec());
 
-                let alpha_shading_dict = Dictionary::new(Some(alpha_shading_values));
+                let alpha_shading_dict = DictionaryObject::new(Some(alpha_shading_values));
                 let alpha_shading_num = pdf.objects.len();
                 pdf.add_object(Box::new(alpha_shading_dict));
 
@@ -202,7 +203,7 @@ impl LinearGradient {
 
         shading_values.insert("Extend".to_string(), b"[true true]".to_vec());
 
-        let shading_dict = Dictionary::new(Some(shading_values));
+        let shading_dict = DictionaryObject::new(Some(shading_values));
         let shading_num = pdf.objects.len();
         pdf.add_object(Box::new(shading_dict));
 
@@ -215,7 +216,7 @@ impl LinearGradient {
             format!("{} 0 R", shading_num).into_bytes(),
         );
 
-        let pattern_dict = Dictionary::new(Some(pattern_values));
+        let pattern_dict = DictionaryObject::new(Some(pattern_values));
         pdf.add_object(Box::new(pattern_dict));
 
         Some((pattern_name, gs_name))
@@ -356,7 +357,7 @@ impl RadialGradient {
                 alpha_shading_values.insert("Function".to_string(), alpha_function_str.into_bytes());
                 alpha_shading_values.insert("Extend".to_string(), b"[true true]".to_vec());
 
-                let alpha_shading_dict = Dictionary::new(Some(alpha_shading_values));
+                let alpha_shading_dict = DictionaryObject::new(Some(alpha_shading_values));
                 let alpha_shading_num = pdf.objects.len();
                 pdf.add_object(Box::new(alpha_shading_dict));
 
@@ -373,7 +374,7 @@ impl RadialGradient {
 
         shading_values.insert("Extend".to_string(), b"[true true]".to_vec());
 
-        let shading_dict = Dictionary::new(Some(shading_values));
+        let shading_dict = DictionaryObject::new(Some(shading_values));
         let shading_num = pdf.objects.len();
         pdf.add_object(Box::new(shading_dict));
 
@@ -386,7 +387,7 @@ impl RadialGradient {
             format!("{} 0 R", shading_num).into_bytes(),
         );
 
-        let pattern_dict = Dictionary::new(Some(pattern_values));
+        let pattern_dict = DictionaryObject::new(Some(pattern_values));
         pdf.add_object(Box::new(pattern_dict));
 
         Some((pattern_name, gs_name))
@@ -431,7 +432,7 @@ fn create_soft_mask_for_shading(
 
     // Stream content that paints the shading
     let stream_content = b"/Sh0 sh".to_vec();
-    let form_stream = crate::stream::Stream::new().with_data(
+    let form_stream = StreamObject::new().with_data(
         Some(vec![stream_content]),
         Some(form_extra),
     );
@@ -447,7 +448,7 @@ fn create_soft_mask_for_shading(
         "G".to_string(),
         format!("{} 0 R", form_number).into_bytes(),
     );
-    let smask_dict = Dictionary::new(Some(smask_values));
+    let smask_dict = DictionaryObject::new(Some(smask_values));
     let smask_number = pdf.objects.len();
     pdf.add_object(Box::new(smask_dict));
 
@@ -458,6 +459,6 @@ fn create_soft_mask_for_shading(
         "SMask".to_string(),
         format!("{} 0 R", smask_number).into_bytes(),
     );
-    let gs_dict = Dictionary::new(Some(gs_values));
+    let gs_dict = DictionaryObject::new(Some(gs_values));
     pdf.add_object(Box::new(gs_dict));
 }

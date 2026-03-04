@@ -1,27 +1,25 @@
-use std::collections::HashMap;
-use crate::object::{PdfObject, PdfMetadata};
+use crate::objects::metadata::PdfMetadata;
+use crate::objects::pdf_object::PdfObject;
 
-#[derive(Clone, Debug)]
-pub struct Dictionary {
+pub struct DictionaryObject {
     pub metadata: PdfMetadata,
-    pub values: HashMap<String, Vec<u8>>,
+    pub values: Vec<(String, Box<dyn PdfObject>)>,
 }
 
-impl Dictionary {
-    pub fn new(values: Option<HashMap<String, Vec<u8>>>) -> Self {
-        Dictionary {
+impl DictionaryObject {
+    pub fn new(values: Vec<(String, Box<dyn PdfObject>)>) -> Self {
+        Self {
             metadata: PdfMetadata::default(),
-            values: values.unwrap_or_default(),
+            values,
         }
     }
-
     pub fn reference(&self) -> Vec<u8> {
         let number = self.metadata.number.unwrap_or(0);
         format!("{} {} R", number, self.metadata.generation).into_bytes()
     }
 }
 
-impl PdfObject for Dictionary {
+impl PdfObject for DictionaryObject {
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
     }
@@ -31,13 +29,12 @@ impl PdfObject for Dictionary {
     }
 
     fn data(&self) -> Vec<u8> {
-        let mut result = Vec::new();
-        result.extend(b"<<");
+        let mut result = b"<<".to_vec();
         for (key, value) in &self.values {
             result.push(b'/');
             result.extend(key.as_bytes());
             result.push(b' ');
-            result.extend(value);
+            result.extend(value.reference());
         }
         result.extend(b">>");
         result

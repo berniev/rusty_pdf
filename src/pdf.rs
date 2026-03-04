@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 use std::io::Write;
 
-use crate::dictionary::Dictionary;
-use crate::object::{BaseObject, ObjectStatus, PdfObject};
-use crate::page::{PageSize, Page};
-use crate::string::encode_pdf_string;
+use crate::{Array, ArrayObject, Dictionary, DictionaryObject, PdfObject};
+use crate::objects::base::BaseObject;
+use crate::objects::status::ObjectStatus;
+use crate::objects::stream::StreamObject;
+
+use crate::objects::string::encode_pdf_string;
+use crate::page::{Page, PageSize};
 
 /// PDF file identifier mode.
 ///
@@ -43,7 +46,6 @@ impl Default for PDF {
 }
 
 impl PDF {
-
     pub fn new(size: PageSize) -> Self {
         let mut pdf = PDF {
             default_page_size: size,
@@ -70,7 +72,9 @@ impl PDF {
     /// Set the default page size for the document.
     pub fn with_default_page_size(mut self, size: PageSize) -> Self {
         self.default_page_size = size;
-        self.page_tree.values.insert("MediaBox".to_string(), size.to_mediabox());
+        self.page_tree
+            .values
+            .insert("MediaBox".to_string(), size.to_mediabox());
         self
     }
 
@@ -96,7 +100,9 @@ impl PDF {
 
     pub fn add_page_simple(&mut self, size: Option<PageSize>, contents: &[u8]) {
         let mut page = Page::new();
-        if let Some(s) = size { page.set_size(s); }
+        if let Some(s) = size {
+            page.set_size(s);
+        }
         page.set_contents(contents.to_vec());
         self.add_page(page);
     }
@@ -139,14 +145,20 @@ impl PDF {
         Ok(())
     }
 
-    fn write_legacy_xref_and_trailer<W: Write>(
-        &mut self,
-        output: &mut W,
-        identifier: Identifier,
-    ) -> std::io::Result<()> {
-        self.xref_position = Some(self.current_position);
-        self.write_line(b"xref", output)?;
-        self.write_line(format!("0 {}", self.objects.len()).as_bytes(), output)?;
+    fn write_trailer<W: Write>(&mut self, output: &mut W) -> std::io::Result<()> {
+        self.write_line(b"trailer", output)?;
+        self.write_line(b"<<", output)?;
+        self.write_line(format!("/Size {}", self.objects.len()).as_bytes(), output)?;
+        self.write_line(
+            &format!("/Root {} 0 R", self.catalog.metadata().number.unwrap()).into_bytes(),
+            output,
+        )?;
+
+        Ok(())
+    }
+
+    fn write_legacy_xref<W: Write>(&mut self, output: &mut W) -> std::io::Result<()> {
+               self.write_line(format!("0 {}", self.objects.len()).as_bytes(), output)?;
 
         let xref_entries: Vec<String> = self
             .objects
@@ -158,13 +170,20 @@ impl PDF {
             self.write_line(entry.as_bytes(), output)?;
         }
 
-        self.write_line(b"trailer", output)?;
-        self.write_line(b"<<", output)?;
-        self.write_line(format!("/Size {}", self.objects.len()).as_bytes(), output)?;
-        self.write_line(
-            &format!("/Root {} 0 R", self.catalog.metadata().number.unwrap()).into_bytes(),
-            output,
-        )?;
+        Ok(())
+
+    }
+    fn write_legacy_xref_and_trailer<W: Write>(
+        &mut self,
+        output: &mut W,
+        identifier: Identifier,
+    ) -> std::io::Result<()> {
+        self.xref_position = Some(self.current_position);
+        self.write_line(b"xref", output)?;
+        self.write_line(format!("0 {}", self.objects.len()).as_bytes(), output)?;
+
+        self.write_legacy_xref(output)?;
+        self.write_trailer(output)?;
 
         if !self.info.values.is_empty() {
             self.write_line(
@@ -303,7 +322,8 @@ impl PDF {
                             merged.push_str(" /Font ");
                             merged.push_str(&String::from_utf8_lossy(&font_resources));
                             merged.push_str(" >>");
-                            page.other.insert("Resources".to_string(), merged.into_bytes());
+                            page.other
+                                .insert("Resources".to_string(), merged.into_bytes());
                         }
                     } else {
                         page.other.insert("Resources".to_string(), res_ref.clone());
@@ -361,8 +381,6 @@ impl PDF {
 
     /// Write compressed PDF using object streams and cross-reference streams (PDF 1.5+)
     fn write_compressed<W: Write>(&mut self, output: &mut W) -> std::io::Result<()> {
-        use crate::array::Array;
-        use crate::stream::Stream;
 
         // Separate compressible objects from non-compressible ones
         let mut compressed_data: Vec<(usize, Vec<u8>)> = Vec::new(); // (obj_num, data)
@@ -424,7 +442,7 @@ impl PDF {
         );
 
         let obj_stream_number = self.objects.len();
-        let mut object_stream = Stream::new_compressed().with_data(Some(stream_parts), Some(extra));
+        let mut object_stream = StreamObject::new_compressed().with_data(Some(stream_parts), Some(extra));
         object_stream.metadata.number = Some(obj_stream_number);
         object_stream.metadata.offset = self.current_position;
 
@@ -496,7 +514,7 @@ impl PDF {
         xref_extra.insert("Root".to_string(), self.catalog.reference());
 
         let mut xref_stream =
-            Stream::new_compressed().with_data(Some(vec![xref_stream_data]), Some(xref_extra));
+            StreamObject::new_compressed().with_data(Some(vec![xref_stream_data]), Some(xref_extra));
         xref_stream.metadata.number = Some(xref_stream_number);
         self.xref_position = Some(self.current_position);
         xref_stream.metadata.offset = self.current_position;

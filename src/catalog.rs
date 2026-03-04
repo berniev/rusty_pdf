@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{PdfError, Result};
-use crate::dictionary::Dictionary;
-use crate::object::{PdfMetadata, PdfObject};
+use crate::objects::dictionary::Dictionary;
+use crate::error::{PdfError, Result};
+use crate::objects::metadata::PdfMetadata;
+use crate::objects::pdf_object::PdfObject;
 
 #[derive(Debug, Clone)]
 pub struct Catalog {
@@ -13,12 +14,10 @@ pub struct Catalog {
 
 impl Catalog {
     pub fn new() -> Self {
-        let mut other = HashMap::new();
-        other.insert("Type".to_string(), b"/Catalog".to_vec());
         Catalog {
             metadata: PdfMetadata::default(),
             pages_ref: None,
-            other,
+            other: HashMap::from([("Type".to_string(), b"/Catalog".to_vec())]),
         }
     }
 

@@ -84,32 +84,35 @@
 //! }
 //! ```
 
-pub mod array;
-pub mod dictionary;
 pub mod encoding;
 pub mod error;
 pub mod gradient;
 pub mod graphics_state;
-pub mod object;
+pub mod objects;
 pub mod pdf;
 pub mod resources;
-pub mod stream;
-pub mod string;
 pub mod text;
 pub mod page;
 pub mod catalog;
 
 // Re-export main types for convenience
-pub use array::Array;
-pub use dictionary::Dictionary;
+pub use objects::array::{Array, ArrayObject};
+pub use objects::dictionary::DictionaryObject;
+pub use objects::stream::StreamObject;
+pub use objects::base::BaseObject;
+pub use objects::metadata::PdfMetadata;
+pub use objects::status::ObjectStatus;
+pub use objects::pdf_object::PdfObject;
+pub use objects::number::{NumberObject, NumberType};
+pub use objects::boolean::BooleanObject;
+pub use objects::name::NameObject;
+pub use objects::string::StringObject;
+pub use objects::null::NullObject;
 pub use error::{PdfError, Result};
 pub use gradient::{ColorStop, LinearGradient, RadialGradient};
 pub use graphics_state::GraphicsStateManager;
-pub use object::{BaseObject, PdfObject, PdfMetadata, ObjectStatus};
 pub use pdf::{Identifier, PDF};
 pub use resources::ResourceDictionary;
-pub use stream::Stream;
-pub use string::encode_pdf_string;
 pub use text::{wrap_text, StandardFont, WrapMode};
 pub use page::{Page, PageSize};
 pub use catalog::Catalog;
