@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use crate::dictionary::Dictionary;
 use crate::{DictionaryObject, PdfObject};
-use crate::object::{PdfMetadata, PdfObject};
 use crate::objects::metadata::PdfMetadata;
+
+//--------------------------- Page Size ---------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PageSize {
@@ -37,6 +37,8 @@ impl PageSize {
         format!("[0 0 {w} {h}]").into_bytes()
     }
 }
+
+//--------------------------- Page ---------------------------//
 
 #[derive(Debug, Clone)]
 pub struct Page {

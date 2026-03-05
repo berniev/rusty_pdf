@@ -1,227 +1,15 @@
 use crate::encoding::{ascii85_encode, to_pdf_num};
-use crate::error::{PdfError, Result};
+use crate::error::{PdfError, PdfResult};
 use crate::objects::metadata::PdfMetadata;
 use crate::objects::string::encode_pdf_string;
-use crate::{DictionaryObject, PdfObject};
+use crate::util::{
+    CMYK, Color, CompressionMethod, EvenOdd, Matrix, PosnXY, RGB, Size, StrokeOrFill, ToPdf,
+};
+use crate::{DictionaryObject, NumberObject, PdfObject, objects};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
 use std::collections::HashMap;
 use std::io::Write as IoWrite;
-
-trait ToPdf {
-    fn to_pdf(&self) -> String;
-}
-
-impl ToPdf for f64 {
-    fn to_pdf(&self) -> String {
-        format!("{}", to_pdf_num(*self))
-    }
-}
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum StrokeOrFill {
-    Stroke,
-    Fill,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum EvenOdd {
-    Even,
-    Odd,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum CompressionMethod {
-    None,
-    Flate,
-}
-
-#[derive(Debug)]
-pub struct Color {
-    pub color: f64,
-}
-
-impl Color {
-    pub fn validate(&self) -> Result<()> {
-        if !(0.0..=1.0).contains(&self.color) {
-            return Err(PdfError::InvalidColorChannel {
-                color: { Color { color: self.color } },
-            });
-        }
-
-        Ok(())
-    }
-}
-
-impl ToPdf for Color {
-    fn to_pdf(&self) -> String {
-        format!("{}", to_pdf_num(self.color))
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct RGB {
-    pub red: f64,
-    pub green: f64,
-    pub blue: f64,
-}
-
-impl RGB {
-    pub fn validate(&self) -> Result<()> {
-        for &v in &[self.red, self.green, self.blue] {
-            if !(0.0..=1.0).contains(&v) {
-                return Err(PdfError::InvalidRGB {
-                    rgb: RGB {
-                        red: self.red,
-                        green: self.green,
-                        blue: self.blue,
-                    },
-                });
-            }
-        }
-        Ok(())
-    }
-}
-
-impl ToPdf for RGB {
-    fn to_pdf(&self) -> String {
-        format!(
-            "{} {} {}",
-            to_pdf_num(self.red),
-            to_pdf_num(self.green),
-            to_pdf_num(self.blue),
-        )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct RGBA {
-    pub red: f64,
-    pub green: f64,
-    pub blue: f64,
-    pub alpha: f64,
-}
-
-impl RGBA {
-    pub fn validate(&self) -> Result<()> {
-        for &v in &[self.red, self.green, self.blue, self.alpha] {
-            if !(0.0..=1.0).contains(&v) {
-                return Err(PdfError::InvalidRGBA {
-                    rgb: RGBA {
-                        red: self.red,
-                        green: self.green,
-                        blue: self.blue,
-                        alpha: self.alpha,
-                    },
-                });
-            }
-        }
-        Ok(())
-    }
-}
-
-impl ToPdf for RGBA {
-    fn to_pdf(&self) -> String {
-        format!(
-            "{} {} {} {}",
-            to_pdf_num(self.red),
-            to_pdf_num(self.green),
-            to_pdf_num(self.blue),
-            to_pdf_num(self.alpha)
-        )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct CMYK {
-    pub cyan: f64,
-    pub magenta: f64,
-    pub yellow: f64,
-    pub black: f64,
-}
-
-impl CMYK {
-    pub fn validate(&self) -> Result<()> {
-        for &v in &[self.cyan, self.magenta, self.yellow, self.black] {
-            if !(0.0..=1.0).contains(&v) {
-                return Err(PdfError::InvalidCMYK {
-                    cmyk: CMYK {
-                        cyan: self.cyan,
-                        magenta: self.magenta,
-                        yellow: self.yellow,
-                        black: self.black,
-                    },
-                });
-            }
-        }
-        Ok(())
-    }
-}
-
-impl ToPdf for CMYK {
-    fn to_pdf(&self) -> String {
-        format!(
-            "{} {} {} {}",
-            to_pdf_num(self.cyan),
-            to_pdf_num(self.magenta),
-            to_pdf_num(self.yellow),
-            to_pdf_num(self.black)
-        )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct PosnXY {
-    pub x: f64,
-    pub y: f64,
-}
-
-impl ToPdf for PosnXY {
-    fn to_pdf(&self) -> String {
-        format!("{} {}", to_pdf_num(self.x), to_pdf_num(self.y),)
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Matrix {
-    pub a: f64,
-    pub b: f64,
-    pub c: f64,
-    pub d: f64,
-    pub e: f64,
-    pub f: f64,
-}
-
-impl Matrix {
-    pub fn new(a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) -> Self {
-        Matrix { a, b, c, d, e, f }
-    }
-}
-
-impl ToPdf for Matrix {
-    fn to_pdf(&self) -> String {
-        format!(
-            "{} {} {} {} {} {}",
-            to_pdf_num(self.a),
-            to_pdf_num(self.b),
-            to_pdf_num(self.c),
-            to_pdf_num(self.d)
-            to_pdf_num(self.e)
-            to_pdf_num(self.f)
-        )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Size {
-    pub width: f64,
-    pub height: f64,
-}
-
-impl ToPdf for Size {
-    fn to_pdf(&self) -> String {
-        format!("{} {}", to_pdf_num(self.width), to_pdf_num(self.height),)
-    }
-}
 
 /// PDF content stream.
 ///
@@ -409,7 +197,7 @@ impl StreamObject {
         color_space: &str,
         bits_per_component: u8,
         raw_pixel_data: &[u8],
-    ) -> Result<()> {
+    ) -> PdfResult<()> {
         if width == 0 || height == 0 {
             return Err(PdfError::InvalidImage(format!(
                 "Invalid image dimensions: {}x{}",
@@ -465,7 +253,7 @@ impl StreamObject {
     ///
     /// The image will be automatically converted to RGB format and embedded.
     /// Use `push_state()` and `set_matrix()` before this call to position and scale the image.
-    pub fn inline_image_from_file(&mut self, path: &str) -> Result<()> {
+    pub fn inline_image_from_file(&mut self, path: &str) -> PdfResult<()> {
         // Load image from file
         let img = image::open(path).map_err(|e| {
             PdfError::InvalidImage(format!("Failed to load image from {}: {}", path, e))
@@ -523,7 +311,7 @@ impl StreamObject {
     ///
     /// Set RGB color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if color values are not in range 0.0-1.0.
-    pub fn set_color_rgb(&mut self, rgb: RGB, stroke: StrokeOrFill) -> Result<()> {
+    pub fn set_color_rgb(&mut self, rgb: RGB, stroke: StrokeOrFill) -> PdfResult<()> {
         rgb.validate()?;
         let operator = match stroke {
             StrokeOrFill::Stroke => "RG",
@@ -537,7 +325,7 @@ impl StreamObject {
     ///
     /// Set CMYK color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if color values are not in range 0.0-1.0.
-    pub fn set_color_cmyk(&mut self, cmyk: CMYK, stroke: StrokeOrFill) -> Result<()> {
+    pub fn set_color_cmyk(&mut self, cmyk: CMYK, stroke: StrokeOrFill) -> PdfResult<()> {
         cmyk.validate()?;
         let operator = match stroke {
             StrokeOrFill::Stroke => "K",
@@ -551,7 +339,7 @@ impl StreamObject {
     ///
     /// Set grayscale color for stroking operations instead if `stroke` is set to `true`.
     /// Returns an error if gray value is not in range 0.0-1.0.
-    pub fn set_color_grayscale(&mut self, grayscale: Color, stroke: StrokeOrFill) -> Result<()> {
+    pub fn set_color_grayscale(&mut self, grayscale: Color, stroke: StrokeOrFill) -> PdfResult<()> {
         grayscale.validate()?;
         let operator = match stroke {
             StrokeOrFill::Stroke => "G",
@@ -761,7 +549,7 @@ impl PdfObject for StreamObject {
 
     fn data(&self) -> Vec<u8> {
         let mut stream_bytes = self.stream.join(&b'\n');
-        let mut extra = self.extra.clone();
+        let mut extra_values = self.extra.clone();
 
         match self.compress {
             CompressionMethod::Flate => {
@@ -772,14 +560,17 @@ impl PdfObject for StreamObject {
             CompressionMethod::None => {}
         };
 
-        extra.insert(
+        // Add Length as a proper PdfObject
+        extra_values.push(
             "Length".to_string(),
-            stream_bytes.len().to_string().into_bytes(),
+            Box::new(NumberObject::new(objects::number::NumberType::Real(
+                stream_bytes.len() as f64,
+            ))),
         );
 
         let extra_dict = DictionaryObject {
             metadata: PdfMetadata::default(),
-            values: extra,
+            values: extra_values, // This now matches exactly
         };
 
         let mut result = extra_dict.data();

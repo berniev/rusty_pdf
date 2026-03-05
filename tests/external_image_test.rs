@@ -42,7 +42,7 @@ fn test_external_image_from_file() {
     pdf.add_page(page);
 
     let mut file = File::create("/tmp/pydyf_test/ext.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
 
     println!("✅ Generated: /tmp/pydyf_test/ext.pdf");
 }

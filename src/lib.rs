@@ -41,7 +41,7 @@
 //!
 //! // Write to file
 //! let mut file = File::create("output.pdf").unwrap();
-//! pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
+//! pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
 //! ```
 //!
 //! ## Features
@@ -93,7 +93,7 @@ pub mod pdf;
 pub mod resources;
 pub mod text;
 pub mod page;
-pub mod catalog;
+pub mod util;
 
 // Re-export main types for convenience
 pub use objects::array::{Array, ArrayObject};
@@ -108,11 +108,10 @@ pub use objects::boolean::BooleanObject;
 pub use objects::name::NameObject;
 pub use objects::string::StringObject;
 pub use objects::null::NullObject;
-pub use error::{PdfError, Result};
+pub use error::{PdfError, PdfResult};
 pub use gradient::{ColorStop, LinearGradient, RadialGradient};
 pub use graphics_state::GraphicsStateManager;
-pub use pdf::{Identifier, PDF};
+pub use pdf::{FileIdentifierMode, PDF};
 pub use resources::ResourceDictionary;
 pub use text::{wrap_text, StandardFont, WrapMode};
 pub use page::{Page, PageSize};
-pub use catalog::Catalog;

@@ -46,7 +46,7 @@ fn test_cmyk_colors() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/cmyk.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
 
     println!("✅ Generated: /tmp/pydyf_test/cmyk.pdf");
 }
@@ -95,7 +95,7 @@ fn test_grayscale_colors() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/gray.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
 
     println!("✅ Generated: /tmp/pydyf_test/gray.pdf");
 }
@@ -135,7 +135,7 @@ fn test_mixed_color_spaces() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/mixed.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::Identifier::AutoMD5, false).unwrap();
+    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
 
     println!("✅ Generated: /tmp/pydyf_test/mixed.pdf");
 }

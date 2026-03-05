@@ -2,6 +2,7 @@ use crate::objects;
 
 use std::fmt;
 use std::io;
+use crate::util::{Color, CMYK, RGB, RGBA};
 
 /// Errors that can occur during PDF generation
 #[derive(Debug)]
@@ -19,16 +20,16 @@ pub enum PdfError {
     InvalidFont(String),
 
     InvalidColorChannel {
-        color: objects::stream::Color,
+        color: Color,
     },
     InvalidRGB {
-        rgb: objects::stream::RGB,
+        rgb: RGB,
     },
     InvalidRGBA {
-        rgb: objects::stream::RGBA,
+        rgb: RGBA,
     },
     InvalidCMYK {
-        cmyk: objects::stream::CMYK,
+        cmyk: CMYK,
     },
     /// Invalid image data
     InvalidImage(String),
@@ -91,4 +92,4 @@ impl From<io::Error> for PdfError {
     }
 }
 
-pub type Result<T> = std::result::Result<T, PdfError>;
+pub type PdfResult<T> = std::result::Result<T, PdfError>;

@@ -9,7 +9,7 @@ pub struct ArrayObject {
 }
 
 impl ArrayObject {
-    pub fn new(values: Vec<Box<dyn PdfObject>>) -> Self {
+    pub fn new(values: Option<_>) -> Self {
         Self {
             metadata: PdfMetadata::default(),
             values,

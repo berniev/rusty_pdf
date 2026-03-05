@@ -1,31 +1,30 @@
 use std::collections::HashMap;
 use std::io::Write;
 
-use crate::{Array, ArrayObject, Dictionary, DictionaryObject, PdfObject};
 use crate::objects::base::BaseObject;
 use crate::objects::status::ObjectStatus;
 use crate::objects::stream::StreamObject;
+use crate::{Array, ArrayObject, DictionaryObject, PdfObject};
 
 use crate::objects::string::encode_pdf_string;
 use crate::page::{Page, PageSize};
 
-/// PDF file identifier mode.
-///
-/// Controls how the file identifier is generated in the PDF trailer.
-pub enum Identifier {
+//----------------------- Identifier -----------------------
+
+/// in the PDF trailer
+pub enum FileIdentifierMode {
     None,
     AutoMD5,
     Custom(Vec<u8>),
 }
 
-/// Main PDF document structure.
-///
-/// Represents a complete PDF document with objects, pages, and metadata.
+//--------------------------- PDF -------------------------
+
 pub struct PDF {
     pub objects: Vec<Box<dyn PdfObject>>,
-    pub page_tree: Dictionary,
-    pub info: Dictionary,
-    pub catalog: Dictionary,
+    pub page_tree: DictionaryObject,
+    pub info: DictionaryObject,
+    pub catalog: DictionaryObject,
     pub current_position: usize,
     pub xref_position: Option<usize>,
     pub default_page_size: PageSize,
@@ -35,9 +34,9 @@ impl Default for PDF {
     fn default() -> Self {
         PDF {
             objects: Vec::new(),
-            page_tree: Dictionary::new(None),
-            info: Dictionary::new(None),
-            catalog: Dictionary::new(None),
+            page_tree: DictionaryObject::new(None),
+            info: DictionaryObject::new(None),
+            catalog: DictionaryObject::catalog(),
             current_position: 0,
             xref_position: None,
             default_page_size: PageSize::default(),
@@ -60,11 +59,11 @@ impl PDF {
         pages_values.insert("Kids".to_string(), b"[]".to_vec());
         pages_values.insert("Count".to_string(), b"0".to_vec());
         pages_values.insert("MediaBox".to_string(), size.to_mediabox());
-        pdf.page_tree = Dictionary::new(Some(pages_values));
+        pdf.page_tree = DictionaryObject::new(Some(pages_values));
 
         let mut catalog_values = HashMap::new();
         catalog_values.insert("Type".to_string(), b"/Catalog".to_vec());
-        pdf.catalog = Dictionary::new(Some(catalog_values));
+        pdf.catalog = DictionaryObject::new(Some(catalog_values));
 
         pdf
     }
@@ -158,7 +157,7 @@ impl PDF {
     }
 
     fn write_legacy_xref<W: Write>(&mut self, output: &mut W) -> std::io::Result<()> {
-               self.write_line(format!("0 {}", self.objects.len()).as_bytes(), output)?;
+        self.write_line(format!("0 {}", self.objects.len()).as_bytes(), output)?;
 
         let xref_entries: Vec<String> = self
             .objects
@@ -171,12 +170,11 @@ impl PDF {
         }
 
         Ok(())
-
     }
     fn write_legacy_xref_and_trailer<W: Write>(
         &mut self,
         output: &mut W,
-        identifier: Identifier,
+        identifier: FileIdentifierMode,
     ) -> std::io::Result<()> {
         self.xref_position = Some(self.current_position);
         self.write_line(b"xref", output)?;
@@ -219,11 +217,11 @@ impl PDF {
     /// Generates the fully formatted PDF /ID line based on the identifier mode.
     fn format_identifier(
         objects: &[Box<dyn PdfObject>],
-        identifier: &Identifier,
+        identifier: &FileIdentifierMode,
     ) -> Option<Vec<u8>> {
         match identifier {
-            Identifier::None => None,
-            Identifier::AutoMD5 | Identifier::Custom(_) => {
+            FileIdentifierMode::None => None,
+            FileIdentifierMode::AutoMD5 | FileIdentifierMode::Custom(_) => {
                 // Calculate MD5 hash of all non-free objects
                 let mut context = md5::Context::new();
                 for obj in objects {
@@ -240,8 +238,8 @@ impl PDF {
 
                 // Select bytes for the first ID (Custom or Auto-MD5)
                 let id_bytes = match identifier {
-                    Identifier::AutoMD5 => data_hash_bytes,
-                    Identifier::Custom(bytes) => bytes,
+                    FileIdentifierMode::AutoMD5 => data_hash_bytes,
+                    FileIdentifierMode::Custom(bytes) => bytes,
                     _ => unreachable!(),
                 };
 
@@ -289,14 +287,14 @@ impl PDF {
         &mut self,
         output: &mut W,
         version: Option<&[u8]>,
-        id_mode: Identifier,
+        id_mode: FileIdentifierMode,
         compress: bool,
     ) -> std::io::Result<()> {
         let version = version.unwrap_or(b"1.7");
 
         let font_resources = Self::get_standard_fonts();
         let resources_number = self.objects.len();
-        let mut resources = Dictionary::new(None);
+        let mut resources = DictionaryObject::new(None);
         resources.metadata.number = Some(resources_number);
         resources
             .values
@@ -381,7 +379,6 @@ impl PDF {
 
     /// Write compressed PDF using object streams and cross-reference streams (PDF 1.5+)
     fn write_compressed<W: Write>(&mut self, output: &mut W) -> std::io::Result<()> {
-
         // Separate compressible objects from non-compressible ones
         let mut compressed_data: Vec<(usize, Vec<u8>)> = Vec::new(); // (obj_num, data)
         let mut indirect_to_write = Vec::new();
@@ -442,7 +439,8 @@ impl PDF {
         );
 
         let obj_stream_number = self.objects.len();
-        let mut object_stream = StreamObject::new_compressed().with_data(Some(stream_parts), Some(extra));
+        let mut object_stream =
+            StreamObject::new_compressed().with_data(Some(stream_parts), Some(extra));
         object_stream.metadata.number = Some(obj_stream_number);
         object_stream.metadata.offset = self.current_position;
 
@@ -513,8 +511,8 @@ impl PDF {
         xref_extra.insert("Size".to_string(), total_size.to_string().into_bytes());
         xref_extra.insert("Root".to_string(), self.catalog.reference());
 
-        let mut xref_stream =
-            StreamObject::new_compressed().with_data(Some(vec![xref_stream_data]), Some(xref_extra));
+        let mut xref_stream = StreamObject::new_compressed()
+            .with_data(Some(vec![xref_stream_data]), Some(xref_extra));
         xref_stream.metadata.number = Some(xref_stream_number);
         self.xref_position = Some(self.current_position);
         xref_stream.metadata.offset = self.current_position;
