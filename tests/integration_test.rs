@@ -1,4 +1,5 @@
-use pydyf::{PDF, PageSize, Page, Stream};
+use pydyf::{PDF, PageSize, Page, StreamObject};
+use pydyf::util::{EvenOdd, PosnPoints, DimsPoints, StrokeOrFill, RGB};
 
 fn create_page_with_content(content_stream_ref: Vec<u8>) -> Page {
     let mut page = Page::new();
@@ -15,7 +16,7 @@ fn test_create_pdf() {
 #[test]
 fn test_add_page() {
     let mut pdf = PDF::new(PageSize::A4);
-    let stream = Stream::new();
+    let stream = StreamObject::new();
     pdf.add_object(Box::new(stream));
 
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -27,24 +28,24 @@ fn test_add_page() {
 
 #[test]
 fn test_stream_operations() {
-    let mut stream = Stream::new_compressed();
+    let mut stream = StreamObject::new_compressed();
 
-    let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
-    stream.rectangle(100.0, 100.0, 200.0, 150.0);
-    stream.fill(false);
+    let _ = stream.set_color_rgb(RGB{red:1.0, green:0.0, blue:0.0}, StrokeOrFill::Stroke);
+    stream.rectangle(PosnPoints {x:100.0, y:100.0}, DimsPoints {height:200.0, width:150.0});
+    stream.fill(EvenOdd::Odd);
 
     assert!(stream.stream.len() > 0);
 }
 
 #[test]
 fn test_compressed_stream() {
-    let stream = Stream::new_compressed();
+    let stream = StreamObject::new_compressed();
     assert!(stream.compress);
 }
 
 #[test]
 fn test_text_operations() {
-    let mut stream = Stream::new();
+    let mut stream = StreamObject::new();
 
     stream.begin_text();
     stream.set_font_size("Helvetica", 12.0);
@@ -56,7 +57,7 @@ fn test_text_operations() {
 #[test]
 fn test_add_page_simple_with_pagesize() {
     let mut pdf = PDF::new(PageSize::A4);
-    let stream = Stream::new();
+    let stream = StreamObject::new();
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
 
@@ -75,7 +76,7 @@ fn test_add_page_simple_with_pagesize() {
 #[test]
 fn test_add_page_simple_default_size() {
     let mut pdf = PDF::new(PageSize::Letter);
-    let stream = Stream::new();
+    let stream = StreamObject::new();
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
 

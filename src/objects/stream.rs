@@ -1,17 +1,16 @@
-use crate::encoding::{ascii85_encode, to_pdf_num};
+use crate::encoding::{ascii85_encode, f_to_pdf_num};
 use crate::error::{PdfError, PdfResult};
 use crate::objects::metadata::PdfMetadata;
 use crate::objects::string::encode_pdf_string;
 use crate::util::{
-    CMYK, Color, CompressionMethod, EvenOdd, Matrix, PosnXY, RGB, Size, StrokeOrFill, ToPdf,
+    CMYK, Color, ColorSpace, CompressionMethod, DimsPoints, EvenOdd, Matrix, PosnPoints, RGB,
+    StrokeOrFill, ToPdf,
 };
 use crate::{DictionaryObject, NumberObject, PdfObject};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
-use std::collections::HashMap;
 use std::io::Write as IoWrite;
 use std::sync::Arc;
-
 //------------------------ Stream Object -----------------------
 
 /// PDF content stream.
@@ -94,7 +93,7 @@ impl StreamObject {
 
     fn float_cmd(&mut self, string: &str, value: f64) {
         self.stream
-            .push(format!("{} {}", to_pdf_num(value), string).into_bytes());
+            .push(format!("{} {}", f_to_pdf_num(value), string).into_bytes());
     }
 
     fn int_cmd(&mut self, string: &str, value: i32) {
@@ -138,21 +137,21 @@ impl StreamObject {
     /// Add cubic Bézier curve to current path.
     ///
     /// extend curve from `(x3, y3)` using `(x1, y1)` and `(x2, y2)` as Bézier control points.
-    pub fn curve_to(&mut self, pos1: PosnXY, pos2: PosnXY, pos3: PosnXY) {
+    pub fn curve_to(&mut self, pos1: PosnPoints, pos2: PosnPoints, pos3: PosnPoints) {
         self.push_op(&[&pos1, &pos2, &pos3], "c");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
     /// Extend curve to `(x3, y3)` using current point, and `(x2, y2)` as Bézier control points.
-    pub fn curve_start_to(&mut self, pos2: PosnXY, pos3: PosnXY) {
+    pub fn curve_start_to(&mut self, pos2: PosnPoints, pos3: PosnPoints) {
         self.push_op(&[&pos2, &pos3], "v");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
     /// extend curve to `(x3, y3)` using `(x1, y1)`, and `(x3, y3)` as Bézier control points.
-    pub fn curve_end_to(&mut self, pos1: PosnXY, pos3: PosnXY) {
+    pub fn curve_end_to(&mut self, pos1: PosnPoints, pos3: PosnPoints) {
         self.push_op(&[&pos1, &pos3], "y");
     }
 
@@ -195,24 +194,15 @@ impl StreamObject {
     /// * `raw_pixel_data` - Raw pixel data bytes
     pub fn inline_image(
         &mut self,
-        width: u32,
-        height: u32,
-        color_space: &str,
+        width_pixels: u32,
+        height_pixels: u32,
+        color_space: ColorSpace,
         bits_per_component: u8,
         raw_pixel_data: &[u8],
     ) -> PdfResult<()> {
-        if width == 0 || height == 0 {
+        if width_pixels == 0 || height_pixels == 0 {
             return Err(PdfError::InvalidImage(format!(
-                "Invalid image dimensions: {}x{}",
-                width, height
-            )));
-        }
-
-        let valid_spaces = ["RGB", "Gray", "CMYK"];
-        if !valid_spaces.contains(&color_space) {
-            return Err(PdfError::InvalidImage(format!(
-                "Invalid color space: {}. Must be one of: RGB, Gray, CMYK",
-                color_space
+                "Invalid image dimensions: {width_pixels} x {height_pixels} pixels",
             )));
         }
 
@@ -235,9 +225,9 @@ impl StreamObject {
 
         let header_string = format!(
             "BI /W {} /H {} /BPC {} /CS /Device{} /F {} /L {} ID ",
-            to_pdf_num(width as f64),
-            to_pdf_num(height as f64),
-            to_pdf_num(bits_per_component as f64),
+            f_to_pdf_num(width_pixels as f64),
+            f_to_pdf_num(height_pixels as f64),
+            f_to_pdf_num(bits_per_component as f64),
             color_space,
             filters,
             encoded_data.len()
@@ -257,33 +247,35 @@ impl StreamObject {
     /// The image will be automatically converted to RGB format and embedded.
     /// Use `push_state()` and `set_matrix()` before this call to position and scale the image.
     pub fn inline_image_from_file(&mut self, path: &str) -> PdfResult<()> {
-        // Load image from file
         let img = image::open(path).map_err(|e| {
             PdfError::InvalidImage(format!("Failed to load image from {}: {}", path, e))
         })?;
 
         // Convert to RGB
         let rgb_img = img.to_rgb8();
-        let (width, height) = rgb_img.dimensions();
-
-        // Get raw pixel data
-        let raw_data = rgb_img.into_raw();
+        let (width_pixels, height_pixels) = rgb_img.dimensions();
 
         // Add as inline image
-        self.inline_image(width, height, "RGB", 8, &raw_data)
+        self.inline_image(
+            width_pixels,
+            height_pixels,
+            ColorSpace::RGB,
+            8,
+            &rgb_img.into_raw(),
+        )
     }
 
-    pub fn line_to_x_y(&mut self, posn: PosnXY) {
+    pub fn line_to_x_y(&mut self, posn: PosnPoints) {
         self.push_op(&[&posn], "l");
     }
 
     /// Begin new subpath by moving current point to `(x, y)`.
-    pub fn move_to_x_y(&mut self, posn: PosnXY) {
+    pub fn move_to_x_y(&mut self, posn: PosnPoints) {
         self.push_op(&[&posn], "m");
     }
 
     /// Move text to next line at `(x, y)` distance from previous line.
-    pub fn move_text_to_x_y(&mut self, posn: PosnXY) {
+    pub fn move_text_to_x_y(&mut self, posn: PosnPoints) {
         self.push_op(&[&posn], "T*");
     }
 
@@ -306,7 +298,7 @@ impl StreamObject {
     /// Add rectangle to current path as complete subpath.
     ///
     /// `posn` is the lower-left corner and `size` the dimensions.
-    pub fn rectangle(&mut self, posn: PosnXY, size: Size) {
+    pub fn rectangle(&mut self, posn: PosnPoints, size: DimsPoints) {
         self.push_op(&[&posn, &size], "re");
     }
 
@@ -369,7 +361,7 @@ impl StreamObject {
         stroke: StrokeOrFill,
         operands: &[f64],
     ) {
-        let mut cmd_parts: Vec<String> = operands.iter().map(|&n| to_pdf_num(n)).collect();
+        let mut cmd_parts: Vec<String> = operands.iter().map(|&n| f_to_pdf_num(n)).collect();
         if let Some(n) = name {
             cmd_parts.push(format!("/{n}"));
         }
@@ -385,7 +377,7 @@ impl StreamObject {
 
     pub fn set_dash_line_pattern(&mut self, dash_array: &[f64], dash_phase: i32) {
         // Build the [n n n] part directly
-        let array_str: Vec<String> = dash_array.iter().map(|&n| to_pdf_num(n)).collect();
+        let array_str: Vec<String> = dash_array.iter().map(|&n| f_to_pdf_num(n)).collect();
 
         // Build the entire command in one single allocation
         let cmd = format!("[{}] {} d", array_str.join(" "), dash_phase).into_bytes();
@@ -395,7 +387,7 @@ impl StreamObject {
     /// Set font name and size.
     pub fn set_font_name_and_size(&mut self, font: &str, size: f64) {
         self.stream
-            .push(format!("/{} {} Tf", font, to_pdf_num(size)).into_bytes());
+            .push(format!("/{} {} Tf", font, f_to_pdf_num(size)).into_bytes());
     }
 
     pub fn set_text_rendering_mode(&mut self, mode: i32) {
@@ -455,13 +447,15 @@ impl StreamObject {
 
     pub fn rounded_rectangle(
         &mut self,
-        posn: PosnXY,
-        size: Size,
+        posn: PosnPoints,
+        size: DimsPoints,
         radius_top_left: f64,
         radius_top_right: f64,
         radius_bottom_right: f64,
         radius_bottom_left: f64,
     ) {
+        let PosnPoints { x, y } = posn;
+        let DimsPoints { width, height } = size;
         let draw_corner = |s: &mut StreamObject, radius: f64, rel_corner_pos: [f64; 2]| {
             if radius < 0.0001 {
                 return;
@@ -469,59 +463,56 @@ impl StreamObject {
 
             const KAPPA: f64 = 0.5522847498307933; // makes cubic Bezier curve like circular arc
             s.curve_to(
-                PosnXY {
-                    x: posn.x + size.width - radius + radius * KAPPA,
-                    y: posn.y + size.height,
+                PosnPoints {
+                    x: x + width - radius + radius * KAPPA,
+                    y: y + height,
                 },
-                PosnXY {
-                    x: posn.x + size.width,
-                    y: posn.y + size.height - radius + radius * KAPPA,
+                PosnPoints {
+                    x: x + width,
+                    y: y + height - radius + radius * KAPPA,
                 },
-                PosnXY {
-                    x: posn.x + size.width,
-                    y: posn.y + size.height - radius,
+                PosnPoints {
+                    x: x + width,
+                    y: y + height - radius,
                 },
             );
         };
 
-        self.move_to_x_y(PosnXY {
-            x: posn.x + radius_top_left,
-            y: posn.y + size.height,
+        self.move_to_x_y(PosnPoints {
+            x: x + radius_top_left,
+            y: y + height,
         });
 
         // top right
-        draw_corner(self, radius_top_left, [size.width, size.height]);
+        draw_corner(self, radius_top_left, [width, height]);
         // right
-        self.line_to_x_y(PosnXY {
-            x: posn.x + size.width - radius_top_right,
-            y: posn.y + size.height,
+        self.line_to_x_y(PosnPoints {
+            x: x + width - radius_top_right,
+            y: y + height,
         });
 
         // bottom right
-        draw_corner(self, radius_top_right, [size.width, 0.0]);
+        draw_corner(self, radius_top_right, [width, 0.0]);
 
         // bottom
-        self.line_to_x_y(PosnXY {
-            x: posn.x + size.width,
-            y: posn.y + radius_bottom_right,
+        self.line_to_x_y(PosnPoints {
+            x: x + width,
+            y: y + radius_bottom_right,
         });
 
         // bottom left
         draw_corner(self, radius_bottom_right, [0.0, 0.0]);
 
         // left
-        self.line_to_x_y(PosnXY {
-            x: posn.x + size.width,
-            y: posn.y,
-        });
+        self.line_to_x_y(PosnPoints { x: x + width, y });
 
         // top left
-        draw_corner(self, radius_bottom_left, [0.0, size.height]);
+        draw_corner(self, radius_bottom_left, [0.0, height]);
 
         // top
-        self.line_to_x_y(PosnXY {
-            x: posn.x + radius_bottom_left,
-            y: posn.y,
+        self.line_to_x_y(PosnPoints {
+            x: x + radius_bottom_left,
+            y,
         });
 
         self.close();

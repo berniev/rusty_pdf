@@ -1,6 +1,7 @@
-use std::collections::HashMap;
-use crate::{DictionaryObject, PdfObject};
+use crate::objects::base::IndirectReference;
 use crate::objects::metadata::PdfMetadata;
+use crate::{DictionaryObject, PdfObject};
+use std::sync::Arc;
 
 //--------------------------- Page Size ---------------------------//
 
@@ -40,25 +41,40 @@ impl PageSize {
 
 //--------------------------- Page ---------------------------//
 
-#[derive(Debug, Clone)]
 pub struct Page {
     pub metadata: PdfMetadata,
-    pub size: Option<PageSize>,
-    pub contents: Vec<u8>,
-    pub resources: Option<DictionaryObject>,
-    pub other: HashMap<String, Vec<u8>>,
+    pub page_size: PageSize,
+    pub dict: DictionaryObject, // The core dictionary (/Type /Page, etc)
+    pub contents: Option<Arc<dyn PdfObject>>, // The page's actual drawing commands
+}
+
+impl Default for Page {
+    fn default() -> Self {
+        Page {
+            metadata: PdfMetadata::default(),
+            page_size: PageSize::default(),
+            dict: DictionaryObject::typed("Page"),
+            contents: None,
+        }
+    }
 }
 
 impl Page {
-
-    pub fn new() -> Self {
-        Page {
-            metadata: PdfMetadata::default(),
-            size: None,
-            contents: Vec::new(),
-            resources: None,
-            other: HashMap::new(),
+    pub fn new(size: PageSize) -> Self {
+        Self {
+            page_size: size,
+            ..Default::default()
         }
+    }
+
+    pub fn set_parent(&mut self, parent_id: usize) {
+        self.dict.set(
+            "Parent",
+            Arc::new(IndirectReference {
+                metadata: PdfMetadata::default(),
+                id: parent_id,
+            }),
+        );
     }
 
     pub fn set_size(&mut self, size: PageSize) {
@@ -92,30 +108,3 @@ impl Page {
     }
 }
 
-impl Default for Page {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PdfObject for Page {
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
-    }
-
-    fn data(&self) -> Vec<u8> {
-        self.to_dictionary().data()
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn is_compressible(&self) -> bool {
-        self.metadata.generation == 0
-    }
-}

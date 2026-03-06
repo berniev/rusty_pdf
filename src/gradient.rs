@@ -1,10 +1,10 @@
 use crate::DictionaryObject;
 use crate::objects::stream::StreamObject;
 use crate::pdf::PDF;
-use crate::util::{PosnXY, Size, RGBA};
+use crate::util::{PosnPoints, DimsPoints, RGBA};
 use std::collections::HashMap;
 
-fn common(size:Size) {
+fn common(size: DimsPoints) {
     let gs_name = if self.stops.len() >= 2 {
         let first = &self.stops[0].rgba;
         let last = &self.stops[self.stops.len() - 1].rgba;
@@ -93,8 +93,8 @@ impl LinearGradient {
         &self,
         pdf: &mut PDF,
         resource_counter: &mut u32,
-        posn:PosnXY,
-        size:Size,
+        posn: PosnPoints,
+        size: DimsPoints,
         stroke_width: f64,
     ) -> Option<(String, Option<String>)> {
         // Check if gradient ends in transparent - skip rendering (can't represent in PDF)
@@ -183,8 +183,8 @@ impl RadialGradient {
         &self,
         pdf: &mut PDF,
         resource_counter: &mut u32,
-        posn:PosnXY,
-        size:Size,
+        posn: PosnPoints,
+        size: DimsPoints,
     ) -> Option<(String, Option<String>)> {
         // Check if gradient ends in transparent - skip rendering (can't represent in PDF)
         if self.stops.len() >= 2 && self.stops.last().unwrap().rgba.alpha == 0.0 {

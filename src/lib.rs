@@ -94,6 +94,7 @@ pub mod resources;
 pub mod text;
 pub mod page;
 pub mod util;
+mod writer;
 
 // Re-export main types for convenience
 pub use objects::array::{Array, ArrayObject};

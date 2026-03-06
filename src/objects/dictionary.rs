@@ -18,25 +18,12 @@ impl DictionaryObject {
         }
     }
 
-    fn typed(name: &str) -> Self {
+    pub(crate) fn typed(name: &str) -> Self {
         Self::new(Some(vec![(
             "Type".to_string(),
             Arc::new(NameObject::new(name.to_string())),
         )]))
     }
-    pub fn catalog() -> Self {
-        Self::typed("Catalog")
-    }
-
-    pub fn pages_tree() -> Self {
-        let mut dict = Self::typed("Pages");
-        dict.values
-            .push(("Kids".to_string(), Arc::new(ArrayObject::new(None))));
-        dict.values
-            .push(("Count".to_string(), Arc::new(NumberObject::new(NumberType::from(0.0)))));
-        dict
-    }
-
     pub fn reference(&self) -> Vec<u8> {
         let number = self.metadata.number.unwrap_or(0);
         format!("{} {} R", number, self.metadata.generation).into_bytes()
