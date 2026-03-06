@@ -19,6 +19,18 @@ impl From<f64> for NumberType {
     }
 }
 
+impl From<i32> for NumberType {
+    fn from(i: i32) -> Self {
+        Self::Integer(i as i64)
+    }
+}
+
+impl From<f32> for NumberType {
+    fn from(f: f32) -> Self {
+        Self::Real(f as f64)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct NumberObject {
     pub metadata: PdfMetadata,
@@ -100,5 +112,17 @@ impl From<i64> for NumberObject {
 impl From<f64> for NumberObject {
     fn from(f: f64) -> Self {
         Self::new(NumberType::Real(f))
+    }
+}
+
+impl From<i32> for NumberObject {
+    fn from(i: i32) -> Self {
+        Self::new(NumberType::Integer(i as i64))
+    }
+}
+
+impl From<f32> for NumberObject {
+    fn from(f: f32) -> Self {
+        Self::new(NumberType::Real(f as f64))
     }
 }

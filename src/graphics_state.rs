@@ -1,7 +1,8 @@
-use crate::DictionaryObject;
+use std::collections::HashMap;
+
 use crate::objects::stream::StreamObject;
 use crate::pdf::PDF;
-use std::collections::HashMap;
+use crate::{DictionaryObject, NumberObject};
 
 pub struct GraphicsStateManager {
     opacity_states: HashMap<u32, usize>, // opacity values (scaled to u32) to object numbers
@@ -40,8 +41,8 @@ impl GraphicsStateManager {
         self.resource_counter += 1;
 
         let mut gs_dict = DictionaryObject::typed("/ExtGState");
-        gs_dict.set("CA", format!("{:.3}", alpha)); // Stroke alpha
-        gs_dict.set("ca", format!("{:.3}", alpha)); // Fill alpha
+        gs_dict.set("CA", std::sync::Arc::new(NumberObject::from(alpha))); // Stroke alpha
+        gs_dict.set("ca", std::sync::Arc::new(NumberObject::from(alpha))); // Fill alpha
         let obj_num = pdf.objects.len();
         pdf.add_object(Box::new(gs_dict));
 
