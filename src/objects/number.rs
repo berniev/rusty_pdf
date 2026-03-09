@@ -31,6 +31,19 @@ impl From<f32> for NumberType {
     }
 }
 
+/// Spec:
+/// Integer Object:
+///     mathematical integers with an implementation specified interval centered at 0 and written
+///     as one or more decimal digits optionally preceded by a sign
+/// Numeric Object:
+///     either an integer object or a real (float) object
+/// Real Object:
+///     approximate mathematical real numbers, but with limited range and precision and written as
+///     one or more decimal digits with an optional sign and a leading, trailing, or embedded
+///     PERIOD (2Eh) (decimal point)
+/// Number Tree:
+///     similar to a dictionary that associates keys and values but the keys in a number tree are
+///     integers and are ordered
 #[derive(Debug, Clone, PartialEq)]
 pub struct NumberObject {
     pub metadata: PdfMetadata,
@@ -93,7 +106,7 @@ impl PdfObject for NumberObject {
     }
 
     fn is_compressible(&self) -> bool {
-        self.metadata.generation == 0
+        self.metadata.generation_number == 0
     }
 }
 

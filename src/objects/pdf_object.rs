@@ -8,8 +8,8 @@ pub trait PdfObject {
 
     fn indirect(&self) -> Vec<u8> {
         let meta = self.metadata();
-        let number = meta.number.unwrap_or(0);
-        let header = format!("{} {} obj\n", number, meta.generation);
+        let number = meta.object_number.unwrap_or(0);
+        let header = format!("{} {} obj\n", number, meta.generation_number);
         let mut result = header.into_bytes();
         result.extend(self.data());
         result.extend(b"\nendobj");
@@ -18,8 +18,8 @@ pub trait PdfObject {
 
     fn reference(&self) -> Vec<u8> {
         let meta = self.metadata();
-        let number = meta.number.unwrap_or(0);
-        format!("{} {} R", number, meta.generation).into_bytes()
+        let number = meta.object_number.unwrap_or(0);
+        format!("{} {} R", number, meta.generation_number).into_bytes()
     }
 
     /// Whether the object can be included in an object stream (PDF 1.5+).
@@ -29,6 +29,6 @@ pub trait PdfObject {
     ///
     /// Note: Some object types (like Stream) override this to always return false.
     fn is_compressible(&self) -> bool {
-        self.metadata().generation == 0
+        self.metadata().generation_number == 0
     }
 }

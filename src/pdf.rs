@@ -1,27 +1,108 @@
-use std::rc::Rc;
+use crate::page::Page;
+use crate::page::PageSize;
+
 use crate::objects::base::BaseObject;
 use crate::{ArrayObject, DictionaryObject, NameObject, NumberObject, NumberType, PdfObject};
+use std::rc::Rc;
 
-use crate::page::Page;
-use crate::page_size::PageSize;
+pub struct StreamObject {
+    data: Vec<u8>,
+    metadata: DictionaryObject,
+}
 
 pub const DEFAULT_VERSION: TargetVersion = TargetVersion::Auto;
 pub const DEFAULT_PAGE_SIZE: PageSize = PageSize::A4;
 
 //--------------------------- Catalog -------------------------
 
+/// Spec:
+/// Document Catalog:
+///     The primary dictionary object containing references directly or indirectly to all other 
+///     objects in the document with the exception that there may be objects in the trailer that 
+///     are not referred to by the catalog
+/// 
+///  Catalog 
+///          Page Tree
+///                           Page
+///                                          Content Stream
+///                                          Thumbnail Image
+///                                          Annotations
+///                                    ...
+///                           Page
+///          Outline Hierachy
+///                           Outline Entry
+///                                ...
+///                           Outline Entry
+///          Article Threads
+///                           Thread
+///                                          Bead <--> Bead
+///                               ...
+///                           Thread
+///          Named Destinations
+///          Interactive form
+/// Entries:
+///     Type               name           Reqd          "Catalog"
+///     Version            name           Opt     1.4   
+///     Extensions         dictionary     Opt
+///     Pages              dictionary     Reqd          shall be indirect ref
+///     PageLabels         number tree    Opt     1.3
+///     Names              dictionary     Opt     1.2
+///     Dests              dictionary     Opt     1.1   indirect reference
+///     ViewerPreferences  dictionary     Opt     1.2
+///     PageLayout         name           Opt 
+///         SinglePage (def)
+///         OneColumn
+///         TwoColumnLeft
+///         TwoColumnRight
+///         TwoPageLeft
+///         TwoPageRight
+///     PageMode           name           Opt     
+///          UseNone (def)
+///          UseOutlines
+///          UseThumbs
+///          FullScreen
+///          UseOC
+///          UseAttachments
+///     Outlines            dictionary     Opt         indirect reference
+///     Threads             array          Opt    1.1  indirect reference
+///     OpenAction          array or dict  Opt    1.1   
+///     AA                  dictionary     Opt    1.4
+///     URI                 dictionary     Opt    1.1
+///     AcroForm            dictionary     Opt    1.2
+///     Metadata            dictionary     Opt    1.4
+///     StructTreeRoot      dictionary     Opt    1.3
+///     MarkInfo            dictionary     Opt    1.4
+///     Lang                text string    Opt    1.4
+///     SpiderInfo          dictionary     Opt    1.3
+///     OutputIntents       array          Opt    1.4
+///     PieceInfo           dictionary     Opt    1.4
+///     OCProperties        dictionary     Opt    1.5
+///     Perms               dictionary     Opt    1.5
+///     Legal               dictionary     Opt    1.5
+///     Requirements        array          Opt    1.7
+///     Collection          dictionary     Opt    1.7
+///     NeedsRendering      boolean        Opt    1.7
+/// 
 pub struct DocumentCatalog {
-    pub dict: DictionaryObject,
+    pub catalog: DictionaryObject,
 }
 
 impl DocumentCatalog {
     pub fn new() -> Self {
-        Self { dict: DictionaryObject::typed("Catalog")}
+        Self {
+            catalog: DictionaryObject::typed("Catalog"),
+        }
     }
 }
 
 //--------------------------- Page Tree -------------------------
 
+/// Spec:
+/// Page Tree Nodes:
+///     Type    name        "Pages"    Reqd
+///     Parent  dictionary             Prohibited in root, else Reqd indirect reference  
+///     Kids    array                  Reqd  indirect references
+///     Count   integer                Reqd  Number of descendant leaf nodes (page objects)
 pub struct PageTree {
     pub dict: DictionaryObject,
 }
@@ -65,6 +146,21 @@ pub enum FileIdentifierMode {
 
 //--------------------------- PDF -------------------------
 
+/// Spec:
+/// Object:
+///     a basic data structure from which PDF files are constructed and includes these types:
+///     array, Boolean, dictionary, integer, name, null, real, stream and string
+/// Object Reference:
+///     an object value used to allow one object to refer to another; that has the form “<n> <m> R”
+///     where <n> is an indirect object number, <m> is its version number and R is the uppercase
+///     letter R
+/// Object stream:
+///     a stream that contains a sequence of PDF objects
+/// File Structure:
+///     Header: One line identifying pdf version
+///     Body: containing the objects that make up the document
+///     Cross-Reference Table: (xreft) information about the indirect objects in the file
+///     Trailer: location of the xreft and of certain special objects within the body of the file
 pub struct PDF {
     pub version: TargetVersion,
     pub objects: Vec<Box<dyn PdfObject>>,
@@ -95,10 +191,9 @@ impl PDF {
             ..Default::default()
         };
 
-        pdf.add_object(Box::new(BaseObject::sentinel()));
+        pdf.add_object(Box::new(BaseObject::sentinel())); // object zero
 
-        pdf.page_tree
-            .set("MediaBox", Rc::new([0]));
+        pdf.page_tree.set("MediaBox", Rc::new([0]));
 
         pdf
     }
@@ -110,30 +205,23 @@ impl PDF {
 
     pub fn add_object(&mut self, mut object: Box<dyn PdfObject>) -> usize {
         let number = self.objects.len();
-        object.metadata_mut().number = Some(number);
+        object.metadata_mut().object_number = Some(number);
         self.objects.push(object);
 
         number
     }
 
     pub fn add_page(&mut self, page: Page) {
-    let dict = page.into_dictionary();
-    let id = self.add_object(Box::new(dict));
-    self.page_ids.push(id);
-}
-
-    pub fn add_page_simple(&mut self, size: PageSize, contents: &[u8]) {
-        let mut page = Page::new(size);
-        page.set_contents(contents.to_vec());
-        self.add_page(page);
+        let dict = page.into_dictionary();
+        let id = self.add_object(Box::new(dict));
+        self.page_ids.push(id);
     }
 
     pub fn page_references(&self) -> Vec<Vec<u8>> {
         let kids_str = self
             .page_tree
-            .values
             .get("Kids")
-            .map(|v| String::from_utf8_lossy(v).to_string())
+            .map(|v| String::from_utf8_lossy(&v.data()).to_string())
             .unwrap_or_else(|| "[]".to_string());
 
         // Parse references in format "[1 0 R 2 0 R 3 0 R]"

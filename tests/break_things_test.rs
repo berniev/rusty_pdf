@@ -1,6 +1,10 @@
-use pydyf::{PDF, PageSize, Page, Stream};
 use std::fs::File;
+
+use pydyf::StreamObject;
+use pydyf::color::{Color, RGB};
 use pydyf::page_size::PageSize;
+use pydyf::util::{Dims, EvenOdd, Posn, StrokeOrFill};
+use pydyf::{PDF, Page};
 
 fn create_page_with_content(page_size: PageSize, content_stream_ref: Vec<u8>) -> Page {
     let mut page = Page::new(page_size);
@@ -11,16 +15,22 @@ fn create_page_with_content(page_size: PageSize, content_stream_ref: Vec<u8>) ->
 #[test]
 fn test_empty_page() {
     let mut pdf = PDF::new();
-    let stream = Stream::new();
+    let stream = StreamObject::new();
 
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let page = Page::new(PageSize::A4).with_contents(content_ref);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_empty.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
@@ -28,10 +38,23 @@ fn test_massive_page_count() {
     let mut pdf = PDF::new();
 
     for _ in 0..500 {
-        let mut stream = Stream::new();
-        let _ = stream.set_color_rgb(0.5, 0.5, 0.5, false);
-        stream.rectangle(50.0, 50.0, 100.0, 100.0);
-        stream.fill(false);
+        let mut stream = StreamObject::new();
+        let _ = stream.set_color_rgb(
+            RGB {
+                red: Color { color: 0.5 },
+                green: Color { color: 0.5 },
+                blue: Color { color: 0.5 },
+            },
+            StrokeOrFill::Fill,
+        );
+        stream.rectangle(
+            Posn { x: 50.0, y: 50.0 },
+            Dims {
+                width: 100.0,
+                height: 100.0,
+            },
+        );
+        stream.fill(EvenOdd::Odd);
 
         pdf.add_object(Box::new(stream));
         let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -41,13 +64,19 @@ fn test_massive_page_count() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_massive.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_extreme_coordinates() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = StreamObject::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(-1000.0, -1000.0, 100.0, 100.0);
@@ -72,13 +101,19 @@ fn test_extreme_coordinates() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_coords.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_very_long_text() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = StreamObject::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
     stream.begin_text();
@@ -98,13 +133,19 @@ fn test_very_long_text() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_longtext.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_special_characters_text() {
-    let mut pdf = PDF::new(PageSize::A4);
-    let mut stream = Stream::new();
+    let mut pdf = PDF::new();
+    let mut stream = StreamObject::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
     stream.begin_text();
@@ -126,18 +167,24 @@ fn test_special_characters_text() {
 
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4,content_ref);
+    let page = create_page_with_content(PageSize::A4, content_ref);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_special_chars.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_huge_rectangle() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = StreamObject::new();
 
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
     stream.rectangle(0.0, 0.0, 5000.0, 5000.0);
@@ -150,13 +197,19 @@ fn test_huge_rectangle() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_huge.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_compressed_empty() {
     let mut pdf = PDF::new();
-    let stream = Stream::new_compressed();
+    let stream = StreamObject::compressed();
 
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -165,13 +218,19 @@ fn test_compressed_empty() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_compressed_empty.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_extreme_font_sizes() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = StreamObject::new();
 
     let _ = stream.set_color_rgb(0.0, 0.0, 0.0, false);
     stream.begin_text();
@@ -197,13 +256,19 @@ fn test_extreme_font_sizes() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_fonts.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
 fn test_overlapping_operations() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = StreamObject::new();
 
     stream.begin_text();
     let _ = stream.set_color_rgb(1.0, 0.0, 0.0, false);
@@ -218,7 +283,13 @@ fn test_overlapping_operations() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_overlap.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }
 
 #[test]
@@ -227,5 +298,11 @@ fn test_no_pages() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let mut file = File::create("/tmp/pydyf_test/break_no_pages.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    pdf.write(
+        &mut file,
+        Some(b"1.7"),
+        pydyf::FileIdentifierMode::AutoMD5,
+        false,
+    )
+    .unwrap();
 }

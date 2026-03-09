@@ -1,6 +1,4 @@
 use crate::encoding::f_to_pdf_num;
-use crate::{PdfError, PdfResult};
-use std::fmt;
 use std::fmt::Display;
 //------------------------- ToPdf -----------------------------
 
@@ -18,33 +16,9 @@ impl ToPdf for f64 {
     }
 }
 
-//--------------------- StrokeOrFill -----------------------------
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum StrokeOrFill {
-    Stroke,
-    Fill,
-}
-
-//------------------------ EvenOdd -------------------------------
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum EvenOdd {
-    Even,
-    Odd,
-}
-
-//------------------- CompressionMethod ----------------------------
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum CompressionMethod {
-    None,
-    Flate,
-}
-
 //------------------------ Posn -------------------------------
 
-/// Position is X:Y. Positive Y moves up.
+/// Position is X:Y. In pdf positive Y moves up.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Posn<T> {
     pub x: T,
@@ -66,12 +40,12 @@ where
 //------------------------ Dims -------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct DimsPoints {
+pub struct Dims {
     pub width: f64,
     pub height: f64,
 }
 
-impl ToPdf for DimsPoints {
+impl ToPdf for Dims {
     fn to_pdf(&self) -> String {
         format!("{} {}", f_to_pdf_num(self.width), f_to_pdf_num(self.height),)
     }

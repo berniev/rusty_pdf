@@ -3,6 +3,18 @@ use crate::objects::base::IndirectReference;
 use crate::objects::metadata::PdfMetadata;
 use crate::objects::pdf_object::PdfObject;
 
+/// Spec:
+/// Array Objects:
+///     An array object is a one-dimensional collection of objects arranged sequentially. Unlike
+///     arrays in many other computer languages, PDF arrays may be heterogeneous; that is, an
+///     array’s elements may be any combination of numbers, strings, dictionaries, or any other
+///     objects, including other arrays. An array may have zero elements.
+/// Construction:
+///     An array shall be written as a sequence of objects enclosed in SQUARE BRACKETS (using LEFT
+///     SQUARE BRACKET (5Bh) and RIGHT SQUARE BRACKET (5Dh)).
+///     EXAMPLE [ 549 3.14 false ( Ralph ) /SomeName ]
+///     PDF directly supports only one-dimensional arrays. Arrays of higher dimension can be
+///     constructed by using arrays as elements of arrays, nested to any depth
 pub struct ArrayObject {
     pub metadata: PdfMetadata,
     pub values: Vec<Rc<dyn PdfObject>>,
@@ -50,6 +62,6 @@ impl PdfObject for ArrayObject {
     }
 
     fn is_compressible(&self) -> bool {
-        self.metadata.generation == 0
+        self.metadata.generation_number == 0
     }
 }

@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::color::RGBA;
 use crate::objects::stream::StreamObject;
-use crate::util::{DimsPoints, Posn};
+use crate::util::{Dims, Posn};
 use crate::{
     ArrayObject, BooleanObject, DictionaryObject, NameObject, NumberObject, PDF, PdfObject,
 };
@@ -105,7 +105,7 @@ impl Gradient {
         pdf: &mut PDF,
         resource_counter: &mut u32,
         posn: Posn<f64>,
-        size: DimsPoints,
+        size: Dims,
         stroke_width: f64,
     ) -> Option<(String, Option<String>)> {
         if self.stops.len() < 2 {
@@ -128,8 +128,8 @@ impl Gradient {
 
         // 2. Create Color Function (Type 2 - Exponential Interpolation)
         let color_func = create_interpolation_function_type_2(
-            vec![first.red, first.green, first.blue],
-            vec![last.red, last.green, last.blue],
+            vec![first.red.color, first.green.color, first.blue.color],
+            vec![last.red.color, last.green.color, last.blue.color],0.0
         );
         let color_func_num = pdf.add_object(Box::new(color_func));
 
@@ -157,8 +157,8 @@ impl Gradient {
 
             // Alpha Interpolation Function
             let alpha_func = create_interpolation_function_type_2(
-                vec![first.alpha],
-                vec![last.alpha], /* f64 */
+                vec![first.alpha.color, last.alpha.color],
+                vec![last.alpha.color], 0.0
             );
             let alpha_func_num = pdf.add_object(Box::new(alpha_func));
 
@@ -200,11 +200,11 @@ impl Gradient {
     fn get_shading_params(
         &self,
         posn: Posn<f64>,
-        size: DimsPoints,
+        size: Dims,
         stroke_width: f64,
     ) -> (u8, Vec<f64>) {
         let Posn { x, y } = posn;
-        let DimsPoints { width, height } = size;
+        let Dims { width, height } = size;
         match self.kind {
             GradientKind::Linear { angle } => {
                 let math_angle = 90.0 - angle;
@@ -281,7 +281,7 @@ fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: 
     resources.set("Shading", Rc::new(shading_res));
     xobj.set("Resources", Rc::new(resources));
 
-    let mut form_stream = StreamObject::new_compressed();
+    let mut form_stream = StreamObject::compressed();
     form_stream.paint_shading("Sh0");
     form_stream.extra = xobj.values;
 

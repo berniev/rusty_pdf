@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::io::Write;
 
 use crate::objects::string::encode_pdf_string;
-use crate::{ArrayObject, FileIdentifierMode, ObjectStatus, PDF, PdfObject, StreamObject};
-
+use crate::{ArrayObject, FileIdentifierMode, PDF, PdfObject, StreamObject};
+use crate::objects::metadata::ObjectStatus;
 //---------------------------- PdfWriter ------------------
 
 pub struct PdfWriter<W: Write, S: WriteStrategy> {
@@ -62,7 +62,8 @@ pub trait WriteStrategy {
     ///////////////////
 
     fn write_line<W: Write>(&self, stream: &mut PdfStream<W>, bytes: &[u8]) -> std::io::Result<()> {
-        stream.write_line(bytes);
+        stream.write_line(bytes).expect("TODO: panic message");
+
         Ok(())
     }
 
@@ -335,8 +336,8 @@ impl CompressedStrategy {
 
         let obj_stream_number = self.objects.len();
         let mut object_stream =
-            StreamObject::new().compressed().with_data(Some(stream_parts), Some(extra));
-        object_stream.metadata.number = Some(obj_stream_number);
+            StreamObject::compressed().with_data(Some(stream_parts), Some(extra));
+        object_stream.metadata.object_number = Some(obj_stream_number);
         object_stream.metadata.offset = self.current_position;
 
         let obj_stream_indirect = object_stream.indirect();
@@ -409,7 +410,7 @@ impl CompressedStrategy {
 
         let mut xref_stream = StreamObject::compressed()
             .with_data(Some(vec![xref_stream_data]), Some(xref_extra));
-        xref_stream.metadata.number = Some(xref_stream_number);
+        xref_stream.metadata.object_number = Some(xref_stream_number);
         self.xref_position = Some(self.current_position);
         xref_stream.metadata.offset = self.current_position;
 

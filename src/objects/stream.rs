@@ -9,10 +9,32 @@ use crate::encoding::{ascii85_encode, f_to_pdf_num};
 use crate::error::{PdfError, PdfResult};
 use crate::objects::metadata::PdfMetadata;
 use crate::objects::string::encode_pdf_string;
-use crate::util::{
-    CompressionMethod, DimsPoints, EvenOdd, Matrix, Posn, StrokeOrFill, ToPdf,
-};
+use crate::util::{Dims, Matrix, Posn, ToPdf};
 use crate::{DictionaryObject, NumberObject, PdfObject};
+
+//------------------------ EvenOdd -------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EvenOdd {
+    Even,
+    Odd,
+}
+
+//------------------- CompressionMethod ----------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CompressionMethod {
+    None,
+    Flate,
+}
+
+//--------------------- StrokeOrFill -----------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum StrokeOrFill {
+    Stroke,
+    Fill,
+}
 
 //------------------------ Stream Object -----------------------
 
@@ -24,8 +46,44 @@ use crate::{DictionaryObject, NumberObject, PdfObject};
 /// - Colors: RGB, CMYK, grayscale
 /// - Images: inline images
 /// - Transformations: matrices, state management
+/// Spec:
+/// Stream Object:
+///     A stream object, like a string object, is a sequence of bytes. Furthermore, a stream may be
+///     of unlimited length, whereas a string shall be subject to an implementation limit. For this
+///     reason, objects with potentially large amounts of data, such as images and page
+///     descriptions, shall be represented as streams.
+///     A stream shall consist of a dictionary followed by zero or more bytes bracketed between the
+///     keywords'stream' and 'endstream'.
+///     All streams shall be indirect objects (see 7.3.10, "Indirect Objects") and the stream
+///     dictionary shall be a direct object.
+///     Beginning with PDF 1.5, indirect objects may reside in object streams (see 7.5.7, "Object
+///     Streams"). They are referred to in the same way; however, their definition shall not
+///     include the keywords obj and endobj, and their generation number shall be zero.
+/// Filter:
+///     an optional part of the specification of a stream object, indicating how the data in the
+///     stream should be decoded before it is used
 /// * `stream` - Optional pre-existing stream content (sequence of operator calls)
 /// * `extra` - Optional extra dictionary entries
+/// Stream Extent: Entries common to all stream dictionaries:
+///     Length      integer              (Reqd) - The length of the stream in bytes.
+///     Filter      name or array        (Opt)  - A filter or sequence of filters to be applied.
+///     DecodeParms dictionary or array  (Opt)  - Parameters for the filter(s) in Filter.
+///     F           file specification   (Opt)  - A file specification for the stream data.
+///     FFilter     name or array        (Opt)  - A filter or sequence of filters to file data
+///     FDecodeParms dictionary or array (Opt)  - Parameters for the filter(s) in FFilter.
+///     DL          integer              (Opt)  - Non-negative length of the decoded stream in bytes.
+/// Stream Filters:
+///                 Params   Ver  Data Type       Decode/Decompress
+///    ASCIIHexDecode   no        binary          ASCII hex
+///    ASCII85Decode    no        binary          ASCII base-85
+///    LZWDecode        yes       text or binary  LZE (Lempel-Ziv-Welch) algorithm
+///    FlateDecode      yes  1.2  text or binary  zlib/deflate compression
+///    RunLengthDecode  no        text or binary  byte-oriented run-length encoding algorithm
+///    CCITTFaxDecode   yes       image           CCITT facsimile standard. typ mono 1 bit/pixel
+///    JBIG2Decode      yes  1.4  image           JBig2 standard -> mono or approx
+///    DCTDecode        yes       image           Discrete Cosine Transform technique based on JPEG
+///    JPXDecode        no   1.5  image           Wwavelet-based JPEG2000 standard
+///    Crypt            yes  1.5  data            Data encrypted by a security handler
 pub struct StreamObject {
     pub metadata: PdfMetadata,
     pub stream: Vec<Vec<u8>>,
@@ -288,7 +346,7 @@ impl StreamObject {
     /// Add rectangle to current path as complete subpath.
     ///
     /// `posn` is the lower-left corner and `size` the dimensions.
-    pub fn rectangle(&mut self, posn: Posn<f64>, size: DimsPoints) {
+    pub fn rectangle(&mut self, posn: Posn<f64>, size: Dims) {
         self.push_op(&[&posn, &size], "re");
     }
 
@@ -438,7 +496,7 @@ impl StreamObject {
     pub fn rounded_rectangle(
         &mut self,
         posn: Posn<f64>,
-        size: DimsPoints,
+        size: Dims,
         radius_top_left: f64,
         radius_top_right: f64,
         radius_bottom_right: f64,
@@ -447,7 +505,7 @@ impl StreamObject {
         const KAPPA: f64 = 0.5522847498307933; // makes cubic Bezier curve like circular arc
 
         let Posn { x, y } = posn;
-        let DimsPoints { width, height } = size;
+        let Dims { width, height } = size;
 
         let draw_corner = |s: &mut StreamObject, radius: f64, rel_corner_pos: Posn<f64>| {
             if radius < 0.0001 {

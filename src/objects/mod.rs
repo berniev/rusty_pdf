@@ -7,7 +7,6 @@ pub mod name;
 pub mod null;
 pub mod number;
 pub mod pdf_object;
-pub mod status;
 pub mod stream;
 pub mod string;
 
@@ -20,6 +19,5 @@ pub use name::NameObject;
 pub use null::NullObject;
 pub use number::{NumberObject, NumberType};
 pub use pdf_object::PdfObject;
-pub use status::ObjectStatus;
 pub use stream::StreamObject;
 pub use string::StringObject;

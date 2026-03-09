@@ -33,7 +33,7 @@ impl PdfObject for BooleanObject {
     }
 
     fn is_compressible(&self) -> bool {
-        self.metadata.generation == 0
+        self.metadata.generation_number == 0
     }
 }
 

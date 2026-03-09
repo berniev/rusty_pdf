@@ -6,13 +6,13 @@ use crate::encoding::f_to_pdf_num;
 use crate::util::ToPdf;
 use crate::{PdfError, PdfResult};
 
+//------------------------ ColorSpace -------------------------------
+
 pub enum ColorSpace {
     CMYK,
     Gray,
     RGB,
 }
-
-//------------------------ ColorSpace -------------------------------
 
 impl Display for ColorSpace {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -101,7 +101,8 @@ impl PartialOrd<f64> for Color {
         self.color.partial_cmp(other)
     }
 }
-//------------------------ RGB -------------------------------
+
+//------------------------- RGB -------------------------------
 
 #[derive(Debug, Clone, Copy)]
 pub struct RGB {

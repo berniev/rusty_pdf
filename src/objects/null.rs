@@ -1,6 +1,11 @@
 use crate::objects::metadata::PdfMetadata;
 use crate::PdfObject;
 
+/// Spec:
+/// null object:
+///     The null object has a type and value that are unequal to those of any other object.
+///     A single object of type null, denoted by the keyword 'null', and having a type and value
+///     that are unequal to those of any other object
 pub struct NullObject {
     pub metadata: PdfMetadata,
 }
@@ -31,6 +36,6 @@ impl PdfObject for NullObject {
     }
 
     fn is_compressible(&self) -> bool {
-        self.metadata.generation == 0
+        self.metadata.generation_number == 0
     }
 }
