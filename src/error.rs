@@ -1,8 +1,7 @@
-use crate::objects;
-
 use std::fmt;
 use std::io;
-use crate::util::{Color, CMYK, RGB, RGBA};
+
+use crate::color::{Color, CMYK, RGB, RGBA};
 
 /// Errors that can occur during PDF generation
 #[derive(Debug)]

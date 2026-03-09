@@ -1,17 +1,17 @@
-use std::sync::Arc;
+use std::rc::Rc;
 use crate::objects::metadata::PdfMetadata;
 use crate::objects::pdf_object::PdfObject;
 use crate::{ArrayObject, NameObject, NumberObject, NumberType};
-
+use crate::objects::base::IndirectReference;
 //--------------------------- DictionaryObject----------------------//
 
 pub struct DictionaryObject {
     pub metadata: PdfMetadata,
-    pub values: Vec<(String, Arc<dyn PdfObject>)>,
+    pub values: Vec<(String, Rc<dyn PdfObject>)>,
 }
 
 impl DictionaryObject {
-    pub fn new(values: Option<Vec<(String, Arc<dyn PdfObject>)>>) -> Self {
+    pub fn new(values: Option<Vec<(String, Rc<dyn PdfObject>)>>) -> Self {
         Self {
             metadata: PdfMetadata::default(),
             values: values.unwrap_or_default(),
@@ -21,15 +21,16 @@ impl DictionaryObject {
     pub(crate) fn typed(name: &str) -> Self {
         Self::new(Some(vec![(
             "Type".to_string(),
-            Arc::new(NameObject::new(name.to_string())),
+            Rc::new(NameObject::new(name.to_string())),
         )]))
     }
+
     pub fn reference(&self) -> Vec<u8> {
         let number = self.metadata.number.unwrap_or(0);
         format!("{} {} R", number, self.metadata.generation).into_bytes()
     }
     
-    pub fn set(&mut self, key: &str, value: Arc<dyn PdfObject>) {
+    pub fn set(&mut self, key: &str, value: Rc<dyn PdfObject>) {
         if let Some(pos) = self.values.iter().position(|(k, _)| k == key) {
             self.values[pos].1 = value;
         } else {
@@ -37,7 +38,14 @@ impl DictionaryObject {
         }
     }
 
-    pub fn get(&self, key: &str) -> Option<&Arc<dyn PdfObject>> {
+    pub fn set_indirect(&mut self, key: &str, id: usize) {
+        self.set(key, Rc::new(IndirectReference {
+            metadata: Default::default(),
+            id,
+        }));
+    }
+
+    pub fn get(&self, key: &str) -> Option<&Rc<dyn PdfObject>> {
         self.values.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
 }

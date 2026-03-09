@@ -1,16 +1,19 @@
+use std::io::Write as IoWrite;
+use std::rc::Rc;
+
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
+
+use crate::color::{CMYK, Color, ColorSpace, RGB};
 use crate::encoding::{ascii85_encode, f_to_pdf_num};
 use crate::error::{PdfError, PdfResult};
 use crate::objects::metadata::PdfMetadata;
 use crate::objects::string::encode_pdf_string;
 use crate::util::{
-    CMYK, Color, ColorSpace, CompressionMethod, DimsPoints, EvenOdd, Matrix, PosnPoints, RGB,
-    StrokeOrFill, ToPdf,
+    CompressionMethod, DimsPoints, EvenOdd, Matrix, Posn, StrokeOrFill, ToPdf,
 };
 use crate::{DictionaryObject, NumberObject, PdfObject};
-use flate2::Compression;
-use flate2::write::ZlibEncoder;
-use std::io::Write as IoWrite;
-use std::sync::Arc;
+
 //------------------------ Stream Object -----------------------
 
 /// PDF content stream.
@@ -21,15 +24,17 @@ use std::sync::Arc;
 /// - Colors: RGB, CMYK, grayscale
 /// - Images: inline images
 /// - Transformations: matrices, state management
+/// * `stream` - Optional pre-existing stream content (sequence of operator calls)
+/// * `extra` - Optional extra dictionary entries
 pub struct StreamObject {
     pub metadata: PdfMetadata,
-    pub stream: Vec<Vec<u8>>, // sequence of operator calls
-    pub extra: Vec<(String, Arc<dyn PdfObject>)>,
-    pub compress: CompressionMethod, // using flate
+    pub stream: Vec<Vec<u8>>,
+    pub extra: Vec<(String, Rc<dyn PdfObject>)>,
+    pub compress: CompressionMethod,
 }
 
-impl Default for StreamObject {
-    fn default() -> Self {
+impl StreamObject {
+    pub fn new() -> Self {
         StreamObject {
             metadata: PdfMetadata::default(),
             stream: Vec::new(),
@@ -37,29 +42,17 @@ impl Default for StreamObject {
             compress: CompressionMethod::None,
         }
     }
-}
 
-/// to specify stream and dictionary, use with_data()
-impl StreamObject {
-    pub fn new() -> Self {
-        StreamObject {
-            compress: CompressionMethod::None,
-            ..Default::default()
-        }
-    }
-
-    pub fn new_compressed() -> Self {
+    pub fn compressed() -> Self {
         let mut s = Self::new();
         s.compress = CompressionMethod::Flate;
         s
     }
 
-    /// * `stream` - Optional pre-existing stream content
-    /// * `extra` - Optional extra dictionary entries
     pub fn with_data(
         mut self,
         stream: Option<Vec<Vec<u8>>>,
-        extra: Option<Vec<(String, Arc<dyn PdfObject>)>>,
+        extra: Option<Vec<(String, Rc<dyn PdfObject>)>>,
     ) -> Self {
         if let Some(s) = stream {
             self.stream = s;
@@ -135,22 +128,22 @@ impl StreamObject {
 
     /// Add cubic Bézier curve to current path.
     ///
-    /// extend curve from `(x3, y3)` using `(x1, y1)` and `(x2, y2)` as Bézier control points.
-    pub fn curve_to(&mut self, pos1: PosnPoints, pos2: PosnPoints, pos3: PosnPoints) {
+    /// extend curve from `pos3` using `pos1` and `pos2` as Bézier control points.
+    pub fn curve_to(&mut self, pos1: Posn<f64>, pos2: Posn<f64>, pos3: Posn<f64>) {
         self.push_op(&[&pos1, &pos2, &pos3], "c");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
-    /// Extend curve to `(x3, y3)` using current point, and `(x2, y2)` as Bézier control points.
-    pub fn curve_start_to(&mut self, pos2: PosnPoints, pos3: PosnPoints) {
+    /// Extend curve to `pos3` using current point, and `pos2` as Bézier control points.
+    pub fn curve_start_to(&mut self, pos2: Posn<f64>, pos3: Posn<f64>) {
         self.push_op(&[&pos2, &pos3], "v");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
-    /// extend curve to `(x3, y3)` using `(x1, y1)`, and `(x3, y3)` as Bézier control points.
-    pub fn curve_end_to(&mut self, pos1: PosnPoints, pos3: PosnPoints) {
+    /// extend curve to `pos3` using `pos1`, and `pos3` as Bézier control points.
+    pub fn curve_end_to(&mut self, pos1: Posn<f64>, pos3: Posn<f64>) {
         self.push_op(&[&pos1, &pos3], "y");
     }
 
@@ -250,11 +243,9 @@ impl StreamObject {
             PdfError::InvalidImage(format!("Failed to load image from {}: {}", path, e))
         })?;
 
-        // Convert to RGB
         let rgb_img = img.to_rgb8();
         let (width_pixels, height_pixels) = rgb_img.dimensions();
 
-        // Add as inline image
         self.inline_image(
             width_pixels,
             height_pixels,
@@ -264,17 +255,17 @@ impl StreamObject {
         )
     }
 
-    pub fn line_to_x_y(&mut self, posn: PosnPoints) {
+    pub fn line_to_x_y(&mut self, posn: Posn<f64>) {
         self.push_op(&[&posn], "l");
     }
 
-    /// Begin new subpath by moving current point to `(x, y)`.
-    pub fn move_to_x_y(&mut self, posn: PosnPoints) {
+    /// Begin new subpath by moving current point to `posn`.
+    pub fn move_to_x_y(&mut self, posn: Posn<f64>) {
         self.push_op(&[&posn], "m");
     }
 
-    /// Move text to next line at `(x, y)` distance from previous line.
-    pub fn move_text_to_x_y(&mut self, posn: PosnPoints) {
+    /// Move text to next line at `posn` distance from previous line.
+    pub fn move_text_to_x_y(&mut self, posn: Posn<f64>) {
         self.push_op(&[&posn], "T*");
     }
 
@@ -297,7 +288,7 @@ impl StreamObject {
     /// Add rectangle to current path as complete subpath.
     ///
     /// `posn` is the lower-left corner and `size` the dimensions.
-    pub fn rectangle(&mut self, posn: PosnPoints, size: DimsPoints) {
+    pub fn rectangle(&mut self, posn: Posn<f64>, size: DimsPoints) {
         self.push_op(&[&posn, &size], "re");
     }
 
@@ -383,7 +374,7 @@ impl StreamObject {
 
         self.stream.push(cmd);
     }
-    /// Set font name and size.
+
     pub fn set_font_name_and_size(&mut self, font: &str, size: f64) {
         self.stream
             .push(format!("/{} {} Tf", font, f_to_pdf_num(size)).into_bytes());
@@ -446,73 +437,76 @@ impl StreamObject {
 
     pub fn rounded_rectangle(
         &mut self,
-        posn: PosnPoints,
+        posn: Posn<f64>,
         size: DimsPoints,
         radius_top_left: f64,
         radius_top_right: f64,
         radius_bottom_right: f64,
         radius_bottom_left: f64,
     ) {
-        let PosnPoints { x, y } = posn;
+        const KAPPA: f64 = 0.5522847498307933; // makes cubic Bezier curve like circular arc
+
+        let Posn { x, y } = posn;
         let DimsPoints { width, height } = size;
-        let draw_corner = |s: &mut StreamObject, radius: f64, rel_corner_pos: [f64; 2]| {
+
+        let draw_corner = |s: &mut StreamObject, radius: f64, rel_corner_pos: Posn<f64>| {
             if radius < 0.0001 {
                 return;
             }
 
-            const KAPPA: f64 = 0.5522847498307933; // makes cubic Bezier curve like circular arc
+            let Posn { x, y } = rel_corner_pos;
             s.curve_to(
-                PosnPoints {
+                Posn {
                     x: x + width - radius + radius * KAPPA,
                     y: y + height,
                 },
-                PosnPoints {
+                Posn {
                     x: x + width,
                     y: y + height - radius + radius * KAPPA,
                 },
-                PosnPoints {
+                Posn {
                     x: x + width,
                     y: y + height - radius,
                 },
             );
         };
 
-        self.move_to_x_y(PosnPoints {
+        self.move_to_x_y(Posn {
             x: x + radius_top_left,
             y: y + height,
         });
 
-        // top right
-        draw_corner(self, radius_top_left, [width, height]);
-        // right
-        self.line_to_x_y(PosnPoints {
+        draw_corner(
+            self,
+            radius_top_left,
+            Posn {
+                x: width,
+                y: height,
+            },
+        ); // top right
+
+        self.line_to_x_y(Posn {
             x: x + width - radius_top_right,
             y: y + height,
-        });
+        }); // right
 
-        // bottom right
-        draw_corner(self, radius_top_right, [width, 0.0]);
+        draw_corner(self, radius_top_right, Posn { x: width, y: 0.0 }); // bottom right
 
-        // bottom
-        self.line_to_x_y(PosnPoints {
+        self.line_to_x_y(Posn {
             x: x + width,
             y: y + radius_bottom_right,
-        });
+        }); // bottom
 
-        // bottom left
-        draw_corner(self, radius_bottom_right, [0.0, 0.0]);
+        draw_corner(self, radius_bottom_right, Posn { x: 0.0, y: 0.0 }); // bottom left
 
-        // left
-        self.line_to_x_y(PosnPoints { x: x + width, y });
+        self.line_to_x_y(Posn { x: x + width, y }); // left
 
-        // top left
-        draw_corner(self, radius_bottom_left, [0.0, height]);
+        draw_corner(self, radius_bottom_left, Posn { x: 0.0, y: height }); // top left
 
-        // top
-        self.line_to_x_y(PosnPoints {
+        self.line_to_x_y(Posn {
             x: x + radius_bottom_left,
             y,
-        });
+        }); // top
 
         self.close();
     }
@@ -541,20 +535,22 @@ impl PdfObject for StreamObject {
     }
 
     fn data(&self) -> Vec<u8> {
-        let mut stream_bytes = self.stream.join(&b'\n');
-
-        if let CompressionMethod::Flate = self.compress {
-            let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-            encoder.write_all(&stream_bytes).unwrap();
-            stream_bytes = encoder.finish().unwrap();
-        }
+        let stream_bytes = match self.compress {
+            CompressionMethod::None => self.stream.join(&b'\n'),
+            CompressionMethod::Flate => {
+                let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+                encoder.write_all(&self.stream.join(&b'\n')).unwrap();
+                encoder.finish().unwrap()
+            }
+        };
 
         let mut dict_values = self.extra.clone();
         dict_values.push((
             "Length".to_string(),
-            Arc::new(NumberObject::from(stream_bytes.len() as f64)),
+            Rc::new(NumberObject::from(stream_bytes.len() as f64)),
         ));
-        let mut dict = DictionaryObject::new(Some(dict_values));
+        let dict = DictionaryObject::new(Some(dict_values));
+
         let mut result = dict.data();
         result.extend(b"\nstream\n");
         result.extend(stream_bytes);
@@ -568,6 +564,6 @@ impl PdfObject for StreamObject {
     }
 
     fn is_compressible(&self) -> bool {
-        false // never compressible in PDF object streams
+        false
     }
 }

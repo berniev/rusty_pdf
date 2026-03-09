@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use std::collections::HashMap;
 
 use crate::objects::stream::StreamObject;
@@ -41,8 +42,8 @@ impl GraphicsStateManager {
         self.resource_counter += 1;
 
         let mut gs_dict = DictionaryObject::typed("/ExtGState");
-        gs_dict.set("CA", std::sync::Arc::new(NumberObject::from(alpha))); // Stroke alpha
-        gs_dict.set("ca", std::sync::Arc::new(NumberObject::from(alpha))); // Fill alpha
+        gs_dict.set("CA", Rc::new(NumberObject::from(alpha))); // Stroke alpha
+        gs_dict.set("ca", Rc::new(NumberObject::from(alpha))); // Fill alpha
         let obj_num = pdf.objects.len();
         pdf.add_object(Box::new(gs_dict));
 
@@ -109,8 +110,7 @@ mod tests {
 
     #[test]
     fn test_opacity_state_creation() {
-        use crate::page::PageSize;
-        let mut pdf = PDF::new(PageSize::A4);
+        let mut pdf = PDF::new();
         let mut gs_manager = GraphicsStateManager::new();
 
         let name1 = gs_manager.get_or_create_opacity_state(&mut pdf, 0.5);
@@ -125,8 +125,7 @@ mod tests {
 
     #[test]
     fn test_extgstate_dict() {
-        use crate::page::PageSize;
-        let mut pdf = PDF::new(PageSize::A4);
+        let mut pdf = PDF::new();
         let mut gs_manager = GraphicsStateManager::new();
 
         gs_manager.get_or_create_opacity_state(&mut pdf, 0.5);

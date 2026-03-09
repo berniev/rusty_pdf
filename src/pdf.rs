@@ -1,8 +1,9 @@
+use std::rc::Rc;
 use crate::objects::base::BaseObject;
 use crate::{ArrayObject, DictionaryObject, NameObject, NumberObject, NumberType, PdfObject};
-use std::sync::Arc;
 
-use crate::page::{Page, PageSize};
+use crate::page::Page;
+use crate::page_size::PageSize;
 
 pub const DEFAULT_VERSION: TargetVersion = TargetVersion::Auto;
 pub const DEFAULT_PAGE_SIZE: PageSize = PageSize::A4;
@@ -28,8 +29,8 @@ pub struct PageTree {
 impl PageTree {
     pub fn new() -> Self {
         let mut dict = DictionaryObject::typed("Pages");
-        dict.set("Kids", Arc::new(ArrayObject::new(None)));
-        dict.set("Count", Arc::new(NumberObject::new(NumberType::from(0.0))));
+        dict.set("Kids", Rc::new(ArrayObject::new(None)));
+        dict.set("Count", Rc::new(NumberObject::new(NumberType::from(0.0))));
         Self { dict }
     }
 }
@@ -65,7 +66,6 @@ pub enum FileIdentifierMode {
 //--------------------------- PDF -------------------------
 
 pub struct PDF {
-    pub page_size: PageSize,
     pub version: TargetVersion,
     pub objects: Vec<Box<dyn PdfObject>>,
     pub info: DictionaryObject,
@@ -78,7 +78,6 @@ pub struct PDF {
 impl Default for PDF {
     fn default() -> Self {
         PDF {
-            page_size: DEFAULT_PAGE_SIZE,
             version: DEFAULT_VERSION,
             info: DictionaryObject::new(None),
             catalog: DocumentCatalog::new(),
@@ -91,23 +90,17 @@ impl Default for PDF {
 }
 
 impl PDF {
-    pub fn new(size: PageSize) -> Self {
+    pub fn new() -> Self {
         let mut pdf = PDF {
-            page_size: size,
             ..Default::default()
         };
 
         pdf.add_object(Box::new(BaseObject::sentinel()));
 
         pdf.page_tree
-            .set("MediaBox", Arc::new(ArrayObject::from_size(size)));
+            .set("MediaBox", Rc::new([0]));
 
         pdf
-    }
-
-    pub fn with_page_size(mut self, size: PageSize) -> Self {
-        self.page_size = size;
-        self
     }
 
     pub fn with_version(mut self, version: TargetVersion) -> Self {
@@ -119,13 +112,15 @@ impl PDF {
         let number = self.objects.len();
         object.metadata_mut().number = Some(number);
         self.objects.push(object);
+
         number
     }
 
     pub fn add_page(&mut self, page: Page) {
-        let id = self.add_object(Box::new(page));
-        self.page_ids.push(id);
-    }
+    let dict = page.into_dictionary();
+    let id = self.add_object(Box::new(dict));
+    self.page_ids.push(id);
+}
 
     pub fn add_page_simple(&mut self, size: PageSize, contents: &[u8]) {
         let mut page = Page::new(size);
@@ -167,9 +162,9 @@ impl PDF {
 
         for (name, subtype) in fonts {
             let mut f = DictionaryObject::typed("Font");
-            f.set("Subtype", Arc::new(NameObject::new(subtype.to_string())));
-            f.set("BaseFont", Arc::new(NameObject::new(name.to_string())));
-            font_dict.set(name, Arc::new(f));
+            f.set("Subtype", Rc::new(NameObject::new(subtype.to_string())));
+            f.set("BaseFont", Rc::new(NameObject::new(name.to_string())));
+            font_dict.set(name, Rc::new(f));
         }
         font_dict
     }

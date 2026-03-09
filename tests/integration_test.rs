@@ -1,5 +1,6 @@
 use pydyf::{PDF, PageSize, Page, StreamObject};
-use pydyf::util::{EvenOdd, PosnPoints, DimsPoints, StrokeOrFill, RGB};
+use pydyf::page_size::PageSize;
+use pydyf::util::{EvenOdd, Posn, DimsPoints, StrokeOrFill, RGB};
 
 fn create_page_with_content(content_stream_ref: Vec<u8>) -> Page {
     let mut page = Page::new();
@@ -31,7 +32,7 @@ fn test_stream_operations() {
     let mut stream = StreamObject::new_compressed();
 
     let _ = stream.set_color_rgb(RGB{red:1.0, green:0.0, blue:0.0}, StrokeOrFill::Stroke);
-    stream.rectangle(PosnPoints {x:100.0, y:100.0}, DimsPoints {height:200.0, width:150.0});
+    stream.rectangle(Posn {x:100.0, y:100.0}, DimsPoints {height:200.0, width:150.0});
     stream.fill(EvenOdd::Odd);
 
     assert!(stream.stream.len() > 0);
@@ -39,7 +40,7 @@ fn test_stream_operations() {
 
 #[test]
 fn test_compressed_stream() {
-    let stream = StreamObject::new_compressed();
+    let stream = StreamObject::new().compressed();
     assert!(stream.compress);
 }
 
@@ -75,7 +76,7 @@ fn test_add_page_simple_with_pagesize() {
 
 #[test]
 fn test_add_page_simple_default_size() {
-    let mut pdf = PDF::new(PageSize::Letter);
+    let mut pdf = PDF::new();
     let stream = StreamObject::new();
     pdf.add_object(Box::new(stream));
     let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
@@ -93,7 +94,7 @@ fn test_add_page_simple_default_size() {
 
 #[test]
 fn test_root_mediabox_inheritance() {
-    let pdf = PDF::new(PageSize::A4);
+    let pdf = PDF::new();
     let pages_dict = &pdf.page_tree;
     let mediabox = pages_dict.values.get("MediaBox").unwrap();
     assert_eq!(String::from_utf8_lossy(mediabox), "[0 0 595 842]");

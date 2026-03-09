@@ -95,10 +95,11 @@ pub mod text;
 pub mod page;
 pub mod util;
 mod writer;
-mod page_size;
+pub mod page_size;
+mod color;
 
 // Re-export main types for convenience
-pub use objects::array::{Array, ArrayObject};
+pub use objects::array::ArrayObject;
 pub use objects::dictionary::DictionaryObject;
 pub use objects::stream::StreamObject;
 pub use objects::base::BaseObject;

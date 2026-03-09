@@ -11,7 +11,7 @@ pub mod status;
 pub mod stream;
 pub mod string;
 
-pub use array::{Array, ArrayObject};
+pub use array::ArrayObject;
 pub use base::BaseObject;
 pub use boolean::BooleanObject;
 pub use dictionary::DictionaryObject;
