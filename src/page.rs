@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::util::Dims;
-use crate::{ArrayObject, DictionaryObject, NumberObject, PdfObject};
+use crate::{ArrayObject, DictionaryObject, NumberObject, ResourceDictionary};
 
 //--------------------------- Page Size ---------------------------//
 
@@ -103,12 +103,11 @@ impl PageSize {
 pub struct PageObject {
     id: usize,
     parent: usize,
-    resources: Option<DictionaryObject>,
+    resources: Option<ResourceDictionary>,
     media_box: Option<PageSize>,
 }
 
 impl PageObject {
-
     pub fn new(id: usize, parent: usize) -> Self {
         Self {
             id,
@@ -124,7 +123,7 @@ impl PageObject {
     }
 
     /// If None, the page will later try to inherit from its parent.
-    pub fn set_resources(&mut self, resources: DictionaryObject) {
+    pub fn set_resources(&mut self, resources: ResourceDictionary) {
         self.resources = Some(resources);
     }
 }
@@ -155,8 +154,8 @@ pub struct PageTreeNode {
     id: usize,
     parent: usize,
     kids: Vec<PageTreeItem>,
-    media_box: Option<PageSize>,         // Shared dimensions
-    resources: Option<DictionaryObject>, // Shared fonts, etc.
+    media_box: Option<PageSize>,           // Shared dimensions
+    resources: Option<ResourceDictionary>, // Shared fonts, etc.
 }
 
 impl PageTreeNode {
@@ -165,8 +164,8 @@ impl PageTreeNode {
             id: 0,
             parent: 0,
             kids: Vec::new(),
-            media_box:None,
-            resources:None,
+            media_box: None,
+            resources: None,
         }
     }
 
@@ -204,7 +203,7 @@ impl PageTreeNode {
         self.media_box = Some(size);
     }
 
-    pub fn set_resources(&mut self, resources: DictionaryObject) {
+    pub fn set_resources(&mut self, resources: ResourceDictionary) {
         self.resources = Some(resources);
     }
 }
