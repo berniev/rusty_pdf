@@ -1,5 +1,6 @@
 pub trait PdfObject {
-     fn data(&self) -> Vec<u8>;
+    fn data(&self) -> Vec<u8>;
+
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any; // Downcast to Any for type checking
 
     fn indirect(&self) -> Vec<u8> {

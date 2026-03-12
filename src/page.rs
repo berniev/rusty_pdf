@@ -8,6 +8,7 @@ use crate::util::Dims;
 
 ///// Usage: let object_num: ObjectNum = 100u64.into();
 #[derive(Clone, Debug)]
+#[derive(Default)]
 pub struct ObjectId(u64);
 
 impl From<u64> for ObjectId {

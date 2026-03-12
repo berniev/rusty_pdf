@@ -4,6 +4,8 @@ pub mod number;
 pub mod pdf_object;
 pub mod stream;
 pub mod string;
+pub(crate) mod array;
+mod metadata;
 
 pub use dictionary::DictionaryObject;
 pub use name::NameObject;

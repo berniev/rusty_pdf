@@ -677,6 +677,7 @@ dependencies = [
  "hex",
  "image",
  "md5",
+ "once_cell",
  "regex",
 ]
 

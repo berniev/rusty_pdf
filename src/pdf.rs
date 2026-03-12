@@ -1,109 +1,9 @@
 use std::io::Write;
 use crate::page::{PageObject, PageTreeNode};
 
-use crate::objects::base::BaseObject;
 use crate::{DictionaryObject, NameObject, PdfObject};
 use std::rc::Rc;
 use crate::cross_ref::CrossRefTable;
-
-//--------------------------- Catalog -------------------------
-
-/// Spec:
-/// Document Catalog:
-///     The primary dictionary object containing references directly or indirectly to all other
-///     objects in the document with the exception that there may be objects in the trailer that
-///     are not referred to by the catalog
-///
-///  Catalog
-///          Page Tree
-///                           Page
-///                                          Content Stream
-///                                          Thumbnail Image
-///                                          Annotations
-///                                    ...
-///                           Page
-///          Outline Hierachy
-///                           Outline Entry
-///                                ...
-///                           Outline Entry
-///          Article Threads
-///                           Thread
-///                                          Bead <--> Bead
-///                               ...
-///                           Thread
-///          Named Destinations
-///          Interactive form
-/// Entries:
-///     Type               name           Reqd          "Catalog"
-///     Version            name           Opt     1.4   
-///     Extensions         dictionary     Opt
-///     Pages              dictionary     Reqd          shall be indirect ref
-///     PageLabels         number tree    Opt     1.3
-///     Names              dictionary     Opt     1.2
-///     Dests              dictionary     Opt     1.1   indirect reference
-///     ViewerPreferences  dictionary     Opt     1.2
-///     PageLayout         name           Opt
-///         SinglePage (def)
-///         OneColumn
-///         TwoColumnLeft
-///         TwoColumnRight
-///         TwoPageLeft
-///         TwoPageRight
-///     PageMode           name           Opt     
-///          UseNone (def)
-///          UseOutlines
-///          UseThumbs
-///          FullScreen
-///          UseOC
-///          UseAttachments
-///     Outlines            dictionary     Opt         indirect reference
-///     Threads             array          Opt    1.1  indirect reference
-///     OpenAction          array or dict  Opt    1.1   
-///     AA                  dictionary     Opt    1.4
-///     URI                 dictionary     Opt    1.1
-///     AcroForm            dictionary     Opt    1.2
-///     Metadata            dictionary     Opt    1.4
-///     StructTreeRoot      dictionary     Opt    1.3
-///     MarkInfo            dictionary     Opt    1.4
-///     Lang                text string    Opt    1.4
-///     SpiderInfo          dictionary     Opt    1.3
-///     OutputIntents       array          Opt    1.4
-///     PieceInfo           dictionary     Opt    1.4
-///     OCProperties        dictionary     Opt    1.5
-///     Perms               dictionary     Opt    1.5
-///     Legal               dictionary     Opt    1.5
-///     Requirements        array          Opt    1.7
-///     Collection          dictionary     Opt    1.7
-///     NeedsRendering      boolean        Opt    1.7
-///
-
-//--------------------------- Version -------------------------
-
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub enum TargetVersion {
-    Auto,
-    V1_4,
-    V1_5,
-}
-
-impl TargetVersion {
-    pub fn as_str(&self) -> &str {
-        match self {
-            TargetVersion::Auto => "Auto",
-            TargetVersion::V1_4 => "1.4",
-            TargetVersion::V1_5 => "1.5",
-        }
-    }
-}
-
-//----------------------- Identifier -----------------------
-
-/// for trailer
-pub enum FileIdentifierMode {
-    None,
-    AutoMD5,
-    Custom(Vec<u8>),
-}
 
 //--------------------------- PDF -------------------------
 
@@ -121,8 +21,40 @@ pub enum FileIdentifierMode {
 ///     Body: containing the objects that make up the document
 ///     Cross-Reference Table: (xreft) information about the indirect objects in the file
 ///     Trailer: location of the xreft and of certain special objects within the body of the file
+
+//--------------------------- Version -------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
+pub enum PdfVersion {
+    #[default]
+    Auto,
+    V1_4,
+    V1_5,
+}
+
+impl PdfVersion {
+    pub fn as_str(&self) -> &str {
+        match self {
+            PdfVersion::Auto => "Auto",
+            PdfVersion::V1_4 => "1.4",
+            PdfVersion::V1_5 => "1.5",
+        }
+    }
+}
+
+//----------------------- Identifier -----------------------
+
+/// for trailer
+pub enum FileIdentifierMode {
+    None,
+    AutoMD5,
+    Custom(Vec<u8>),
+}
+
+//--------------------------- PDF -------------------------
+
 pub struct PDF {
-    pub version: TargetVersion,
+    pub version: PdfVersion,
     pub objects: Vec<Box<dyn PdfObject>>,
     pub catalog: DictionaryObject,
     pub page_tree: PageTreeNode,
@@ -133,7 +65,7 @@ pub struct PDF {
 impl PDF {
     pub fn new() -> Self {
         let mut pdf = PDF {
-            version: TargetVersion::Auto,
+            version: PdfVersion::Auto,
             objects: Vec::new(),
             catalog: DictionaryObject::typed("Catalog"),
             page_tree: PageTreeNode::new(None),
@@ -144,7 +76,7 @@ impl PDF {
         pdf
     }
 
-    pub fn with_version(mut self, version: TargetVersion) -> Self {
+    pub fn with_version(mut self, version: PdfVersion) -> Self {
         self.version = version;
 
         self

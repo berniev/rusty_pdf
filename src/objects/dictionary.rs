@@ -87,9 +87,6 @@ impl PdfObject for DictionaryObject {
         self
     }
 
-    fn is_compressible(&self) -> bool {
-        self.metadata.generation_number == 0
-    }
 }
 
 #[cfg(test)]

@@ -11,8 +11,9 @@ pub mod util;
 pub mod writer;
 pub mod color;
 pub mod cross_ref;
+pub mod catalog;
 
-// Re-export main types for convenience
+// Re-export main types for user API convenience
 pub use objects::dictionary::DictionaryObject;
 pub use objects::stream::StreamObject;
 pub use objects::pdf_object::PdfObject;
