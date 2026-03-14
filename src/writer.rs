@@ -1,7 +1,7 @@
-use std::io::Write;
-use std::collections::HashMap;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::collections::HashMap;
+use std::io::Write;
+use std::rc::Rc;
 
 use crate::cross_ref::CrossRefStream;
 use crate::cross_ref::{CrossRefEntry, ObjectStatus};
@@ -64,82 +64,21 @@ impl<W: Write, S: WriteStrategy> PdfWriter<W, S> {
 //---------------------------- WriteStrategy -----------------
 
 pub(crate) trait WriteStrategy {
-    //////////////////////////////////////////////////////////
-    // These MUST be supplied in every strategy implementation
-    //////////////////////////////////////////////////////////
     const VERSION: &[u8];
     fn get_version(&self) -> &[u8];
 
-    // These have default implementations but can be overridden
     fn write_body<W: Write>(
         &self,
         pdf: &mut PDF,
         stream: &mut PdfStream<W>,
-    ) -> std::io::Result<()> {
-        // Default: Write all objects individually (uncompressed)
-        for obj in &mut pdf.objects {
-            if obj.metadata().status == ObjectStatus::Free {
-                continue;
-            }
-            obj.metadata_mut().offset = stream.pos;
-            stream.write_line_latin1(&obj.indirect())?;
-        }
-        Ok(())
-    }
+    ) -> std::io::Result<()>;
 
     fn write_index<W: Write>(
         &self,
         pdf: &mut PDF,
         stream: &mut PdfStream<W>,
         id_mode: &FileIdentifierMode,
-    ) -> std::io::Result<()> {
-        pdf.xref_position = Some(stream.pos);
-        stream.write_line(b"xref")?;
-        stream.write_line(format!("0 {}", pdf.object_count()).as_bytes())?;
-
-        // Per PDF spec, object 0 is always free (head of free list)
-        stream.write_line(b"0000000000 65535 f ")?;
-
-        // Write entries for actual objects (1 through N-1)
-        let xref_entries: Vec<String> = pdf
-            .objects
-            .iter()
-            .map(|obj| obj.metadata().format_xref_entry())
-            .collect();
-
-        for entry in xref_entries {
-            stream.write_line(entry.as_bytes())?;
-        }
-
-        // Write trailer
-        stream.write_line(b"trailer")?;
-        stream.write_line(b"<<")?;
-        stream.write_line(format!("/Size {}", pdf.object_count()).as_bytes())?;
-        stream.write_line(
-            format!(
-                "/Root {} 0 R",
-                pdf.catalog.metadata.object_identifier.unwrap()
-            )
-            .as_bytes(),
-        )?;
-
-        if !pdf.info.values.is_empty() {
-            stream.write_line(
-                &format!("/Info {} 0 R", pdf.info.metadata.object_identifier.unwrap()).into_bytes(),
-            )?;
-        }
-
-        if let Some(id_line) = Self::format_identifier(&pdf.objects, id_mode) {
-            stream.write_line(&id_line)?;
-        }
-
-        stream.write_line(b">>")?;
-        Ok(())
-    }
-
-    ///////////////////
-    // shared functions
-    ///////////////////
+    ) -> std::io::Result<()>;
 
     /// Formats two byte arrays into a PDF ID array string.
     fn format_id_array(first_id: &[u8], second_id: &[u8]) -> Vec<u8> {
@@ -207,6 +146,72 @@ impl WriteStrategy for LegacyStrategy {
 
     fn get_version(&self) -> &[u8] {
         Self::VERSION
+    }
+
+    fn write_body<W: Write>(
+        &self,
+        pdf: &mut PDF,
+        stream: &mut PdfStream<W>,
+    ) -> std::io::Result<()> {
+        // Write all objects individually (uncompressed)
+        for obj in &mut pdf.objects {
+            if obj.metadata().status == ObjectStatus::Free {
+                continue;
+            }
+            obj.metadata_mut().offset = stream.pos;
+            stream.write_line_latin1(&obj.indirect())?;
+        }
+        Ok(())
+    }
+
+    fn write_index<W: Write>(
+        &self,
+        pdf: &mut PDF,
+        stream: &mut PdfStream<W>,
+        id_mode: &FileIdentifierMode,
+    ) -> std::io::Result<()> {
+        pdf.xref_position = Some(stream.pos);
+        stream.write_line(b"xref")?;
+        stream.write_line(format!("0 {}", pdf.object_count()).as_bytes())?;
+
+        // Per PDF spec, object 0 is always free (head of free list)
+        stream.write_line(b"0000000000 65535 f ")?;
+
+        // Write entries for actual objects (1 through N-1)
+        let xref_entries: Vec<String> = pdf
+            .objects
+            .iter()
+            .map(|obj| obj.metadata().format_xref_entry())
+            .collect();
+
+        for entry in xref_entries {
+            stream.write_line(entry.as_bytes())?;
+        }
+
+        // Write trailer
+        stream.write_line(b"trailer")?;
+        stream.write_line(b"<<")?;
+        stream.write_line(format!("/Size {}", pdf.object_count()).as_bytes())?;
+        stream.write_line(
+            format!(
+                "/Root {} 0 R",
+                pdf.catalog.metadata.object_identifier.unwrap()
+            )
+            .as_bytes(),
+        )?;
+
+        if !pdf.info.values.is_empty() {
+            stream.write_line(
+                &format!("/Info {} 0 R", pdf.info.metadata.object_identifier.unwrap()).into_bytes(),
+            )?;
+        }
+
+        if let Some(id_line) = Self::format_identifier(&pdf.objects, id_mode) {
+            stream.write_line(&id_line)?;
+        }
+
+        stream.write_line(b">>")?;
+        Ok(())
     }
 }
 
