@@ -124,37 +124,73 @@ impl CrossRefTable {
 ///
 
 #[derive(Clone)]
-pub enum XStreamType{
-    FreeObject,
-    Uncompressed,
-    CompressedInObjstm,
+pub(crate) enum CrossRefEntry {
+    FreeObject {
+        next_free_obj: usize,
+        generation: u16,
+    },
+    Uncompressed {
+        byte_offset: usize,
+        generation: u16,
+    },
+    CompressedInObjstm {
+        objstm_number: usize,
+        index_within_objstm: u16,
+    },
 }
 
 pub(crate) struct CrossRefStream {
-    entries: Vec<(XStreamType, usize, u16)>, // (type, field2, field3)
+    entries: Vec<CrossRefEntry>,
 }
-
 impl CrossRefStream {
     pub fn new() -> Self {
         let mut stream = CrossRefStream {
             entries: Vec::new(),
         };
-        stream.entries.push((XStreamType::FreeObject, 0, 65535));
+        stream.entries.push(CrossRefEntry::FreeObject {
+            next_free_obj: 0,
+            generation: 65535,
+        });
         stream
     }
 
-    pub fn add_entry(&mut self, entry_type: XStreamType, field2: usize, field3: u16) {
-        self.entries.push((entry_type, field2, field3));
+    pub fn add_free_object(&mut self, next_free_obj: usize, generation: u16) {
+        self.entries.push(CrossRefEntry::FreeObject {
+            next_free_obj,
+            generation,
+        });
+    }
+
+    pub fn add_uncompressed(&mut self, byte_offset: usize, generation: u16) {
+        self.entries.push(CrossRefEntry::Uncompressed {
+            byte_offset,
+            generation,
+        });
+    }
+
+    pub fn add_compressed(&mut self, objstm_number: usize, index_within_objstm: u16) {
+        self.entries.push(CrossRefEntry::CompressedInObjstm {
+            objstm_number,
+            index_within_objstm,
+        });
     }
 
     pub fn build_binary_data(&self, field2_width: usize, field3_width: usize) -> Vec<u8> {
         let mut data = Vec::new();
-        for (type_byte, field2, field3) in &self.entries {
-            data.push(match type_byte {
-                XStreamType::FreeObject => 0u8,
-                XStreamType::Uncompressed => 1u8,
-                XStreamType::CompressedInObjstm => 2u8,
-            });
+        for entry in &self.entries {
+            let (type_byte, field2, field3) = match entry {
+                CrossRefEntry::FreeObject { next_free_obj, generation } => {
+                    (0u8, *next_free_obj, *generation)
+                }
+                CrossRefEntry::Uncompressed { byte_offset, generation } => {
+                    (1u8, *byte_offset, *generation)
+                }
+                CrossRefEntry::CompressedInObjstm { objstm_number, index_within_objstm } => {
+                    (2u8, *objstm_number, *index_within_objstm)
+                }
+            };
+
+            data.push(type_byte);
 
             // Encode field2 in big-endian
             let field2_bytes = field2.to_be_bytes();
