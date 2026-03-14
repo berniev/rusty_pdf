@@ -1,0 +1,372 @@
+//! Action framework for interactive PDF behaviors.
+//!
+//! Actions define behaviors that can be triggered by user interactions, such as
+//! clicking links, opening documents, or interacting with form fields.
+
+use crate::{DictionaryObject, NameObject, NumberObject, NumberType, PdfResult, ArrayObject};
+use std::rc::Rc;
+
+/// Base trait for PDF actions.
+///
+/// Actions specify responses to various events in PDF documents, such as
+/// user interactions with annotations or form fields.
+pub trait Action {
+    /// Get the action type (URI, GoTo, JavaScript, etc.)
+    fn action_type(&self) -> &'static str;
+
+    /// Convert this action to a PDF dictionary object.
+    fn to_dict(&self) -> PdfResult<DictionaryObject>;
+}
+
+/// Navigate to a URI (web link or file link).
+pub struct UriAction {
+    pub uri: String,
+    pub is_map: bool,
+}
+
+impl UriAction {
+    /// Create a new URI action.
+    pub fn new(uri: String) -> Self {
+        Self {
+            uri,
+            is_map: false,
+        }
+    }
+
+    /// Set whether this is an image map click.
+    pub fn with_is_map(mut self, is_map: bool) -> Self {
+        self.is_map = is_map;
+        self
+    }
+}
+
+impl Action for UriAction {
+    fn action_type(&self) -> &'static str {
+        "URI"
+    }
+
+    fn to_dict(&self) -> PdfResult<DictionaryObject> {
+        let mut dict = DictionaryObject::new(None);
+        dict.set("S", Rc::new(NameObject::new(Some(self.action_type().to_string()))));
+        dict.set("URI", Rc::new(crate::StringObject::new(Some(self.uri.clone()))));
+
+        if self.is_map {
+            dict.set("IsMap", Rc::new(crate::BooleanObject::new(Some(true))));
+        }
+
+        Ok(dict)
+    }
+}
+
+/// Navigate to a destination within the PDF.
+pub struct GoToAction {
+    pub destination: Destination,
+}
+
+impl GoToAction {
+    /// Create a new GoTo action.
+    pub fn new(destination: Destination) -> Self {
+        Self { destination }
+    }
+}
+
+impl Action for GoToAction {
+    fn action_type(&self) -> &'static str {
+        "GoTo"
+    }
+
+    fn to_dict(&self) -> PdfResult<DictionaryObject> {
+        let mut dict = DictionaryObject::new(None);
+        dict.set("S", Rc::new(NameObject::new(Some(self.action_type().to_string()))));
+        dict.set("D", Rc::new(self.destination.to_array()));
+        Ok(dict)
+    }
+}
+
+/// Execute JavaScript code.
+pub struct JavaScriptAction {
+    pub script: String,
+}
+
+impl JavaScriptAction {
+    /// Create a new JavaScript action.
+    pub fn new(script: String) -> Self {
+        Self { script }
+    }
+}
+
+impl Action for JavaScriptAction {
+    fn action_type(&self) -> &'static str {
+        "JavaScript"
+    }
+
+    fn to_dict(&self) -> PdfResult<DictionaryObject> {
+        let mut dict = DictionaryObject::new(None);
+        dict.set("S", Rc::new(NameObject::new(Some(self.action_type().to_string()))));
+        dict.set("JS", Rc::new(crate::StringObject::new(Some(self.script.clone()))));
+        Ok(dict)
+    }
+}
+
+/// Launch an external application or open a file.
+pub struct LaunchAction {
+    pub file: String,
+    pub new_window: Option<bool>,
+}
+
+impl LaunchAction {
+    /// Create a new Launch action.
+    pub fn new(file: String) -> Self {
+        Self {
+            file,
+            new_window: None,
+        }
+    }
+
+    /// Set whether to open in a new window.
+    pub fn with_new_window(mut self, new_window: bool) -> Self {
+        self.new_window = Some(new_window);
+        self
+    }
+}
+
+impl Action for LaunchAction {
+    fn action_type(&self) -> &'static str {
+        "Launch"
+    }
+
+    fn to_dict(&self) -> PdfResult<DictionaryObject> {
+        let mut dict = DictionaryObject::new(None);
+        dict.set("S", Rc::new(NameObject::new(Some(self.action_type().to_string()))));
+
+        // File specification
+        let mut file_dict = DictionaryObject::new(None);
+        file_dict.set("Type", Rc::new(NameObject::new(Some("Filespec".to_string()))));
+        file_dict.set("F", Rc::new(crate::StringObject::new(Some(self.file.clone()))));
+        dict.set("F", Rc::new(file_dict));
+
+        if let Some(new_win) = self.new_window {
+            dict.set("NewWindow", Rc::new(crate::BooleanObject::new(Some(new_win))));
+        }
+
+        Ok(dict)
+    }
+}
+
+/// Execute a named action (built-in viewer operation).
+pub struct NamedAction {
+    pub name: NamedActionType,
+}
+
+/// Standard named actions defined in PDF specification.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NamedActionType {
+    /// Go to next page.
+    NextPage,
+    /// Go to previous page.
+    PrevPage,
+    /// Go to first page.
+    FirstPage,
+    /// Go to last page.
+    LastPage,
+}
+
+impl NamedActionType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            NamedActionType::NextPage => "NextPage",
+            NamedActionType::PrevPage => "PrevPage",
+            NamedActionType::FirstPage => "FirstPage",
+            NamedActionType::LastPage => "LastPage",
+        }
+    }
+}
+
+impl NamedAction {
+    /// Create a new named action.
+    pub fn new(name: NamedActionType) -> Self {
+        Self { name }
+    }
+}
+
+impl Action for NamedAction {
+    fn action_type(&self) -> &'static str {
+        "Named"
+    }
+
+    fn to_dict(&self) -> PdfResult<DictionaryObject> {
+        let mut dict = DictionaryObject::new(None);
+        dict.set("S", Rc::new(NameObject::new(Some(self.action_type().to_string()))));
+        dict.set("N", Rc::new(NameObject::new(Some(self.name.as_str().to_string()))));
+        Ok(dict)
+    }
+}
+
+/// Destination within a PDF document.
+///
+/// Destinations specify a particular view of a PDF page.
+#[derive(Debug, Clone)]
+pub enum Destination {
+    /// [page /XYZ left top zoom] - Display page at (left, top) with zoom factor.
+    /// null values maintain current position/zoom.
+    XYZ {
+        page: usize,
+        left: Option<f64>,
+        top: Option<f64>,
+        zoom: Option<f64>,
+    },
+
+    /// [page /Fit] - Fit entire page in window.
+    Fit {
+        page: usize,
+    },
+
+    /// [page /FitH top] - Fit page width, position at top.
+    FitH {
+        page: usize,
+        top: Option<f64>,
+    },
+
+    /// [page /FitV left] - Fit page height, position at left.
+    FitV {
+        page: usize,
+        left: Option<f64>,
+    },
+
+    /// [page /FitR left bottom right top] - Fit rectangle in window.
+    FitR {
+        page: usize,
+        left: f64,
+        bottom: f64,
+        right: f64,
+        top: f64,
+    },
+}
+
+impl Destination {
+    /// Create an XYZ destination (most common type).
+    pub fn xyz(page: usize, left: Option<f64>, top: Option<f64>, zoom: Option<f64>) -> Self {
+        Self::XYZ { page, left, top, zoom }
+    }
+
+    /// Create a Fit destination.
+    pub fn fit(page: usize) -> Self {
+        Self::Fit { page }
+    }
+
+    /// Convert destination to PDF array format.
+    pub fn to_array(&self) -> ArrayObject {
+        let mut arr = ArrayObject::new(None);
+
+        match self {
+            Destination::XYZ { page, left, top, zoom } => {
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
+                arr.push_object(Rc::new(NameObject::new(Some("XYZ".to_string()))));
+
+                if let Some(l) = left {
+                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*l))));
+                } else {
+                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
+                }
+
+                if let Some(t) = top {
+                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*t))));
+                } else {
+                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
+                }
+
+                if let Some(z) = zoom {
+                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*z))));
+                } else {
+                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
+                }
+            }
+            Destination::Fit { page } => {
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
+                arr.push_object(Rc::new(NameObject::new(Some("Fit".to_string()))));
+            }
+            Destination::FitH { page, top } => {
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
+                arr.push_object(Rc::new(NameObject::new(Some("FitH".to_string()))));
+
+                if let Some(t) = top {
+                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*t))));
+                } else {
+                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
+                }
+            }
+            Destination::FitV { page, left } => {
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
+                arr.push_object(Rc::new(NameObject::new(Some("FitV".to_string()))));
+
+                if let Some(l) = left {
+                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*l))));
+                } else {
+                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
+                }
+            }
+            Destination::FitR { page, left, bottom, right, top } => {
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
+                arr.push_object(Rc::new(NameObject::new(Some("FitR".to_string()))));
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*left))));
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*bottom))));
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*right))));
+                arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*top))));
+            }
+        }
+
+        arr
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_uri_action() {
+        let action = UriAction::new("https://example.com".to_string());
+        let dict = action.to_dict().unwrap();
+        assert!(dict.contains_key("S"));
+        assert!(dict.contains_key("URI"));
+    }
+
+    #[test]
+    fn test_goto_action() {
+        let dest = Destination::xyz(1, Some(0.0), Some(0.0), Some(1.0));
+        let action = GoToAction::new(dest);
+        let dict = action.to_dict().unwrap();
+        assert!(dict.contains_key("S"));
+        assert!(dict.contains_key("D"));
+    }
+
+    #[test]
+    fn test_javascript_action() {
+        let action = JavaScriptAction::new("app.alert('Hello');".to_string());
+        let dict = action.to_dict().unwrap();
+        assert!(dict.contains_key("S"));
+        assert!(dict.contains_key("JS"));
+    }
+
+    #[test]
+    fn test_named_action() {
+        let action = NamedAction::new(NamedActionType::NextPage);
+        let dict = action.to_dict().unwrap();
+        assert!(dict.contains_key("S"));
+        assert!(dict.contains_key("N"));
+    }
+
+    #[test]
+    fn test_destination_xyz() {
+        let dest = Destination::xyz(0, Some(100.0), Some(200.0), None);
+        let arr = dest.to_array();
+        assert_eq!(arr.values.len(), 5); // page, /XYZ, left, top, zoom
+    }
+
+    #[test]
+    fn test_destination_fit() {
+        let dest = Destination::fit(2);
+        let arr = dest.to_array();
+        assert_eq!(arr.values.len(), 2); // page, /Fit
+    }
+}
