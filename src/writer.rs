@@ -379,9 +379,6 @@ impl WriteStrategy for CompressedStrategy {
         let mut xref_stream = CrossRefStream::new();
         let mut entry_map: HashMap<usize, CrossRefEntry> = HashMap::new();
 
-        // Object 0 already added by CrossRefStream::new()
-        entry_map.insert(0, CrossRefEntry::FreeObject { next_free_obj: 0, generation: 65535 });
-
         let compression_map = self.compression_map.borrow();
 
         // Process all objects in pdf.objects
@@ -425,35 +422,18 @@ impl WriteStrategy for CompressedStrategy {
             }
         }
 
-        // Build binary data
-        let (field2_width, field3_width) = xref_stream.calculate_optimal_widths();
-        let xref_data = xref_stream.build_binary_data(field2_width, field3_width);
         let xref_stream_num = pdf.allocate_object_id();
+        let info_obj_id = if !pdf.info.values.is_empty() {
+            pdf.info.metadata.object_identifier
+        } else {
+            None
+        };
 
-        // Build xref stream dictionary
-        let w_array_str = format!("[ 1 {} {} ]", field2_width, field3_width);
-        let total_entries = xref_stream.entry_count();
-
-        let mut dict_entries = vec![
-            "/Type /XRef".to_string(),
-            format!("/Size {}", total_entries),
-            format!("/Root {} 0 R", pdf.catalog.metadata.object_identifier.unwrap()),
-            format!("/W {}", w_array_str),
-        ];
-
-        if !pdf.info.values.is_empty() {
-            dict_entries.push(format!("/Info {} 0 R", pdf.info.metadata.object_identifier.unwrap()));
-        }
-
-        dict_entries.push(format!("/Length {}", xref_data.len()));
-
-        let dict_str = format!("<< {} >>", dict_entries.join(" "));
-        let mut xref_stream_bytes = Vec::new();
-        xref_stream_bytes.extend_from_slice(
-            format!("{} 0 obj\n{}\nstream\n", xref_stream_num, dict_str).as_bytes()
+        let xref_stream_bytes = xref_stream.build_stream_object(
+            xref_stream_num,
+            pdf.catalog.metadata.object_identifier.unwrap(),
+            info_obj_id,
         );
-        xref_stream_bytes.extend_from_slice(&xref_data);
-        xref_stream_bytes.extend_from_slice(b"\nendstream\nendobj");
 
         stream.output.write_all(&xref_stream_bytes)?;
         stream.output.write_all(b"\n")?;

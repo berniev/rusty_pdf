@@ -247,4 +247,42 @@ impl CrossRefStream {
     pub fn entry_count(&self) -> usize {
         self.entries.len()
     }
+
+    /// Build the complete xref stream object with dictionary and binary data
+    /// Returns (stream_bytes, xref_data_length) for writing to PDF
+    pub fn build_stream_object(
+        &self,
+        stream_num: usize,
+        root_obj_id: usize,
+        info_obj_id: Option<usize>,
+    ) -> Vec<u8> {
+        let (field2_width, field3_width) = self.calculate_optimal_widths();
+        let xref_data = self.build_binary_data(field2_width, field3_width);
+
+        let w_array_str = format!("[ 1 {} {} ]", field2_width, field3_width);
+        let total_entries = self.entry_count();
+
+        let mut dict_entries = vec![
+            "/Type /XRef".to_string(),
+            format!("/Size {}", total_entries),
+            format!("/Root {} 0 R", root_obj_id),
+            format!("/W {}", w_array_str),
+        ];
+
+        if let Some(info_id) = info_obj_id {
+            dict_entries.push(format!("/Info {} 0 R", info_id));
+        }
+
+        dict_entries.push(format!("/Length {}", xref_data.len()));
+
+        let dict_str = format!("<< {} >>", dict_entries.join(" "));
+        let mut stream_bytes = Vec::new();
+        stream_bytes.extend_from_slice(
+            format!("{} 0 obj\n{}\nstream\n", stream_num, dict_str).as_bytes()
+        );
+        stream_bytes.extend_from_slice(&xref_data);
+        stream_bytes.extend_from_slice(b"\nendstream\nendobj");
+
+        stream_bytes
+    }
 }
