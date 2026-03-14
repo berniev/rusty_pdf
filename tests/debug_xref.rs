@@ -27,9 +27,9 @@ fn debug_xref_structure() {
     );
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -64,7 +64,8 @@ fn debug_xref_structure() {
     }
 
     // Save and show structure
-    let path = "/tmp/test_xref_debug.pdf";
+    let path = "/tmp/pydyf_test/test_xref_debug.pdf";
+    std::fs::create_dir_all("/tmp/pydyf_test").ok();
     let mut file = File::create(path).expect("Failed to create file");
     file.write_all(&output).expect("Failed to write file");
 

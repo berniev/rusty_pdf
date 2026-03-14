@@ -9,7 +9,7 @@ fn trace_qpdf_test_sequence() {
     let stream = StreamObject::new();
 
     // Add stream
-    pdf.add_object(Box::new(stream));
+    let content_id = pdf.add_object(Box::new(stream));
     println!("1. Added stream object");
     println!("   pdf.objects.len() = {}", pdf.objects.len());
 
@@ -19,8 +19,8 @@ fn trace_qpdf_test_sequence() {
     println!("   Object IDs: {:?}", ids);
 
     // Add page
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 

@@ -5,7 +5,9 @@ use pydyf::{PDF, PageObject, Stream};
 use std::fs::File;
 
 fn create_page_with_content(content_index: usize) -> PageObject {
-    PageObject::new(content_index.into())
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_index);
+    page
 }
 
 #[test]
@@ -118,8 +120,7 @@ fn test_cmyk_colors() {
     stream.show_single_text_string("CMYK Colors");
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(content_index);
     pdf.add_page(page);
 
@@ -203,8 +204,7 @@ fn test_grayscale_colors() {
     stream.show_single_text_string("Grayscale: Black to White");
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(content_index);
     pdf.add_page(page);
 
@@ -276,8 +276,7 @@ fn test_mixed_color_spaces() {
     stream.show_single_text_string("Gray");
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(content_index);
     pdf.add_page(page);
 

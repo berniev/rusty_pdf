@@ -1,5 +1,4 @@
 use image::{Rgb, RgbImage};
-use pydyf::page::ObjectId;
 use pydyf::util::Matrix;
 use pydyf::{PDF, PageObject, Stream};
 use std::fs::File;
@@ -9,8 +8,10 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     // Extract just the number from "N 0 R" format
     let id_str = content_index.split_whitespace().next().unwrap();
     let id: u64 = id_str.parse().unwrap();
-    
-    PageObject::new(ObjectId::from(id))
+
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(id as usize);
+    page
 }
 
 #[test]
@@ -43,8 +44,8 @@ fn test_external_image_from_file() {
     stream.show_single_text_string("Gradient image from PNG file");
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id = pdf.add_object(Box::new(stream));
+    let content_ref = format!("{} 0 R", content_id).into_bytes();
     let page = create_page_with_content(content_ref);
     pdf.add_page(page);
 

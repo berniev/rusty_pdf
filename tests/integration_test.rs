@@ -16,10 +16,9 @@ fn test_create_pdf() {
 fn test_add_page() {
     let mut pdf = PDF::new();
     let stream = StreamObject::new();
-    pdf.add_object(Box::new(stream));
-
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
 
     pdf.add_page(page);
@@ -72,11 +71,10 @@ fn test_text_operations() {
 fn test_add_page_with_pagesize_adds_mediabox() {
     let mut pdf = PDF::new();
     let stream = StreamObject::new();
-    pdf.add_object(Box::new(stream));
+    let content_id = pdf.add_object(Box::new(stream));
 
-    let next_num = pdf.objects.len() - 1;
-
-    let mut page = PageObject::new(next_num.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
 
     // Should contain MediaBox because it was explicitly provided
@@ -88,11 +86,10 @@ fn test_default_page_size() {
     let mut pdf = PDF::new();
 
     let stream = StreamObject::new();
-    pdf.add_object(Box::new(stream));
+    let content_id = pdf.add_object(Box::new(stream));
 
-    let next_num = pdf.objects.len() - 1;
-
-    let page = PageObject::new(next_num.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     pdf.add_page(page);
 
     let page_obj = pdf.objects.last().unwrap();
@@ -155,9 +152,9 @@ fn test_compressed_pdf_generation() {
     );
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 

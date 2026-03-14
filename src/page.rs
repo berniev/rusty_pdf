@@ -130,6 +130,7 @@ pub struct PageObject {
     pub(crate) resources: Option<ResourceDictionary>,
     pub(crate) resources_id: Option<usize>,
     pub media_box: Option<PageSize>,
+    pub(crate) contents: Vec<usize>, // Content stream object IDs
     pub(crate) metadata: PdfMetadata,
 }
 
@@ -141,6 +142,7 @@ impl PageObject {
             resources: None,
             resources_id: None,
             media_box: None,
+            contents: Vec::new(),
             metadata: PdfMetadata::default(),
         }
     }
@@ -158,6 +160,16 @@ impl PageObject {
     pub fn set_resources(&mut self, resources: ResourceDictionary) {
         self.resources = Some(resources);
     }
+
+    /// Add a content stream to this page.
+    pub fn add_content(&mut self, content_id: usize) {
+        self.contents.push(content_id);
+    }
+
+    /// Set the content streams for this page (replaces existing).
+    pub fn set_contents(&mut self, content_ids: Vec<usize>) {
+        self.contents = content_ids;
+    }
 }
 
 impl crate::PdfObject for PageObject {
@@ -166,6 +178,21 @@ impl crate::PdfObject for PageObject {
 
         // Parent reference (required) - reference to the page tree
         entries.push(format!("/Parent {} 0 R", u64::from(self.parent.clone())));
+
+        // Contents (required unless page is empty)
+        if !self.contents.is_empty() {
+            if self.contents.len() == 1 {
+                // Single content stream
+                entries.push(format!("/Contents {} 0 R", self.contents[0]));
+            } else {
+                // Multiple content streams - use array
+                let refs: Vec<String> = self.contents
+                    .iter()
+                    .map(|id| format!("{} 0 R", id))
+                    .collect();
+                entries.push(format!("/Contents [{}]", refs.join(" ")));
+            }
+        }
 
         // MediaBox (optional if inherited from parent)
         if let Some(size) = &self.media_box {

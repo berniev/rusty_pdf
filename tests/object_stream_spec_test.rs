@@ -110,10 +110,9 @@ fn spec_stream_objects_not_compressible() {
     let _ = stream.set_color_rgb(color, StrokeOrFill::Fill);
     stream.rectangle(Posn { x: 10.0, y: 10.0 }, Dims { height: 20.0, width: 20.0 });
     stream.fill(EvenOdd::Odd);
-    pdf.add_object(Box::new(stream));
-
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 

@@ -7,10 +7,9 @@ fn show_what_duplicate_object_5_contains() {
 
     let mut pdf = PDF::new();
     let stream = StreamObject::new();
-    pdf.add_object(Box::new(stream));
-
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -54,7 +53,12 @@ fn show_what_duplicate_object_5_contains() {
         println!("Object {} appears {} time(s):", obj_num, contents.len());
         for (occurrence, content) in contents.iter().enumerate() {
             let preview = if content.len() > 100 {
-                format!("{}...", &content[..100])
+                // Find a safe char boundary near position 100
+                let mut end = 100.min(content.len());
+                while end > 0 && !content.is_char_boundary(end) {
+                    end -= 1;
+                }
+                format!("{}...", &content[..end])
             } else {
                 content.clone()
             };

@@ -20,9 +20,9 @@ fn test_objstm_has_type() {
     stream.rectangle(Posn { x: 50.0, y: 50.0 }, Dims { height: 100.0, width: 100.0 });
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -39,10 +39,10 @@ fn test_objstm_has_n() {
     let mut pdf = PDF::new();
     let mut stream = StreamObject::new();
     stream.rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
-    pdf.add_object(Box::new(stream));
+    let content_id = pdf.add_object(Box::new(stream));
 
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -66,10 +66,10 @@ fn test_objstm_has_first() {
     let mut pdf = PDF::new();
     let mut stream = StreamObject::new();
     stream.rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
-    pdf.add_object(Box::new(stream));
+    let content_id = pdf.add_object(Box::new(stream));
 
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -93,10 +93,10 @@ fn test_objstm_has_filter() {
     let mut pdf = PDF::new();
     let mut stream = StreamObject::new();
     stream.rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
-    pdf.add_object(Box::new(stream));
+    let content_id = pdf.add_object(Box::new(stream));
 
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -122,10 +122,9 @@ fn test_content_streams_not_compressed() {
     let _ = stream.set_color_rgb(color, StrokeOrFill::Fill);
     stream.rectangle(Posn { x: 10.0, y: 10.0 }, Dims { height: 20.0, width: 20.0 });
     stream.fill(EvenOdd::Odd);
-    pdf.add_object(Box::new(stream));
-
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 

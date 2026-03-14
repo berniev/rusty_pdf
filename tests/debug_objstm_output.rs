@@ -8,10 +8,9 @@ fn debug_what_we_produce() {
     let mut pdf = PDF::new();
     let mut stream = StreamObject::new();
     stream.rectangle(pydyf::util::Posn { x: 0.0, y: 0.0 }, pydyf::util::Dims { height: 10.0, width: 10.0 });
-    pdf.add_object(Box::new(stream));
-
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 

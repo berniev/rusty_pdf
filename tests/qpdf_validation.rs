@@ -28,9 +28,9 @@ fn test_qpdf_validates_compressed_pdf() {
     );
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -40,7 +40,8 @@ fn test_qpdf_validates_compressed_pdf() {
         .expect("Failed to write compressed PDF");
 
     // Save to file
-    let path = "/tmp/test_compressed.pdf";
+    let path = "/tmp/pydyf_test/test_compressed.pdf";
+    std::fs::create_dir_all("/tmp/pydyf_test").ok();
     let mut file = File::create(path).expect("Failed to create file");
     file.write_all(&output).expect("Failed to write file");
 
@@ -81,9 +82,9 @@ fn test_qpdf_validates_uncompressed_pdf() {
     );
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let next_num = pdf.objects.len() - 1;
-    let mut page = PageObject::new(next_num.into());
+    let content_id = pdf.add_object(Box::new(stream));
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -93,7 +94,8 @@ fn test_qpdf_validates_uncompressed_pdf() {
         .expect("Failed to write PDF");
 
     // Save to file
-    let path = "/tmp/test_uncompressed.pdf";
+    let path = "/tmp/pydyf_test/test_uncompressed.pdf";
+    std::fs::create_dir_all("/tmp/pydyf_test").ok();
     let mut file = File::create(path).expect("Failed to create file");
     file.write_all(&output).expect("Failed to write file");
 

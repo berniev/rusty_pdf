@@ -8,7 +8,8 @@ use pydyf::util::{Dims, Matrix, Posn};
 use pydyf::{PDF, PageObject};
 
 fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageObject {
-    let mut page = PageObject::new(content_index.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_index);
     page.set_media_box(page_size);
     page
 }
@@ -18,10 +19,10 @@ fn test_empty_page() {
     let mut pdf = PDF::new();
     let stream = StreamObject::new();
 
-    pdf.add_object(Box::new(stream));
-    let next_num = pdf.objects.len() - 1;
+    let content_id = pdf.add_object(Box::new(stream));
 
-    let mut page = PageObject::new(next_num.into());
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(content_id);
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
@@ -53,8 +54,7 @@ fn test_massive_page_count() {
         );
         stream.fill(EvenOdd::Odd);
 
-        pdf.add_object(Box::new(stream));
-        let content_index = pdf.objects.len() - 1;
+        let content_index = pdf.add_object(Box::new(stream));
         let page = create_page_with_content(PageSize::A4, content_index);
         pdf.add_page(page);
     }
@@ -143,8 +143,7 @@ fn test_extreme_coordinates() {
     );
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
@@ -183,8 +182,7 @@ fn test_very_long_text() {
 
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
@@ -251,8 +249,7 @@ fn test_special_characters_text() {
 
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
@@ -283,8 +280,7 @@ fn test_huge_rectangle() {
     );
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
@@ -298,8 +294,7 @@ fn test_compressed_empty() {
     let mut pdf = PDF::new();
     let stream = StreamObject::compressed();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
@@ -358,8 +353,7 @@ fn test_extreme_font_sizes() {
 
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
@@ -392,8 +386,7 @@ fn test_overlapping_operations() {
     stream.fill(EvenOdd::Odd);
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_index = pdf.objects.len() - 1;
+    let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 

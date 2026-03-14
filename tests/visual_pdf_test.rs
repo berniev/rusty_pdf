@@ -1,6 +1,5 @@
 use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{EvenOdd, StrokeOrFill};
-use pydyf::page::ObjectId;
 use pydyf::util::{Dims, Matrix, Posn};
 use pydyf::{FileIdentifierMode, PDF, PageObject, Stream};
 use std::fs::File;
@@ -10,8 +9,10 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     // Extract just the number from "N 0 R" format
     let id_str = content_index.split_whitespace().next().unwrap();
     let id: u64 = id_str.parse().unwrap();
-    
-    PageObject::new(ObjectId::from(id))
+
+    let mut page = PageObject::new(0usize.into());
+    page.add_content(id as usize);
+    page
 }
 
 #[test]
@@ -49,8 +50,8 @@ fn test_generate_simple_uncompressed_pdf() {
     stream.show_single_text_string("Hello PDF!");
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id = pdf.add_object(Box::new(stream));
+    let content_ref = format!("{} 0 R", content_id).into_bytes();
     let page = create_page_with_content(content_ref);
     pdf.add_page(page);
 
@@ -115,8 +116,8 @@ fn test_generate_circle_over_rectangle() {
     stream.close();
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id = pdf.add_object(Box::new(stream));
+    let content_ref = format!("{} 0 R", content_id).into_bytes();
     let page = create_page_with_content(content_ref);
     pdf.add_page(page);
 
@@ -148,8 +149,8 @@ fn test_multipage_pdf() {
         },
     );
     stream1.fill(EvenOdd::Odd);
-    pdf.add_object(Box::new(stream1));
-    let content_ref1 = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id1 = pdf.add_object(Box::new(stream1));
+    let content_ref1 = format!("{} 0 R", content_id1).into_bytes();
     let page1 = create_page_with_content(content_ref1);
     pdf.add_page(page1);
 
@@ -170,8 +171,8 @@ fn test_multipage_pdf() {
         },
     );
     stream2.fill(EvenOdd::Odd);
-    pdf.add_object(Box::new(stream2));
-    let content_ref2 = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id2 = pdf.add_object(Box::new(stream2));
+    let content_ref2 = format!("{} 0 R", content_id2).into_bytes();
     let page2 = create_page_with_content(content_ref2);
     pdf.add_page(page2);
 
@@ -192,8 +193,8 @@ fn test_multipage_pdf() {
         },
     );
     stream3.fill(EvenOdd::Odd);
-    pdf.add_object(Box::new(stream3));
-    let content_ref3 = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id3 = pdf.add_object(Box::new(stream3));
+    let content_ref3 = format!("{} 0 R", content_id3).into_bytes();
     let page3 = create_page_with_content(content_ref3);
     pdf.add_page(page3);
 
@@ -329,8 +330,8 @@ fn test_graphics_operations() {
     stream.close();
     stream.fill(EvenOdd::Odd);
 
-    pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id = pdf.add_object(Box::new(stream));
+    let content_ref = format!("{} 0 R", content_id).into_bytes();
     let page = create_page_with_content(content_ref);
     pdf.add_page(page);
 
@@ -388,8 +389,8 @@ fn test_comparison_uncompressed() {
 
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id = pdf.add_object(Box::new(stream));
+    let content_ref = format!("{} 0 R", content_id).into_bytes();
     let page = create_page_with_content(content_ref);
     pdf.add_page(page);
 
@@ -447,8 +448,8 @@ fn test_comparison_compressed() {
 
     stream.end_text();
 
-    pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
+    let content_id = pdf.add_object(Box::new(stream));
+    let content_ref = format!("{} 0 R", content_id).into_bytes();
     let page = create_page_with_content(content_ref);
     pdf.add_page(page);
 
