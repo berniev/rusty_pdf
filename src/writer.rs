@@ -390,13 +390,15 @@ impl WriteStrategy for CompressedStrategy {
                 continue;
             }
 
-            if meta.status == ObjectStatus::Free {
-                entry_map.insert(obj_id, CrossRefEntry::FreeObject { next_free_obj: 0, generation: 65535 });
-            } else if let Some((objstm_num, index)) = compression_map.get(&obj_id) {
-                entry_map.insert(obj_id, CrossRefEntry::CompressedInObjstm { objstm_number: *objstm_num, index_within_objstm: *index as u16 });
-            } else {
-                entry_map.insert(obj_id, CrossRefEntry::Uncompressed { byte_offset: meta.offset, generation: meta.generation_number.as_u16() });
-            }
+            entry_map.insert(
+                obj_id,
+                CrossRefEntry::from_object_metadata(
+                    meta.status,
+                    meta.offset,
+                    meta.generation_number.as_u16(),
+                    compression_map.get(&obj_id).copied(),
+                ),
+            );
         }
 
         // Entry for object stream (if present)

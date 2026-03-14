@@ -140,6 +140,31 @@ pub enum CrossRefEntry {
 }
 
 impl CrossRefEntry {
+    /// Construct a CrossRefEntry from object metadata and optional compression info
+    pub fn from_object_metadata(
+        status: ObjectStatus,
+        offset: usize,
+        generation: u16,
+        compression_info: Option<(usize, usize)>,
+    ) -> Self {
+        if status == ObjectStatus::Free {
+            CrossRefEntry::FreeObject {
+                next_free_obj: 0,
+                generation: 65535,
+            }
+        } else if let Some((objstm_num, index)) = compression_info {
+            CrossRefEntry::CompressedInObjstm {
+                objstm_number: objstm_num,
+                index_within_objstm: index as u16,
+            }
+        } else {
+            CrossRefEntry::Uncompressed {
+                byte_offset: offset,
+                generation,
+            }
+        }
+    }
+
     /// Calculate minimum bytes needed to represent a usize value
     fn bytes_needed_usize(value: usize) -> usize {
         if value == 0 {
