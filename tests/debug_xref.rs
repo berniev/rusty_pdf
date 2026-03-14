@@ -1,0 +1,80 @@
+use pydyf::color::{Color, RGB};
+use pydyf::objects::stream::{EvenOdd, StrokeOrFill};
+use pydyf::page::PageSize;
+use pydyf::util::{Dims, Posn};
+use pydyf::{FileIdentifierMode, PageObject, StreamObject, PDF};
+use std::fs::File;
+use std::io::Write as IoWrite;
+
+#[test]
+#[ignore]
+fn debug_xref_structure() {
+    let mut pdf = PDF::new();
+    let mut stream = StreamObject::new();
+
+    let color = RGB {
+        red: Color { color: 0.0 },
+        green: Color { color: 0.0 },
+        blue: Color { color: 1.0 },
+    };
+    let _ = stream.set_color_rgb(color, StrokeOrFill::Fill);
+    stream.rectangle(
+        Posn { x: 50.0, y: 50.0 },
+        Dims {
+            height: 100.0,
+            width: 100.0,
+        },
+    );
+    stream.fill(EvenOdd::Odd);
+
+    pdf.add_object(Box::new(stream));
+    let next_num = pdf.objects.len() - 1;
+    let mut page = PageObject::new(next_num.into());
+    page.set_media_box(PageSize::A4);
+    pdf.add_page(page);
+
+    // Before writing
+    println!("\n=== BEFORE write_compressed ===");
+    println!("pdf.objects.len() = {}", pdf.objects.len());
+    for (i, obj) in pdf.objects.iter().enumerate() {
+        println!(
+            "  objects[{}]: id={:?}, type={}",
+            i,
+            obj.metadata().object_identifier,
+            std::any::type_name_of_val(obj.as_ref())
+        );
+    }
+
+    // Write compressed PDF
+    let mut output = Vec::new();
+    pdf.write_compressed(&mut output, FileIdentifierMode::None)
+        .expect("Failed to write compressed PDF");
+
+    // After writing
+    println!("\n=== AFTER write_compressed ===");
+    println!("pdf.objects.len() = {}", pdf.objects.len());
+    for (i, obj) in pdf.objects.iter().enumerate() {
+        println!(
+            "  objects[{}]: id={:?}, offset={}, type={}",
+            i,
+            obj.metadata().object_identifier,
+            obj.metadata().offset,
+            std::any::type_name_of_val(obj.as_ref())
+        );
+    }
+
+    // Save and show structure
+    let path = "/tmp/test_xref_debug.pdf";
+    let mut file = File::create(path).expect("Failed to create file");
+    file.write_all(&output).expect("Failed to write file");
+
+    println!("\n=== PDF Structure ===");
+    let pdf_str = String::from_utf8_lossy(&output);
+
+    // Find all "N 0 obj" patterns
+    for (i, line) in pdf_str.lines().enumerate() {
+        if line.contains(" obj") {
+            println!("Line {}: {}", i, line);
+        }
+    }
+}
