@@ -1,5 +1,5 @@
-use crate::PdfObject;
 use crate::PdfMetadata;
+use crate::PdfObject;
 
 //---------------- NumberType -----------------
 
@@ -103,6 +103,10 @@ impl PdfObject for NumberObject {
 
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
+    }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
     }
 }
 

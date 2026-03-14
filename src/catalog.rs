@@ -3,17 +3,18 @@ use std::any::Any;
 use std::collections::HashMap;
 
 use crate::page::{ObjectId, PageTreeNode};
-use crate::pdf::PdfVersion;
 use crate::{ArrayObject, BooleanObject, IndirectObject, NameObject};
 use crate::{DictionaryObject, PdfMetadata, PdfObject};
 
 //--------------------------- DirectRef -------------------------
 
+#[allow(dead_code)]
 #[derive(Default)]
 struct DirectRef {
     object_id: ObjectId,
 }
 
+#[allow(dead_code)]
 impl DirectRef {
     pub fn new(object_id: ObjectId) -> Self {
         Self { object_id }
@@ -26,11 +27,13 @@ impl DirectRef {
 
 //--------------------------- IndirectRef -------------------------
 
+#[allow(dead_code)]
 #[derive(Default)]
 struct IndirectRef {
     object_id: ObjectId,
 }
 
+#[allow(dead_code)]
 impl IndirectRef {
     pub fn new(object_id: ObjectId) -> Self {
         Self { object_id }
@@ -138,6 +141,7 @@ pub enum CatalogEntryType {
     IndirectRef,
 }
 
+#[allow(dead_code)]
 #[rustfmt::skip]
 static SUPPORTED_CATALOG_ENTRIES: Lazy<HashMap<&'static str, CatalogEntryInfo>> = Lazy::new(|| {
     HashMap::from([
@@ -175,11 +179,13 @@ static SUPPORTED_CATALOG_ENTRIES: Lazy<HashMap<&'static str, CatalogEntryInfo>> 
 
 //--------------------------- Catalog -------------------------
 
+#[allow(dead_code)]
 struct Catalog {
     metadata: PdfMetadata,
     pages: Option<PageTreeNode>,
 }
 
+#[allow(dead_code)]
 impl Catalog {
     pub fn new(pages: Option<PageTreeNode>) -> Self {
         Self {
@@ -223,5 +229,9 @@ impl PdfObject for Catalog {
 
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
+    }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
     }
 }

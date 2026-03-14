@@ -34,7 +34,11 @@ impl ToPdfNum for f64 {
         } else {
             let s = format!("{:.4}", self);
             let trimmed = s.trim_end_matches('0').trim_end_matches('.');
-            if trimmed.is_empty() || trimmed == "-0" { "0".to_string() } else { trimmed.to_string() }
+            if trimmed.is_empty() || trimmed == "-0" {
+                "0".to_string()
+            } else {
+                trimmed.to_string()
+            }
         }
     }
 }
@@ -63,7 +67,7 @@ pub fn f_to_pdf_num(n: f64) -> String {
     }
 }*/
 
-//// Convert string to bytes
+/// Convert string to bytes
 pub fn to_bytes_str(s: &str) -> Vec<u8> {
     s.as_bytes().to_vec()
 }

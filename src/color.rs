@@ -83,7 +83,7 @@ impl Display for Color {
 
 impl ToPdf for Color {
     fn to_pdf(&self) -> String {
-        format!("{}", f_to_pdf_num(self.color))
+        f_to_pdf_num(self.color).to_string()
     }
     fn as_string(&self) -> String {
         format!("{}", self.color)

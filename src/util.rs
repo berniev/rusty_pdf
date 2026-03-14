@@ -10,7 +10,7 @@ pub trait ToPdf {
 
 impl ToPdf for f64 {
     fn to_pdf(&self) -> String {
-        format!("{}", f_to_pdf_num(*self))
+        f_to_pdf_num(*self).to_string()
     }
     fn as_string(&self) -> String {
         format!("{}", *self)

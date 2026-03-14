@@ -1,12 +1,10 @@
-use std::fmt;
-pub(crate) use crate::objects::metadata::{Generation, ObjectStatus};
+pub use crate::objects::metadata::{Generation, ObjectStatus};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CrossRefError {
     EmptyTable,
     InvalidRootEntry,
 }
-
 
 /// 7.5.4 Cross-Reference Table
 /// The cross-reference table contains information that permits random access to indirect objects
@@ -26,12 +24,11 @@ pub enum CrossRefError {
 /// only one subsection, whose object numbering begins at 0.
 ///
 /// We are not designing for modification.
-
 pub struct Entry {
     object_number: u32,
     object_status: ObjectStatus, // determines treatment of offset
-    offset_or_next_free: u64, // InUse: offset in stream. Free: next free object number
-    generation: Generation, // 65535 for root entry, otherwise 0
+    offset_or_next_free: u64,    // InUse: offset in stream. Free: next free object number
+    generation: Generation,      // 65535 for root entry, otherwise 0
 }
 
 impl Entry {
@@ -62,10 +59,15 @@ pub struct CrossRefTable {
     entries: Vec<Entry>, // contiguous, order by object number
 }
 
+impl Default for CrossRefTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CrossRefTable {
     pub fn new() -> Self {
-        let mut table = CrossRefTable
-        {
+        let mut table = CrossRefTable {
             entries: Vec::new(),
         };
         let root = Entry::new(0, ObjectStatus::Free, 0, Generation::Root);
@@ -85,15 +87,11 @@ impl CrossRefTable {
 
         let first = self.entries.first().unwrap();
 
-        if first.generation != Generation::Root || first.object_status != ObjectStatus::Free{
-            return Err(CrossRefError::InvalidRootEntry)
+        if first.generation != Generation::Root || first.object_status != ObjectStatus::Free {
+            return Err(CrossRefError::InvalidRootEntry);
         }
 
-        let head = format!(
-            "xref\r\n{} {}\r\n",
-            first.object_number,
-            self.entries.len()
-        );
+        let head = format!("xref\r\n{} {}\r\n", first.object_number, self.entries.len());
 
         Ok(head
             + &self

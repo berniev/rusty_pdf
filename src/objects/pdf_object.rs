@@ -7,6 +7,8 @@ pub trait PdfObject {
 
     fn metadata(&self) -> &crate::objects::metadata::PdfMetadata;
 
+    fn metadata_mut(&mut self) -> &mut crate::objects::metadata::PdfMetadata;
+
     fn indirect(&self) -> String {
         let meta = self.metadata();
         let number = meta.object_identifier.unwrap_or(0);

@@ -2,7 +2,10 @@ use std::rc::Rc;
 
 use crate::color::RGBA;
 use crate::util::{Dims, Posn};
-use crate::{DictionaryObject, NameObject, NumberObject, PDF, PdfObject, StreamObject, ArrayObject, BooleanObject};
+use crate::{
+    ArrayObject, BooleanObject, DictionaryObject, NameObject, NumberObject, PDF, PdfObject,
+    StreamObject,
+};
 //--------------------------- PDF Function ---------------------------//
 
 /// Type 0: Sampled. Maps input to output via lookup table
@@ -125,7 +128,8 @@ impl Gradient {
         // 2. Create Color Function (Type 2 - Exponential Interpolation)
         let color_func = create_interpolation_function_type_2(
             vec![first.red.color, first.green.color, first.blue.color],
-            vec![last.red.color, last.green.color, last.blue.color],0.0
+            vec![last.red.color, last.green.color, last.blue.color],
+            0.0,
         );
         let color_func_num = pdf.add_object(Box::new(color_func));
 
@@ -154,7 +158,8 @@ impl Gradient {
             // Alpha Interpolation Function
             let alpha_func = create_interpolation_function_type_2(
                 vec![first.alpha.color, last.alpha.color],
-                vec![last.alpha.color], 0.0
+                vec![last.alpha.color],
+                0.0,
             );
             let alpha_func_num = pdf.add_object(Box::new(alpha_func));
 
@@ -193,12 +198,7 @@ impl Gradient {
     }
 
     /// Calculates geometry parameters (Type and Coords) based on gradient kind.
-    fn get_shading_params(
-        &self,
-        posn: Posn<f64>,
-        size: Dims,
-        stroke_width: f64,
-    ) -> (u8, Vec<f64>) {
+    fn get_shading_params(&self, posn: Posn<f64>, size: Dims, stroke_width: f64) -> (u8, Vec<f64>) {
         let Posn { x, y } = posn;
         let Dims { width, height } = size;
         match self.kind {
@@ -259,14 +259,26 @@ fn to_array(v: Vec<f64>) -> Rc<dyn PdfObject> {
 fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: f64, height: f64) {
     // 1. Create Form XObject (Transparency Group)
     let mut xobj = DictionaryObject::typed("XObject");
-    xobj.set("Subtype", Rc::new(NameObject::new(Option::from("Form".to_string()))));
+    xobj.set(
+        "Subtype",
+        Rc::new(NameObject::new(Option::from("Form".to_string()))),
+    );
     xobj.set("FormType", Rc::new(NumberObject::from(1)));
     xobj.set("BBox", to_array(vec![0.0, 0.0, width, height]));
 
     let mut group_dict = DictionaryObject::new(None);
-    group_dict.set("Type", Rc::new(NameObject::new(Option::from("Group".to_string()))));
-    group_dict.set("S", Rc::new(NameObject::new(Option::from("Transparency".to_string()))));
-    group_dict.set("CS", Rc::new(NameObject::new(Option::from("DeviceGray".to_string()))));
+    group_dict.set(
+        "Type",
+        Rc::new(NameObject::new(Option::from("Group".to_string()))),
+    );
+    group_dict.set(
+        "S",
+        Rc::new(NameObject::new(Option::from("Transparency".to_string()))),
+    );
+    group_dict.set(
+        "CS",
+        Rc::new(NameObject::new(Option::from("DeviceGray".to_string()))),
+    );
 
     xobj.set("Group", Rc::new(group_dict));
 
@@ -285,7 +297,10 @@ fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: 
 
     // 2. Create Mask Dictionary
     let mut smask_dict = DictionaryObject::typed("Mask");
-    smask_dict.set("S", Rc::new(NameObject::new(Option::from("Luminosity".to_string()))));
+    smask_dict.set(
+        "S",
+        Rc::new(NameObject::new(Option::from("Luminosity".to_string()))),
+    );
     smask_dict.set_indirect("G", form_number);
 
     let smask_number = pdf.add_object(Box::new(smask_dict));

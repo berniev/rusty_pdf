@@ -13,8 +13,15 @@ pub const STANDARD_RESOURCE_CATEGORIES: &[&str] = &[
     "ProcSet",
 ];
 
+#[derive(Clone)]
 pub struct ResourceDictionary {
     categories: HashMap<String, HashMap<String, usize>>,
+}
+
+impl Default for ResourceDictionary {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ResourceDictionary {
@@ -35,7 +42,7 @@ impl ResourceDictionary {
         }
     }
 
-    pub fn implement(&mut self, category: &str) -> PdfResult<CategoryHandle> {
+    pub fn implement(&mut self, category: &str) -> PdfResult<CategoryHandle<'_>> {
         Self::validate_resource_category(category)?;
         self.categories.entry(category.to_string()).or_default();
 

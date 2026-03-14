@@ -1,7 +1,7 @@
 use std::fmt;
 use std::io;
 
-use crate::color::{Color, CMYK, RGB, RGBA};
+use crate::color::{CMYK, Color, RGB, RGBA};
 
 /// Errors that can occur during PDF generation
 #[derive(Debug)]

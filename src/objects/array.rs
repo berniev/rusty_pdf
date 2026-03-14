@@ -14,7 +14,6 @@ use crate::PdfObject;
 /// Construction:
 ///     An array shall be written as a sequence of objects enclosed in SQUARE BRACKETS.
 ///     EXAMPLE [ 549 3.14 false ( Ralph ) /SomeName ]
-
 pub struct ArrayObject {
     pub values: Vec<Rc<dyn PdfObject>>,
     pub metadata: PdfMetadata,
@@ -31,7 +30,6 @@ impl ArrayObject {
     pub fn push_object(&mut self, value: Rc<dyn PdfObject>) {
         self.values.push(value);
     }
-    
 }
 
 impl PdfObject for ArrayObject {
@@ -40,7 +38,7 @@ impl PdfObject for ArrayObject {
             "[ {} ]",
             self.values
                 .iter()
-                .map(|item| item.reference())
+                .map(|item| item.data())
                 .collect::<Vec<_>>()
                 .join(" ")
         )
@@ -52,5 +50,9 @@ impl PdfObject for ArrayObject {
 
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
+    }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
     }
 }

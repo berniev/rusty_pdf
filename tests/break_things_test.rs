@@ -7,11 +7,9 @@ use pydyf::page::PageSize;
 use pydyf::util::{Dims, Matrix, Posn};
 use pydyf::{PDF, PageObject};
 
-fn create_page_with_content(page_size: PageSize, content_ref: Vec<u8>) -> PageObject {
-    let content_index = String::from_utf8(content_ref).unwrap();
-    let mut page = PageObject::new(content_index.parse().unwrap());
+fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageObject {
+    let mut page = PageObject::new(content_index.into());
     page.set_media_box(page_size);
-
     page
 }
 
@@ -23,19 +21,13 @@ fn test_empty_page() {
     pdf.add_object(Box::new(stream));
     let next_num = pdf.objects.len() - 1;
 
-    let mut page = PageObject::new(next_num, 0);
+    let mut page = PageObject::new(next_num.into());
     page.set_media_box(PageSize::A4);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_empty.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_empty.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -62,20 +54,14 @@ fn test_massive_page_count() {
         stream.fill(EvenOdd::Odd);
 
         pdf.add_object(Box::new(stream));
-        let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-        let page = create_page_with_content(PageSize::A4, content_ref);
+        let content_index = pdf.objects.len() - 1;
+        let page = create_page_with_content(PageSize::A4, content_index);
         pdf.add_page(page);
     }
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_massive.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_massive.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -158,19 +144,13 @@ fn test_extreme_coordinates() {
     stream.fill(EvenOdd::Odd);
 
     pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let content_index = pdf.objects.len() - 1;
+    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_coords.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_coords.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -187,29 +167,30 @@ fn test_very_long_text() {
         StrokeOrFill::Fill,
     );
     stream.begin_text();
-    stream.set_font_size("Courier", 8.0);
+    stream.set_font_name_and_size("Courier", 8.0);
 
     for i in 0..1000 {
-        stream.set_text_matrix(1.0, 0.0, 0.0, 1.0, 50.0, 700.0 - (i as f64 * 10.0));
-        stream.show_text_string(&format!("Line {}", i));
+        stream.set_text_matrix(Matrix {
+            a: 1.0,
+            b: 0.0,
+            c: 0.0,
+            d: 1.0,
+            e: 50.0,
+            f: 700.0 - (i as f64 * 10.0),
+        });
+        stream.show_single_text_string(&format!("Line {}", i));
     }
 
     stream.end_text();
 
     pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let content_index = pdf.objects.len() - 1;
+    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_longtext.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_longtext.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -226,7 +207,7 @@ fn test_special_characters_text() {
         StrokeOrFill::Fill,
     );
     stream.begin_text();
-    stream.set_font_size("Helvetica", 12.0);
+    stream.set_font_name_and_size("Helvetica", 12.0);
 
     stream.set_text_matrix(Matrix {
         a: 1.0,
@@ -236,7 +217,7 @@ fn test_special_characters_text() {
         e: 50.0,
         f: 700.0,
     });
-    stream.show_text_string("Parentheses: (test)");
+    stream.show_single_text_string("Parentheses: (test)");
 
     stream.set_text_matrix(Matrix {
         a: 1.0,
@@ -246,7 +227,7 @@ fn test_special_characters_text() {
         e: 50.0,
         f: 680.0,
     });
-    stream.show_text_string("Backslash: \\ test");
+    stream.show_single_text_string("Backslash: \\ test");
 
     stream.set_text_matrix(Matrix {
         a: 1.0,
@@ -256,7 +237,7 @@ fn test_special_characters_text() {
         e: 50.0,
         f: 660.0,
     });
-    stream.show_text_string("Quotes: \"test\"");
+    stream.show_single_text_string("Quotes: \"test\"");
 
     stream.set_text_matrix(Matrix {
         a: 1.0,
@@ -266,24 +247,18 @@ fn test_special_characters_text() {
         e: 50.0,
         f: 640.0,
     });
-    stream.show_text_string("Mixed: (\\) \"test\" \\n");
+    stream.show_single_text_string("Mixed: (\\) \"test\" \\n");
 
     stream.end_text();
 
     pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let content_index = pdf.objects.len() - 1;
+    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_special_chars.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_special_chars.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -309,19 +284,13 @@ fn test_huge_rectangle() {
     stream.fill(EvenOdd::Odd);
 
     pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let content_index = pdf.objects.len() - 1;
+    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_huge.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_huge.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -330,19 +299,13 @@ fn test_compressed_empty() {
     let stream = StreamObject::compressed();
 
     pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let content_index = pdf.objects.len() - 1;
+    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_compressed_empty.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_compressed_empty.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -360,7 +323,7 @@ fn test_extreme_font_sizes() {
     );
     stream.begin_text();
 
-    stream.set_font_size("Helvetica", 0.1);
+    stream.set_font_name_and_size("Helvetica", 0.1);
     stream.set_text_matrix(Matrix {
         a: 1.0,
         b: 0.0,
@@ -369,9 +332,9 @@ fn test_extreme_font_sizes() {
         e: 50.0,
         f: 700.0,
     });
-    stream.show_text_string("Tiny");
+    stream.show_single_text_string("Tiny");
 
-    stream.set_font_size("Helvetica", 1.0);
+    stream.set_font_name_and_size("Helvetica", 1.0);
     stream.set_text_matrix(Matrix {
         a: 1.0,
         b: 0.0,
@@ -380,9 +343,9 @@ fn test_extreme_font_sizes() {
         e: 50.0,
         f: 650.0,
     });
-    stream.show_text_string("Small");
+    stream.show_single_text_string("Small");
 
-    stream.set_font_size("Helvetica", 200.0);
+    stream.set_font_name_and_size("Helvetica", 200.0);
     stream.set_text_matrix(Matrix {
         a: 1.0,
         b: 0.0,
@@ -391,24 +354,18 @@ fn test_extreme_font_sizes() {
         e: 50.0,
         f: 500.0,
     });
-    stream.show_text_string("BIG");
+    stream.show_single_text_string("BIG");
 
     stream.end_text();
 
     pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let content_index = pdf.objects.len() - 1;
+    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_fonts.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_fonts.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -436,19 +393,13 @@ fn test_overlapping_operations() {
     stream.end_text();
 
     pdf.add_object(Box::new(stream));
-    let content_ref = format!("{} 0 R", pdf.objects.len() - 1).into_bytes();
-    let page = create_page_with_content(PageSize::A4, content_ref);
+    let content_index = pdf.objects.len() - 1;
+    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_overlap.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_overlap.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }
 
 #[test]
@@ -456,12 +407,6 @@ fn test_no_pages() {
     let mut pdf = PDF::new();
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
-    let mut file = File::create("/tmp/pydyf_test/break_no_pages.pdf").unwrap();
-    pdf.write(
-        &mut file,
-        Some(b"1.7"),
-        pydyf::FileIdentifierMode::AutoMD5,
-        false,
-    )
-    .unwrap();
+    let file = File::create("/tmp/pydyf_test/break_no_pages.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 }

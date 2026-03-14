@@ -1,6 +1,6 @@
-use crate::objects::metadata::Generation;
 use crate::PdfMetadata;
 use crate::PdfObject;
+use crate::objects::metadata::Generation;
 
 pub struct BooleanObject {
     pub metadata: PdfMetadata,
@@ -34,6 +34,10 @@ impl PdfObject for BooleanObject {
 
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
+    }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
     }
 
     fn is_compressible(&self) -> bool {

@@ -44,8 +44,7 @@ fn validate_output_pdf() {
         return;
     }
 
-    validate_pdf_file("output.pdf", "qpdf", &["--check"])
-        .expect("output.pdf should be valid");
+    validate_pdf_file("output.pdf", "qpdf", &["--check"]).expect("output.pdf should be valid");
 }
 
 #[test]
@@ -60,14 +59,16 @@ fn validate_all_generated_pdfs() {
 
     let test_dir = Path::new("/tmp/pydyf_test");
     if !test_dir.exists() {
-        eprintln!("Test directory /tmp/pydyf_test does not exist. Run other tests first to generate PDFs.");
+        eprintln!(
+            "Test directory /tmp/pydyf_test does not exist. Run other tests first to generate PDFs."
+        );
         return;
     }
 
     let mut pdf_files = Vec::new();
 
     // PDFs that are intentionally broken/invalid for testing
-    let skip_files = vec!["break_no_pages.pdf"];
+    let skip_files = ["break_no_pages.pdf"];
 
     // Collect all PDF files
     if let Ok(entries) = fs::read_dir(test_dir) {
@@ -75,12 +76,11 @@ fn validate_all_generated_pdfs() {
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) == Some("pdf") {
                 // Skip intentionally broken PDFs
-                if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
-                    if skip_files.contains(&filename) {
+                if let Some(filename) = path.file_name().and_then(|n| n.to_str())
+                    && skip_files.contains(&filename) {
                         println!("⊘ {} (intentionally invalid, skipped)", filename);
                         continue;
                     }
-                }
                 pdf_files.push(path);
             }
         }
@@ -104,7 +104,11 @@ fn validate_all_generated_pdfs() {
                 passed += 1;
             }
             Err(e) => {
-                eprintln!("✗ {}: {}", pdf_path.file_name().unwrap().to_string_lossy(), e);
+                eprintln!(
+                    "✗ {}: {}",
+                    pdf_path.file_name().unwrap().to_string_lossy(),
+                    e
+                );
                 failed += 1;
             }
         }
@@ -116,10 +120,7 @@ fn validate_all_generated_pdfs() {
 
 #[test]
 fn validate_with_multiple_tools() {
-    let tools = vec![
-        ("qpdf", vec!["--check"]),
-        ("pdfinfo", vec![]),
-    ];
+    let tools = vec![("qpdf", vec!["--check"]), ("pdfinfo", vec![])];
 
     for (tool, args) in tools {
         if check_validator(tool) {

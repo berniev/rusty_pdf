@@ -22,6 +22,7 @@ use crate::{IndirectObject, NameObject};
 ///     The value of a Type entry shall be either defined in this standard or a registered name.
 ///         name "Type"    Opt
 ///         name "Subtype" Opt (requires Type)
+#[derive(Clone)]
 pub struct DictionaryObject {
     pub(crate) metadata: PdfMetadata,
     pub values: Vec<(String, Rc<dyn PdfObject>)>,
@@ -78,7 +79,15 @@ impl PdfObject for DictionaryObject {
             "<<{}>>",
             self.values
                 .iter()
-                .map(|(k, v)| format!("/{} {}", k, v.reference()))
+                .map(|(k, v)| {
+                    // For objects with no identifier, embed them directly
+                    // For objects with an identifier, use an indirect reference
+                    if v.metadata().object_identifier.is_none() {
+                        format!("/{} {}", k, v.data())
+                    } else {
+                        format!("/{} {}", k, v.reference())
+                    }
+                })
                 .collect::<Vec<_>>()
                 .join(" ")
         )
@@ -89,6 +98,10 @@ impl PdfObject for DictionaryObject {
 
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
+    }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
     }
 }
 

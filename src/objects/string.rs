@@ -30,6 +30,10 @@ impl PdfObject for StringObject {
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
     }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
+    }
 }
 
 pub fn encode_pdf_string(string: &str) -> String {

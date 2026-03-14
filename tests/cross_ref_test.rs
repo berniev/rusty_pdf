@@ -1,11 +1,10 @@
-use pydyf::cross_ref::{CrossRefTable, Entry, Generation, CrossRefError};
+use pydyf::cross_ref::{CrossRefError, CrossRefTable, Entry, Generation};
 use pydyf::objects::metadata::ObjectStatus;
 
 #[test]
 fn test_new_table_has_root_entry() {
     let table = CrossRefTable::new();
-    let pdf = table.as_pdf().unwrap();
-    let output = String::from_utf8(pdf).unwrap();
+    let output = table.as_pdf().unwrap();
 
     // Should start with xref header
     assert!(output.starts_with("xref\r\n"));
@@ -43,8 +42,7 @@ fn test_add_multiple_entries() {
     table.add_entry(Entry::new(2, ObjectStatus::InUse, 200, Generation::Normal));
     table.add_entry(Entry::new(3, ObjectStatus::InUse, 300, Generation::Normal));
 
-    let pdf = table.as_pdf().unwrap();
-    let output = String::from_utf8(pdf).unwrap();
+    let output = table.as_pdf().unwrap();
 
     // Should have 4 entries (root + 3 added)
     assert!(output.contains("0 4\r\n"));
@@ -104,8 +102,7 @@ fn test_pdf_spec_compliance() {
     table.add_entry(Entry::new(1, ObjectStatus::InUse, 18, Generation::Normal));
     table.add_entry(Entry::new(2, ObjectStatus::InUse, 79, Generation::Normal));
 
-    let pdf = table.as_pdf().unwrap();
-    let output = String::from_utf8(pdf).unwrap();
+    let output = table.as_pdf().unwrap();
 
     // Verify PDF spec format requirements:
     // 1. Starts with "xref"
@@ -122,7 +119,7 @@ fn test_pdf_spec_compliance() {
     }
 
     // Check raw bytes contain CRLF
-    let bytes = pdf;
+    let bytes = output.as_bytes();
     let has_crlf = bytes.windows(2).any(|w| w == b"\r\n");
     assert!(has_crlf);
 }

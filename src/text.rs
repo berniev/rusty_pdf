@@ -92,31 +92,42 @@ impl StandardFont {
     ///
     /// The matching standard font, defaulting to Helvetica if no match
     pub fn from_family(family: Option<&str>, weight: u16, italic: bool) -> Self {
+        #[derive(Clone, Copy)]
+        enum FontFamily {
+            Times,
+            Courier,
+            Helvetica,
+        }
+
+        // Helper to select font variant based on style
+        let select_variant =
+            |family: FontFamily, is_bold: bool, italic: bool| match (family, is_bold, italic) {
+                (FontFamily::Times, true, true) => StandardFont::TimesBoldItalic,
+                (FontFamily::Times, true, false) => StandardFont::TimesBold,
+                (FontFamily::Times, false, true) => StandardFont::TimesItalic,
+                (FontFamily::Times, false, false) => StandardFont::TimesRoman,
+                (FontFamily::Courier, true, true) => StandardFont::CourierBoldOblique,
+                (FontFamily::Courier, true, false) => StandardFont::CourierBold,
+                (FontFamily::Courier, false, true) => StandardFont::CourierOblique,
+                (FontFamily::Courier, false, false) => StandardFont::Courier,
+                (FontFamily::Helvetica, true, true) => StandardFont::HelveticaBoldOblique,
+                (FontFamily::Helvetica, true, false) => StandardFont::HelveticaBold,
+                (FontFamily::Helvetica, false, true) => StandardFont::HelveticaOblique,
+                (FontFamily::Helvetica, false, false) => StandardFont::Helvetica,
+            };
+
         let is_bold = weight >= 700;
 
         let family_lower = family.map(|s| s.to_lowercase());
-        match family_lower.as_deref() {
-            Some(f) if f.contains("times") || f.contains("serif") => match (is_bold, italic) {
-                (true, true) => StandardFont::TimesBoldItalic,
-                (true, false) => StandardFont::TimesBold,
-                (false, true) => StandardFont::TimesItalic,
-                (false, false) => StandardFont::TimesRoman,
-            },
+        let font_family = match family_lower.as_deref() {
+            Some(f) if f.contains("times") || f.contains("serif") => FontFamily::Times,
             Some(f) if f.contains("courier") || f.contains("mono") || f.contains("console") => {
-                match (is_bold, italic) {
-                    (true, true) => StandardFont::CourierBoldOblique,
-                    (true, false) => StandardFont::CourierBold,
-                    (false, true) => StandardFont::CourierOblique,
-                    (false, false) => StandardFont::Courier,
-                }
+                FontFamily::Courier
             }
-            _ => match (is_bold, italic) {
-                (true, true) => StandardFont::HelveticaBoldOblique,
-                (true, false) => StandardFont::HelveticaBold,
-                (false, true) => StandardFont::HelveticaOblique,
-                (false, false) => StandardFont::Helvetica,
-            },
-        }
+            _ => FontFamily::Helvetica,
+        };
+
+        select_variant(font_family, is_bold, italic)
     }
 }
 
@@ -167,61 +178,62 @@ pub fn wrap_text(
     size: f64,
     mode: WrapMode,
 ) -> Vec<String> {
+    match mode {
+        WrapMode::NoWrap => vec![text.to_string()],
+        WrapMode::WordWrap => wrap_by_units(
+            text.split_whitespace().map(|s| s.to_string()),
+            " ",
+            max_width,
+            font,
+            size,
+        ),
+        WrapMode::CharWrap => wrap_by_units(
+            text.chars().map(|c| c.to_string()),
+            "",
+            max_width,
+            font,
+            size,
+        ),
+    }
+}
+
+/// Helper function to wrap text by units (words or characters).
+fn wrap_by_units(
+    units: impl Iterator<Item = String>,
+    separator: &str,
+    max_width: f64,
+    font: StandardFont,
+    size: f64,
+) -> Vec<String> {
     let mut lines = Vec::new();
     let mut current_line = String::new();
 
-    match mode {
-        WrapMode::NoWrap => {
-            lines.push(text.to_string());
-        }
-        WrapMode::WordWrap => {
-            for word in text.split_whitespace() {
-                let test_line = if current_line.is_empty() {
-                    word.to_string()
-                } else {
-                    format!("{} {}", current_line, word)
-                };
+    for unit in units {
+        let test_line = if current_line.is_empty() {
+            unit.clone()
+        } else {
+            format!("{}{}{}", current_line, separator, unit)
+        };
 
-                let test_width = font.measure_text(&test_line, size);
+        let test_width = font.measure_text(&test_line, size);
 
-                if test_width <= max_width {
-                    current_line = test_line;
-                } else {
-                    if !current_line.is_empty() {
-                        lines.push(current_line.clone());
-                    }
-                    current_line = word.to_string();
-                }
-            }
-
+        if test_width <= max_width {
+            current_line = test_line;
+        } else {
             if !current_line.is_empty() {
                 lines.push(current_line);
             }
+            current_line = unit;
         }
-        WrapMode::CharWrap => {
-            for ch in text.chars() {
-                let test_line = format!("{}{}", current_line, ch);
-                let test_width = font.measure_text(&test_line, size);
+    }
 
-                if test_width <= max_width {
-                    current_line = test_line;
-                } else {
-                    if !current_line.is_empty() {
-                        lines.push(current_line.clone());
-                    }
-                    current_line = ch.to_string();
-                }
-            }
-
-            if !current_line.is_empty() {
-                lines.push(current_line);
-            }
-        }
+    if !current_line.is_empty() {
+        lines.push(current_line);
     }
 
     // Ensure at least one line
     if lines.is_empty() {
-        lines.push(text.to_string());
+        lines.push(String::new());
     }
 
     lines

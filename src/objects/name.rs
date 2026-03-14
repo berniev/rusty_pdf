@@ -1,5 +1,5 @@
-use crate::PdfObject;
 use crate::PdfMetadata;
+use crate::PdfObject;
 
 /// Spec:
 /// name object:
@@ -9,7 +9,6 @@ use crate::PdfMetadata;
 /// name tree:
 ///     similar to a dictionary that associates keys and values but the keys in a name tree are
 ///     strings and are ordered
-
 pub struct NameObject {
     metadata: PdfMetadata,
     pub value: Option<String>,
@@ -22,7 +21,7 @@ impl NameObject {
             value,
         }
     }
-    
+
     pub fn set(&mut self, value: String) {
         self.value = Some(value);
     }
@@ -39,5 +38,9 @@ impl PdfObject for NameObject {
 
     fn metadata(&self) -> &PdfMetadata {
         &self.metadata
+    }
+
+    fn metadata_mut(&mut self) -> &mut PdfMetadata {
+        &mut self.metadata
     }
 }

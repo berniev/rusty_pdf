@@ -1,5 +1,5 @@
-use std::rc::Rc;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::objects::stream::StreamObject;
 use crate::pdf::PDF;

@@ -1,11 +1,16 @@
-use pydyf::{PDF, PageSize, PageObject, Stream};
+use image::{Rgb, RgbImage};
+use pydyf::page::ObjectId;
+use pydyf::util::Matrix;
+use pydyf::{PDF, PageObject, Stream};
 use std::fs::File;
-use image::{RgbImage, Rgb};
 
 fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
-    let mut page = PageObject::new();
-    page.set_contents(content_stream_ref);
-    page
+    let content_index = String::from_utf8(content_stream_ref).unwrap();
+    // Extract just the number from "N 0 R" format
+    let id_str = content_index.split_whitespace().next().unwrap();
+    let id: u64 = id_str.parse().unwrap();
+    
+    PageObject::new(ObjectId::from(id))
 }
 
 #[test]
@@ -22,18 +27,20 @@ fn test_external_image_from_file() {
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     img.save("/tmp/pydyf_test/gradient.png").unwrap();
 
-    let mut pdf = PDF::new(PageSize::A4);
+    let mut pdf = PDF::new();
     let mut stream = Stream::new();
 
     stream.push_state();
-    stream.set_matrix(200.0, 0.0, 0.0, 200.0, 50.0, 500.0);
-    stream.inline_image_from_file("/tmp/pydyf_test/gradient.png").unwrap();
+    stream.set_transformation_matrix(Matrix::new(200.0, 0.0, 0.0, 200.0, 50.0, 500.0));
+    stream
+        .inline_image_from_file("/tmp/pydyf_test/gradient.png")
+        .unwrap();
     stream.pop_state();
 
     stream.begin_text();
-    stream.set_font_size("Helvetica", 18.0);
-    stream.set_text_matrix(1.0, 0.0, 0.0, 1.0, 50.0, 450.0);
-    stream.show_text_string("Gradient image from PNG file");
+    stream.set_font_name_and_size("Helvetica", 18.0);
+    stream.set_text_matrix(Matrix::new(1.0, 0.0, 0.0, 1.0, 50.0, 450.0));
+    stream.show_single_text_string("Gradient image from PNG file");
     stream.end_text();
 
     pdf.add_object(Box::new(stream));
@@ -41,8 +48,8 @@ fn test_external_image_from_file() {
     let page = create_page_with_content(content_ref);
     pdf.add_page(page);
 
-    let mut file = File::create("/tmp/pydyf_test/ext.pdf").unwrap();
-    pdf.write(&mut file, Some(b"1.7"), pydyf::FileIdentifierMode::AutoMD5, false).unwrap();
+    let file = File::create("/tmp/pydyf_test/ext.pdf").unwrap();
+    pdf.write(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
 
     println!("✅ Generated: /tmp/pydyf_test/ext.pdf");
 }
