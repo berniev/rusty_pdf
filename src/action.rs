@@ -71,7 +71,7 @@ impl Action for GoToAction {
     fn to_dict(&self) -> PdfResult<DictionaryObject> {
         let mut dict = DictionaryObject::new(None);
         dict.set("S", Rc::new(NameObject::new(Some(self.action_type().to_string()))));
-        dict.set("D", Rc::new(self.destination.to_array()));
+        dict.set("D", Rc::new(ArrayObject::from_destination_ref(&self.destination)));
         Ok(dict)
     }
 }
@@ -333,14 +333,14 @@ mod tests {
     #[test]
     fn test_destination_xyz() {
         let dest = Destination::xyz(0, Some(100.0), Some(200.0), None);
-        let arr = dest.to_array();
+        let arr = ArrayObject::from_destination(dest);
         assert_eq!(arr.values.len(), 5); // page, /XYZ, left, top, zoom
     }
 
     #[test]
     fn test_destination_fit() {
         let dest = Destination::fit(2);
-        let arr = dest.to_array();
+        let arr = ArrayObject::from_destination(dest);
         assert_eq!(arr.values.len(), 2); // page, /Fit
     }
 }

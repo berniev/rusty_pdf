@@ -1,7 +1,6 @@
 use crate::encoding::f_to_pdf_num;
 use std::fmt::Display;
-use std::rc::Rc;
-use crate::{ArrayObject, NumberObject, NumberType};
+
 //------------------------- ToPdf -----------------------------
 
 pub trait ToPdf {
@@ -71,29 +70,6 @@ pub struct Rect {
     pub y2: f64,
 }
 
-/// Create a PDF array from two points [x0 y0 x1 y1].
-/// Useful for gradient coordinates, line segments, etc.
-pub fn points_to_array(start: Posn<f64>, end: Posn<f64>) -> ArrayObject {
-    let mut arr = ArrayObject::new(None);
-    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(start.x))));
-    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(start.y))));
-    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(end.x))));
-    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(end.y))));
-    arr
-}
-
-impl Rect {
-    /// Convert to a PDF array object [x1 y1 x2 y2].
-    pub fn to_array(&self) -> ArrayObject {
-        let mut arr = ArrayObject::new(None);
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.x1))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.y1))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.x2))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.y2))));
-        arr
-    }
-}
-
 //------------------------ Matrix -------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -104,20 +80,6 @@ pub struct Matrix {
     pub d: f64,
     pub e: f64,
     pub f: f64,
-}
-
-impl Matrix {
-    /// Convert to a PDF array object [a b c d e f].
-    pub fn to_array(&self) -> ArrayObject {
-        let mut arr = ArrayObject::new(None);
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.a))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.b))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.c))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.d))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.e))));
-        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.f))));
-        arr
-    }
 }
 
 impl ToPdf for Matrix {

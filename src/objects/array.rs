@@ -1,7 +1,6 @@
 use std::rc::Rc;
 
-use crate::PdfMetadata;
-use crate::PdfObject;
+use crate::{NumberObject, NumberType, PdfMetadata, PdfObject, util::{Posn, Rect, Matrix}, action::Destination};
 
 //-------------------ArrayObject ----------------------
 
@@ -29,6 +28,53 @@ impl ArrayObject {
 
     pub fn push_object(&mut self, value: Rc<dyn PdfObject>) {
         self.values.push(value);
+    }
+
+    pub fn push_real(&mut self, value: f64) {
+        self.values.push(Rc::new(NumberObject::new(NumberType::Real(value))));
+    }
+
+    pub fn push_reals(&mut self, values: &[f64]) {
+        for &value in values {
+            self.push_real(value);
+        }
+    }
+
+    pub fn from_points(start: Posn<f64>, end: Posn<f64>) -> Self {
+        let mut arr = Self::new(None);
+        arr.push_real(start.x);
+        arr.push_real(start.y);
+        arr.push_real(end.x);
+        arr.push_real(end.y);
+        arr
+    }
+
+    pub fn from_rect(rect: Rect) -> Self {
+        let mut arr = Self::new(None);
+        arr.push_real(rect.x1);
+        arr.push_real(rect.y1);
+        arr.push_real(rect.x2);
+        arr.push_real(rect.y2);
+        arr
+    }
+
+    pub fn from_matrix(matrix: Matrix) -> Self {
+        let mut arr = Self::new(None);
+        arr.push_real(matrix.a);
+        arr.push_real(matrix.b);
+        arr.push_real(matrix.c);
+        arr.push_real(matrix.d);
+        arr.push_real(matrix.e);
+        arr.push_real(matrix.f);
+        arr
+    }
+
+    pub fn from_destination(dest: Destination) -> Self {
+        dest.to_array()
+    }
+
+    pub fn from_destination_ref(dest: &Destination) -> Self {
+        dest.to_array()
     }
 }
 

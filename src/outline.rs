@@ -4,7 +4,7 @@
 //! to navigate through the document.
 
 use crate::{
-    DictionaryObject, NameObject, NumberObject, NumberType, PdfResult, StringObject,
+    ArrayObject, DictionaryObject, NameObject, NumberObject, NumberType, PdfResult, StringObject,
     action::Destination,
 };
 use std::rc::Rc;
@@ -220,7 +220,7 @@ impl DocumentOutline {
         }
 
         if let Some(ref dest) = item.destination {
-            dict.set("Dest", Rc::new(dest.to_array()));
+            dict.set("Dest", Rc::new(ArrayObject::from_destination_ref(dest)));
         }
 
         if !item.children.is_empty() {
@@ -257,7 +257,7 @@ impl DocumentOutline {
         }
 
         if let Some((r, g, b)) = item.color {
-            let mut color_arr = crate::ArrayObject::new(None);
+            let mut color_arr = ArrayObject::new(None);
             color_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(r))));
             color_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(g))));
             color_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(b))));

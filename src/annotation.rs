@@ -87,7 +87,7 @@ pub trait Annotation {
         // Required entries
         dict.set("Type", Rc::new(NameObject::new(Some("Annot".to_string()))));
         dict.set("Subtype", Rc::new(NameObject::new(Some(self.subtype().to_string()))));
-        dict.set("Rect", Rc::new(self.rect().to_array()));
+        dict.set("Rect", Rc::new(ArrayObject::from_rect(self.rect())));
 
         // Optional common entries
         let flags = self.flags();
@@ -199,7 +199,7 @@ impl Annotation for TextAnnotation {
         // Required
         dict.set("Type", Rc::new(NameObject::new(Some("Annot".to_string()))));
         dict.set("Subtype", Rc::new(NameObject::new(Some(self.subtype().to_string()))));
-        dict.set("Rect", Rc::new(self.rect().to_array()));
+        dict.set("Rect", Rc::new(ArrayObject::from_rect(self.rect())));
 
         // Optional
         let flags = self.flags();
@@ -286,7 +286,7 @@ impl Annotation for LinkAnnotation {
         // Required
         dict.set("Type", Rc::new(NameObject::new(Some("Annot".to_string()))));
         dict.set("Subtype", Rc::new(NameObject::new(Some(self.subtype().to_string()))));
-        dict.set("Rect", Rc::new(self.rect().to_array()));
+        dict.set("Rect", Rc::new(ArrayObject::from_rect(self.rect())));
 
         // Optional
         let flags = self.flags();
@@ -335,7 +335,7 @@ mod tests {
     #[test]
     fn test_rect_to_array() {
         let rect = Rect { x1: 10.0, y1: 20.0, x2: 100.0, y2: 200.0 };
-        let arr = rect.to_array();
+        let arr = ArrayObject::from_rect(rect);
         assert_eq!(arr.values.len(), 4);
     }
 

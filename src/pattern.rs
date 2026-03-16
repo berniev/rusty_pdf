@@ -102,7 +102,7 @@ impl TilingPattern {
 
         extra_entries.push((
             "BBox".to_string(),
-            Rc::new(self.bounding_box.to_array()) as Rc<dyn PdfObject>,
+            Rc::new(ArrayObject::from_rect(self.bounding_box)) as Rc<dyn PdfObject>,
         ));
 
         extra_entries.push((
@@ -118,7 +118,7 @@ impl TilingPattern {
         if let Some(matrix) = self.matrix {
             extra_entries.push((
                 "Matrix".to_string(),
-                Rc::new(matrix.to_array()) as Rc<dyn PdfObject>,
+                Rc::new(ArrayObject::from_matrix(matrix)) as Rc<dyn PdfObject>,
             ));
         }
 
@@ -214,7 +214,7 @@ impl AxialShading {
             Rc::new(NameObject::new(Some("DeviceRGB".to_string()))),
         );
 
-        dict.set("Coords", Rc::new(crate::util::points_to_array(self.start, self.end)));
+        dict.set("Coords", Rc::new(ArrayObject::from_points(self.start, self.end)));
 
         // Function (simplified: direct color interpolation)
         // In a full implementation, this would be a proper PDF function object
