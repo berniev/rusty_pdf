@@ -60,7 +60,7 @@ macro_rules! impl_color_logic {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
-    pub color: f64,
+    pub color: f32,
 }
 
 impl Color {
@@ -90,14 +90,14 @@ impl ToPdf for Color {
     }
 }
 
-impl PartialEq<f64> for Color {
-    fn eq(&self, other: &f64) -> bool {
+impl PartialEq<f32> for Color {
+    fn eq(&self, other: &f32) -> bool {
         self.color == *other
     }
 }
 
-impl PartialOrd<f64> for Color {
-    fn partial_cmp(&self, other: &f64) -> Option<Ordering> {
+impl PartialOrd<f32> for Color {
+    fn partial_cmp(&self, other: &f32) -> Option<Ordering> {
         self.color.partial_cmp(other)
     }
 }

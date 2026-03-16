@@ -127,8 +127,8 @@ impl Gradient {
 
         // 2. Create Color Function (Type 2 - Exponential Interpolation)
         let color_func = create_interpolation_function_type_2(
-            vec![first.red.color, first.green.color, first.blue.color],
-            vec![last.red.color, last.green.color, last.blue.color],
+            vec![first.red.color as f64, first.green.color as f64, first.blue.color as f64],
+            vec![last.red.color as f64, last.green.color as f64, last.blue.color as f64],
             0.0,
         );
         let color_func_num = pdf.add_object(Box::new(color_func));
@@ -157,8 +157,8 @@ impl Gradient {
 
             // Alpha Interpolation Function
             let alpha_func = create_interpolation_function_type_2(
-                vec![first.alpha.color, last.alpha.color],
-                vec![last.alpha.color],
+                vec![first.alpha.color as f64, last.alpha.color as f64],
+                vec![last.alpha.color as f64],
                 0.0,
             );
             let alpha_func_num = pdf.add_object(Box::new(alpha_func));
