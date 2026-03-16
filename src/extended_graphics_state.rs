@@ -309,7 +309,7 @@ impl Resource for ExtGState {
         ResourceCategory::ExtGState
     }
 
-    fn resource_id(&self) -> String {
+    fn resource_unique_id(&self) -> String {
         self.generate_id()
     }
 
@@ -364,7 +364,7 @@ mod tests {
     fn test_extgstate_resource_trait() {
         let gs = ExtGState::with_alpha(0.5, 0.5);
         assert_eq!(gs.category(), ResourceCategory::ExtGState);
-        assert!(!gs.resource_id().is_empty());
+        assert!(!gs.resource_unique_id().is_empty());
     }
 
     #[test]

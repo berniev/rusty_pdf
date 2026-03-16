@@ -63,9 +63,7 @@ pub struct PDF {
     pub info: DictionaryObject,
     pub current_position: usize,
     pub xref_position: Option<usize>,
-    /// Single source of truth for object ID allocation.
-    /// PDF spec: object 0 is reserved as free list head, so numbering starts at 1.
-    next_object_id: usize,
+    next_object_id: usize, // Single source of truth for object ID allocation.
 }
 
 impl Default for PDF {
@@ -102,17 +100,12 @@ impl PDF {
         self.last_num
     }
 
-    /// Allocate the next available object ID.
-    /// PDF Reference 1.7, Section 3.4.3: "Object number 0 shall always be free"
-    /// This is the ONLY place object IDs should be allocated.
     pub(crate) fn allocate_object_id(&mut self) -> usize {
         let id = self.next_object_id;
         self.next_object_id += 1;
         id
     }
 
-    /// Get the total number of objects that have been allocated IDs.
-    /// This is used for the xref /Size entry (highest object number + 1).
     pub(crate) fn object_count(&self) -> usize {
         self.next_object_id
     }

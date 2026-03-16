@@ -7,62 +7,37 @@ use crate::{DictionaryObject, NameObject, NumberObject, NumberType, PdfObject, R
 use std::any::Any;
 use std::rc::Rc;
 
-/// Pattern type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PatternType {
-    /// Tiling pattern (repeating graphic).
     Tiling = 1,
-    /// Shading pattern (smooth color transition).
     Shading = 2,
 }
 
-/// Tiling type for tiling patterns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TilingType {
-    /// Constant spacing.
     ConstantSpacing = 1,
-    /// No distortion.
     NoDistortion = 2,
-    /// Faster tiling.
     FasterTiling = 3,
 }
 
-/// Paint type for tiling patterns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PaintType {
-    /// Colored tiling pattern.
     Colored = 1,
-    /// Uncolored tiling pattern.
     Uncolored = 2,
 }
 
-/// A tiling pattern (repeating graphic).
 #[derive(Clone)]
 pub struct TilingPattern {
-    /// Bounding box of the pattern cell [xmin ymin xmax ymax].
-    pub bbox: (f64, f64, f64, f64),
-
-    /// Horizontal spacing.
+    pub bounding_box: (f64, f64, f64, f64), // [xmin ymin xmax ymax]
     pub x_step: f64,
-
-    /// Vertical spacing.
     pub y_step: f64,
-
-    /// Paint type.
     pub paint_type: PaintType,
-
-    /// Tiling type.
     pub tiling_type: TilingType,
-
-    /// Pattern content stream (drawing commands).
     pub content: Vec<u8>,
-
-    /// Transformation matrix [a b c d e f].
-    pub matrix: Option<[f64; 6]>,
+    pub matrix: Option<[f64; 6]>, // [a b c d e f]
 }
 
 impl TilingPattern {
-    /// Create a new tiling pattern.
     pub fn new(
         bbox: (f64, f64, f64, f64),
         x_step: f64,
@@ -70,7 +45,7 @@ impl TilingPattern {
         content: Vec<u8>,
     ) -> Self {
         Self {
-            bbox,
+            bounding_box: bbox,
             x_step,
             y_step,
             paint_type: PaintType::Colored,
@@ -80,25 +55,21 @@ impl TilingPattern {
         }
     }
 
-    /// Set paint type.
     pub fn with_paint_type(mut self, paint_type: PaintType) -> Self {
         self.paint_type = paint_type;
         self
     }
 
-    /// Set tiling type.
     pub fn with_tiling_type(mut self, tiling_type: TilingType) -> Self {
         self.tiling_type = tiling_type;
         self
     }
 
-    /// Set transformation matrix.
     pub fn with_matrix(mut self, matrix: [f64; 6]) -> Self {
         self.matrix = Some(matrix);
         self
     }
 
-    /// Convert to PDF stream object.
     pub fn to_stream(&self) -> crate::StreamObject {
         let mut extra_entries = Vec::new();
 
@@ -127,10 +98,10 @@ impl TilingPattern {
 
         // BBox
         let mut bbox_arr = ArrayObject::new(None);
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bbox.0))));
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bbox.1))));
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bbox.2))));
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bbox.3))));
+        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.0))));
+        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.1))));
+        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.2))));
+        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.3))));
         extra_entries.push((
             "BBox".to_string(),
             Rc::new(bbox_arr) as Rc<dyn PdfObject>,
@@ -188,7 +159,7 @@ impl Resource for TilingPattern {
         ResourceCategory::Pattern
     }
 
-    fn resource_id(&self) -> String {
+    fn resource_unique_id(&self) -> String {
         self.generate_id()
     }
 
@@ -201,51 +172,29 @@ impl Resource for TilingPattern {
     }
 }
 
-/// Shading type for shading patterns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShadingType {
-    /// Function-based shading.
     Function = 1,
-    /// Axial (linear gradient).
     Axial = 2,
-    /// Radial (radial gradient).
     Radial = 3,
-    /// Free-form Gouraud triangle mesh.
     FreeFormGouraud = 4,
-    /// Lattice-form Gouraud triangle mesh.
     LatticeGouraud = 5,
-    /// Coons patch mesh.
     CoonsPatch = 6,
-    /// Tensor-product patch mesh.
     TensorPatch = 7,
 }
 
-/// An axial (linear) shading.
-///
 /// Defines a smooth transition between colors along a line.
 #[derive(Clone)]
 pub struct AxialShading {
-    /// Starting point (x, y).
-    pub start: (f64, f64),
-
-    /// Ending point (x, y).
-    pub end: (f64, f64),
-
-    /// Starting color (RGB).
-    pub start_color: (f64, f64, f64),
-
-    /// Ending color (RGB).
-    pub end_color: (f64, f64, f64),
-
-    /// Extend shading beyond starting point.
+    pub start: (f64, f64), // x,y
+    pub end: (f64, f64), // x,y
+    pub start_color: (f64, f64, f64), // RGB
+    pub end_color: (f64, f64, f64), // RGB
     pub extend_start: bool,
-
-    /// Extend shading beyond ending point.
     pub extend_end: bool,
 }
 
 impl AxialShading {
-    /// Create a new axial shading (linear gradient).
     pub fn new(
         start: (f64, f64),
         end: (f64, f64),
@@ -262,14 +211,12 @@ impl AxialShading {
         }
     }
 
-    /// Set whether to extend shading.
     pub fn with_extend(mut self, start: bool, end: bool) -> Self {
         self.extend_start = start;
         self.extend_end = end;
         self
     }
 
-    /// Convert to PDF shading dictionary.
     pub fn to_dict(&self) -> DictionaryObject {
         let mut dict = DictionaryObject::new(None);
 
@@ -315,7 +262,7 @@ impl Resource for AxialShading {
         ResourceCategory::Shading
     }
 
-    fn resource_id(&self) -> String {
+    fn resource_unique_id(&self) -> String {
         self.generate_id()
     }
 
@@ -341,7 +288,7 @@ mod tests {
             b"0 0 m 10 10 l S".to_vec(),
         );
 
-        assert_eq!(pattern.bbox, (0.0, 0.0, 10.0, 10.0));
+        assert_eq!(pattern.bounding_box, (0.0, 0.0, 10.0, 10.0));
         assert_eq!(pattern.x_step, 10.0);
         assert_eq!(pattern.y_step, 10.0);
     }
@@ -356,7 +303,7 @@ mod tests {
         );
 
         assert_eq!(pattern.category(), ResourceCategory::Pattern);
-        assert!(!pattern.resource_id().is_empty());
+        assert!(!pattern.resource_unique_id().is_empty());
     }
 
     #[test]
@@ -397,7 +344,7 @@ mod tests {
         );
 
         assert_eq!(shading.category(), ResourceCategory::Shading);
-        assert!(!shading.resource_id().is_empty());
+        assert!(!shading.resource_unique_id().is_empty());
     }
 
     #[test]
