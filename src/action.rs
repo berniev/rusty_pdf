@@ -237,23 +237,9 @@ impl Destination {
                 arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
                 arr.push_object(Rc::new(NameObject::new(Some("XYZ".to_string()))));
 
-                if let Some(l) = left {
-                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*l))));
-                } else {
-                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
-                }
-
-                if let Some(t) = top {
-                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*t))));
-                } else {
-                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
-                }
-
-                if let Some(z) = zoom {
-                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*z))));
-                } else {
-                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
-                }
+                arr.push_optional_real(*left);
+                arr.push_optional_real(*top);
+                arr.push_optional_real(*zoom);
             }
             Destination::Fit { page } => {
                 arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
@@ -262,22 +248,12 @@ impl Destination {
             Destination::FitH { page, top } => {
                 arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
                 arr.push_object(Rc::new(NameObject::new(Some("FitH".to_string()))));
-
-                if let Some(t) = top {
-                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*t))));
-                } else {
-                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
-                }
+                arr.push_optional_real(*top);
             }
             Destination::FitV { page, left } => {
                 arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));
                 arr.push_object(Rc::new(NameObject::new(Some("FitV".to_string()))));
-
-                if let Some(l) = left {
-                    arr.push_object(Rc::new(NumberObject::new(NumberType::Real(*l))));
-                } else {
-                    arr.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
-                }
+                arr.push_optional_real(*left);
             }
             Destination::FitR { page, left, bottom, right, top } => {
                 arr.push_object(Rc::new(NumberObject::new(NumberType::Integer(*page as i64))));

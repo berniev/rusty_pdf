@@ -81,6 +81,14 @@ pub trait Annotation {
         None
     }
 
+    fn add_border_style_to_dict(&self, dict: &mut DictionaryObject) {
+        if let Some(style) = self.border_style() {
+            let mut bs = DictionaryObject::new(None);
+            bs.set("S", Rc::new(NameObject::new(Some(style.as_str().to_string()))));
+            dict.set("BS", Rc::new(bs));
+        }
+    }
+
     fn to_dict(&self) -> PdfResult<DictionaryObject> {
         let mut dict = DictionaryObject::new(None);
 
@@ -95,18 +103,10 @@ pub trait Annotation {
             dict.set("F", Rc::new(NumberObject::new(NumberType::Integer(flags.bits() as i64))));
         }
 
-        if let Some(style) = self.border_style() {
-            let mut bs = DictionaryObject::new(None);
-            bs.set("S", Rc::new(NameObject::new(Some(style.as_str().to_string()))));
-            dict.set("BS", Rc::new(bs));
-        }
+        self.add_border_style_to_dict(&mut dict);
 
         if let Some((r, g, b)) = self.color() {
-            let mut arr = ArrayObject::new(None);
-            arr.push_object(Rc::new(NumberObject::new(NumberType::Real(r))));
-            arr.push_object(Rc::new(NumberObject::new(NumberType::Real(g))));
-            arr.push_object(Rc::new(NumberObject::new(NumberType::Real(b))));
-            dict.set("C", Rc::new(arr));
+            dict.set("C", Rc::new(ArrayObject::from_rgb_tuple(r, g, b)));
         }
 
         if let Some(contents) = self.contents() {
@@ -208,11 +208,7 @@ impl Annotation for TextAnnotation {
         }
 
         if let Some((r, g, b)) = self.color() {
-            let mut arr = ArrayObject::new(None);
-            arr.push_object(Rc::new(NumberObject::new(NumberType::Real(r))));
-            arr.push_object(Rc::new(NumberObject::new(NumberType::Real(g))));
-            arr.push_object(Rc::new(NumberObject::new(NumberType::Real(b))));
-            dict.set("C", Rc::new(arr));
+            dict.set("C", Rc::new(ArrayObject::from_rgb_tuple(r, g, b)));
         }
 
         if let Some(contents) = self.contents() {
@@ -294,11 +290,7 @@ impl Annotation for LinkAnnotation {
             dict.set("F", Rc::new(NumberObject::new(NumberType::Integer(flags.bits() as i64))));
         }
 
-        if let Some(style) = self.border_style() {
-            let mut bs = DictionaryObject::new(None);
-            bs.set("S", Rc::new(NameObject::new(Some(style.as_str().to_string()))));
-            dict.set("BS", Rc::new(bs));
-        }
+        self.add_border_style_to_dict(&mut dict);
 
         // Link-specific action
         match &self.action {

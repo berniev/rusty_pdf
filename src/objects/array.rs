@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{NumberObject, NumberType, PdfMetadata, PdfObject, util::{Posn, Rect, Matrix}, action::Destination};
+use crate::{NameObject, NumberObject, NumberType, PdfMetadata, PdfObject, util::{Posn, Rect, Matrix}, action::Destination, color::{RGB, RGBA, CMYK}};
 
 //-------------------ArrayObject ----------------------
 
@@ -40,6 +40,14 @@ impl ArrayObject {
         }
     }
 
+    pub fn push_optional_real(&mut self, value: Option<f64>) {
+        if let Some(v) = value {
+            self.push_real(v);
+        } else {
+            self.push_object(Rc::new(NameObject::new(Some("null".to_string()))));
+        }
+    }
+
     pub fn from_points(start: Posn<f64>, end: Posn<f64>) -> Self {
         let mut arr = Self::new(None);
         arr.push_real(start.x);
@@ -75,6 +83,40 @@ impl ArrayObject {
 
     pub fn from_destination_ref(dest: &Destination) -> Self {
         dest.to_array()
+    }
+
+    pub fn from_rgb_tuple(r: f64, g: f64, b: f64) -> Self {
+        let mut arr = Self::new(None);
+        arr.push_real(r);
+        arr.push_real(g);
+        arr.push_real(b);
+        arr
+    }
+
+    pub fn from_rgb(rgb: RGB) -> Self {
+        let mut arr = Self::new(None);
+        arr.push_real(rgb.red.color as f64);
+        arr.push_real(rgb.green.color as f64);
+        arr.push_real(rgb.blue.color as f64);
+        arr
+    }
+
+    pub fn from_rgba(rgba: RGBA) -> Self {
+        let mut arr = Self::new(None);
+        arr.push_real(rgba.red.color as f64);
+        arr.push_real(rgba.green.color as f64);
+        arr.push_real(rgba.blue.color as f64);
+        arr.push_real(rgba.alpha.color as f64);
+        arr
+    }
+
+    pub fn from_cmyk(cmyk: CMYK) -> Self {
+        let mut arr = Self::new(None);
+        arr.push_real(cmyk.cyan.color as f64);
+        arr.push_real(cmyk.magenta.color as f64);
+        arr.push_real(cmyk.yellow.color as f64);
+        arr.push_real(cmyk.black.color as f64);
+        arr
     }
 }
 
