@@ -1,6 +1,7 @@
 use crate::encoding::f_to_pdf_num;
 use std::fmt::Display;
-
+use std::rc::Rc;
+use crate::{ArrayObject, NumberObject, NumberType};
 //------------------------- ToPdf -----------------------------
 
 pub trait ToPdf {
@@ -60,6 +61,28 @@ impl ToPdf for Dims {
     }
 }
 
+//------------------------ Rect -------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Rect {
+    pub x1: f64,
+    pub y1: f64,
+    pub x2: f64,
+    pub y2: f64,
+}
+
+impl Rect {
+    /// Convert to a PDF array object [x1 y1 x2 y2].
+    pub fn to_array(&self) -> ArrayObject {
+        let mut arr = ArrayObject::new(None);
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.x1))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.y1))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.x2))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.y2))));
+        arr
+    }
+}
+
 //------------------------ Matrix -------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -75,6 +98,18 @@ pub struct Matrix {
 impl Matrix {
     pub fn new(a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) -> Self {
         Matrix { a, b, c, d, e, f }
+    }
+
+    /// Convert to a PDF array object [a b c d e f].
+    pub fn to_array(&self) -> ArrayObject {
+        let mut arr = ArrayObject::new(None);
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.a))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.b))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.c))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.d))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.e))));
+        arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.f))));
+        arr
     }
 }
 

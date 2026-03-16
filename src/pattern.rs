@@ -3,9 +3,15 @@
 //! Patterns allow you to fill and stroke with repeating graphics (tiling)
 //! or smooth color transitions (shading).
 
-use crate::{DictionaryObject, NameObject, NumberObject, NumberType, PdfObject, Resource, ResourceCategory, ArrayObject};
 use std::any::Any;
 use std::rc::Rc;
+
+use crate::color::RGB;
+use crate::util::{Matrix, Posn, Rect};
+use crate::{
+    ArrayObject, DictionaryObject, NameObject, NumberObject, NumberType, PdfObject, Resource,
+    ResourceCategory,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PatternType {
@@ -28,22 +34,17 @@ pub enum PaintType {
 
 #[derive(Clone)]
 pub struct TilingPattern {
-    pub bounding_box: (f64, f64, f64, f64), // [xmin ymin xmax ymax]
+    pub bounding_box: Rect,
     pub x_step: f64,
     pub y_step: f64,
     pub paint_type: PaintType,
     pub tiling_type: TilingType,
     pub content: Vec<u8>,
-    pub matrix: Option<[f64; 6]>, // [a b c d e f]
+    pub matrix: Option<Matrix>,
 }
 
 impl TilingPattern {
-    pub fn new(
-        bbox: (f64, f64, f64, f64),
-        x_step: f64,
-        y_step: f64,
-        content: Vec<u8>,
-    ) -> Self {
+    pub fn new(bbox: Rect, x_step: f64, y_step: f64, content: Vec<u8>) -> Self {
         Self {
             bounding_box: bbox,
             x_step,
@@ -65,7 +66,7 @@ impl TilingPattern {
         self
     }
 
-    pub fn with_matrix(mut self, matrix: [f64; 6]) -> Self {
+    pub fn with_matrix(mut self, matrix: Matrix) -> Self {
         self.matrix = Some(matrix);
         self
     }
@@ -73,7 +74,6 @@ impl TilingPattern {
     pub fn to_stream(&self) -> crate::StreamObject {
         let mut extra_entries = Vec::new();
 
-        // Pattern type
         extra_entries.push((
             "Type".to_string(),
             Rc::new(NameObject::new(Some("Pattern".to_string()))) as Rc<dyn PdfObject>,
@@ -81,61 +81,48 @@ impl TilingPattern {
 
         extra_entries.push((
             "PatternType".to_string(),
-            Rc::new(NumberObject::new(NumberType::Integer(PatternType::Tiling as i64))) as Rc<dyn PdfObject>,
+            Rc::new(NumberObject::new(NumberType::Integer(
+                PatternType::Tiling as i64,
+            ))) as Rc<dyn PdfObject>,
         ));
 
-        // Paint type
         extra_entries.push((
             "PaintType".to_string(),
-            Rc::new(NumberObject::new(NumberType::Integer(self.paint_type as i64))) as Rc<dyn PdfObject>,
+            Rc::new(NumberObject::new(NumberType::Integer(
+                self.paint_type as i64,
+            ))) as Rc<dyn PdfObject>,
         ));
 
-        // Tiling type
         extra_entries.push((
             "TilingType".to_string(),
-            Rc::new(NumberObject::new(NumberType::Integer(self.tiling_type as i64))) as Rc<dyn PdfObject>,
+            Rc::new(NumberObject::new(NumberType::Integer(
+                self.tiling_type as i64,
+            ))) as Rc<dyn PdfObject>,
         ));
 
-        // BBox
-        let mut bbox_arr = ArrayObject::new(None);
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.0))));
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.1))));
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.2))));
-        bbox_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(self.bounding_box.3))));
         extra_entries.push((
             "BBox".to_string(),
-            Rc::new(bbox_arr) as Rc<dyn PdfObject>,
+            Rc::new(self.bounding_box.to_array()) as Rc<dyn PdfObject>,
         ));
 
-        // XStep
         extra_entries.push((
             "XStep".to_string(),
             Rc::new(NumberObject::new(NumberType::Real(self.x_step))) as Rc<dyn PdfObject>,
         ));
 
-        // YStep
         extra_entries.push((
             "YStep".to_string(),
             Rc::new(NumberObject::new(NumberType::Real(self.y_step))) as Rc<dyn PdfObject>,
         ));
 
-        // Matrix (optional)
         if let Some(matrix) = self.matrix {
-            let mut matrix_arr = ArrayObject::new(None);
-            for &val in &matrix {
-                matrix_arr.push_object(Rc::new(NumberObject::new(NumberType::Real(val))));
-            }
             extra_entries.push((
                 "Matrix".to_string(),
-                Rc::new(matrix_arr) as Rc<dyn PdfObject>,
+                Rc::new(matrix.to_array()) as Rc<dyn PdfObject>,
             ));
         }
 
-        crate::StreamObject::new()
-            .with_data(
-                Some(vec![self.content.clone()]),
-                Some(extra_entries)
-            )
+        crate::StreamObject::new().with_data(Some(vec![self.content.clone()]), Some(extra_entries))
     }
 
     fn generate_id(&self) -> String {
@@ -186,21 +173,16 @@ pub enum ShadingType {
 /// Defines a smooth transition between colors along a line.
 #[derive(Clone)]
 pub struct AxialShading {
-    pub start: (f64, f64), // x,y
-    pub end: (f64, f64), // x,y
-    pub start_color: (f64, f64, f64), // RGB
-    pub end_color: (f64, f64, f64), // RGB
+    pub start: Posn<f64>,
+    pub end: Posn<f64>,
+    pub start_color: RGB,
+    pub end_color: RGB,
     pub extend_start: bool,
     pub extend_end: bool,
 }
 
 impl AxialShading {
-    pub fn new(
-        start: (f64, f64),
-        end: (f64, f64),
-        start_color: (f64, f64, f64),
-        end_color: (f64, f64, f64),
-    ) -> Self {
+    pub fn new(start: Posn<f64>, end: Posn<f64>, start_color: RGB, end_color: RGB) -> Self {
         Self {
             start,
             end,
@@ -220,17 +202,25 @@ impl AxialShading {
     pub fn to_dict(&self) -> DictionaryObject {
         let mut dict = DictionaryObject::new(None);
 
-        dict.set("ShadingType", Rc::new(NumberObject::new(NumberType::Integer(ShadingType::Axial as i64))));
+        dict.set(
+            "ShadingType",
+            Rc::new(NumberObject::new(NumberType::Integer(
+                ShadingType::Axial as i64,
+            ))),
+        );
 
         // ColorSpace
-        dict.set("ColorSpace", Rc::new(NameObject::new(Some("DeviceRGB".to_string()))));
+        dict.set(
+            "ColorSpace",
+            Rc::new(NameObject::new(Some("DeviceRGB".to_string()))),
+        );
 
         // Coords [x0 y0 x1 y1]
         let mut coords = ArrayObject::new(None);
-        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.start.0))));
-        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.start.1))));
-        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.end.0))));
-        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.end.1))));
+        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.start.x))));
+        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.start.y))));
+        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.end.x))));
+        coords.push_object(Rc::new(NumberObject::new(NumberType::Real(self.end.y))));
         dict.set("Coords", Rc::new(coords));
 
         // Function (simplified: direct color interpolation)
@@ -249,10 +239,16 @@ impl AxialShading {
     fn generate_id(&self) -> String {
         format!(
             "axial:{},{}->{},{}:rgb({},{},{})->rgb({},{},{})",
-            self.start.0, self.start.1,
-            self.end.0, self.end.1,
-            self.start_color.0, self.start_color.1, self.start_color.2,
-            self.end_color.0, self.end_color.1, self.end_color.2
+            self.start.x,
+            self.start.y,
+            self.end.x,
+            self.end.y,
+            self.start_color.red.color,
+            self.start_color.green.color,
+            self.start_color.blue.color,
+            self.end_color.red.color,
+            self.end_color.green.color,
+            self.end_color.blue.color
         )
     }
 }
@@ -282,13 +278,26 @@ mod tests {
     #[test]
     fn test_tiling_pattern_creation() {
         let pattern = TilingPattern::new(
-            (0.0, 0.0, 10.0, 10.0),
+            Rect {
+                x1: 0.0,
+                y1: 0.0,
+                x2: 10.0,
+                y2: 10.0,
+            },
             10.0,
             10.0,
             b"0 0 m 10 10 l S".to_vec(),
         );
 
-        assert_eq!(pattern.bounding_box, (0.0, 0.0, 10.0, 10.0));
+        assert_eq!(
+            pattern.bounding_box,
+            Rect {
+                x1: 0.0,
+                y1: 0.0,
+                x2: 10.0,
+                y2: 10.0
+            }
+        );
         assert_eq!(pattern.x_step, 10.0);
         assert_eq!(pattern.y_step, 10.0);
     }
@@ -296,7 +305,12 @@ mod tests {
     #[test]
     fn test_tiling_pattern_resource_trait() {
         let pattern = TilingPattern::new(
-            (0.0, 0.0, 10.0, 10.0),
+            Rect {
+                x1: 0.0,
+                y1: 0.0,
+                x2: 10.0,
+                y2: 10.0,
+            },
             10.0,
             10.0,
             vec![],
@@ -308,24 +322,44 @@ mod tests {
 
     #[test]
     fn test_axial_shading_creation() {
+        use crate::color::Color;
+
         let shading = AxialShading::new(
-            (0.0, 0.0),
-            (100.0, 0.0),
-            (1.0, 0.0, 0.0), // Red
-            (0.0, 0.0, 1.0), // Blue
+            Posn { x: 0.0, y: 0.0 },
+            Posn { x: 100.0, y: 0.0 },
+            RGB {
+                red: Color { color: 1.0 },
+                green: Color { color: 0.0 },
+                blue: Color { color: 0.0 },
+            }, // Red
+            RGB {
+                red: Color { color: 0.0 },
+                green: Color { color: 0.0 },
+                blue: Color { color: 1.0 },
+            }, // Blue
         );
 
-        assert_eq!(shading.start, (0.0, 0.0));
-        assert_eq!(shading.end, (100.0, 0.0));
+        assert_eq!(shading.start, Posn { x: 0.0, y: 0.0 });
+        assert_eq!(shading.end, Posn { x: 100.0, y: 0.0 });
     }
 
     #[test]
     fn test_axial_shading_to_dict() {
+        use crate::color::Color;
+
         let shading = AxialShading::new(
-            (0.0, 0.0),
-            (100.0, 100.0),
-            (1.0, 0.0, 0.0),
-            (0.0, 1.0, 0.0),
+            Posn { x: 0.0, y: 0.0 },
+            Posn { x: 100.0, y: 100.0 },
+            RGB {
+                red: Color { color: 1.0 },
+                green: Color { color: 0.0 },
+                blue: Color { color: 0.0 },
+            },
+            RGB {
+                red: Color { color: 0.0 },
+                green: Color { color: 1.0 },
+                blue: Color { color: 0.0 },
+            },
         );
 
         let dict = shading.to_dict();
@@ -336,11 +370,21 @@ mod tests {
 
     #[test]
     fn test_axial_shading_resource_trait() {
+        use crate::color::Color;
+
         let shading = AxialShading::new(
-            (0.0, 0.0),
-            (100.0, 0.0),
-            (0.0, 0.0, 0.0),
-            (1.0, 1.0, 1.0),
+            Posn { x: 0.0, y: 0.0 },
+            Posn { x: 100.0, y: 0.0 },
+            RGB {
+                red: Color { color: 0.0 },
+                green: Color { color: 0.0 },
+                blue: Color { color: 0.0 },
+            },
+            RGB {
+                red: Color { color: 1.0 },
+                green: Color { color: 1.0 },
+                blue: Color { color: 1.0 },
+            },
         );
 
         assert_eq!(shading.category(), ResourceCategory::Shading);
