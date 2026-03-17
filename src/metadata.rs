@@ -3,8 +3,9 @@
 //! Provides structures for embedding metadata in PDF documents, including
 //! both the legacy Info dictionary and modern XMP metadata streams.
 
-use crate::{DictionaryObject, NameObject, PdfResult, StreamObject};
 use std::rc::Rc;
+
+use crate::{DictionaryObject, NameObject, PdfObject, PdfResult, StreamObject};
 
 /// Document information dictionary (legacy PDF metadata).
 ///
@@ -197,10 +198,12 @@ impl XmpMetadata {
     ///
     /// This generates a minimal Dublin Core XMP packet.
     pub fn from_document_info(info: &DocumentInfo) -> Self {
-        let mut xmp = String::from(r#"<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+        let mut xmp = String::from(
+            r#"<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">"#);
+<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">"#,
+        );
 
         if let Some(ref title) = info.title {
             xmp.push_str(&format!(
@@ -255,19 +258,18 @@ impl XmpMetadata {
         let dict_entries = vec![
             (
                 "Type".to_string(),
-                Rc::new(NameObject::new(Some("Metadata".to_string()))) as Rc<dyn crate::PdfObject>,
+                Rc::new(NameObject::new(Some("Metadata".to_string()))) as Rc<dyn PdfObject>,
             ),
             (
                 "Subtype".to_string(),
-                Rc::new(NameObject::new(Some("XML".to_string()))) as Rc<dyn crate::PdfObject>,
+                Rc::new(NameObject::new(Some("XML".to_string()))) as Rc<dyn PdfObject>,
             ),
         ];
 
-        let stream = StreamObject::new()
-            .with_data(
-                Some(vec![self.xmp_packet.as_bytes().to_vec()]),
-                Some(dict_entries)
-            );
+        let stream = StreamObject::new().with_data(
+            Some(vec![self.xmp_packet.as_bytes().to_vec()]),
+            Some(dict_entries),
+        );
 
         Ok(stream)
     }
@@ -284,7 +286,6 @@ impl XmpMetadata {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::PdfObject;
 
     #[test]
     fn test_document_info_empty() {
@@ -336,8 +337,7 @@ mod tests {
 
     #[test]
     fn test_xmp_xml_escaping() {
-        let info = DocumentInfo::new()
-            .with_title("<Test & \"Special\" Characters>".to_string());
+        let info = DocumentInfo::new().with_title("<Test & \"Special\" Characters>".to_string());
 
         let xmp = XmpMetadata::from_document_info(&info);
         assert!(xmp.xmp_packet.contains("&lt;"));

@@ -4,8 +4,7 @@
 //! to navigate through the document.
 
 use crate::{
-    ArrayObject, DictionaryObject, NumberType, PdfResult,
-    action::Destination, color::RGB,
+    ArrayObject, DictionaryObject, NumberType, PdfResult, action::Destination, color::RGB,
 };
 
 //------------------ OutlineItemFlags -----------------------
@@ -264,7 +263,6 @@ pub struct OutlineDictionaries {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::action::Destination;
 
     #[test]
     fn test_outline_item_creation() {

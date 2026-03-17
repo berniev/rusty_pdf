@@ -3,7 +3,7 @@
 //! Actions define behaviors that can be triggered by user interactions, such as
 //! clicking links, opening documents, or interacting with form fields.
 
-use crate::{DictionaryObject, NumberType, PdfResult, ArrayObject, util::Rect};
+use crate::{ArrayObject, DictionaryObject, NumberType, PdfResult, util::Rect};
 
 /// Actions specify responses to various events in PDF documents, such as
 /// user interactions with annotations or form fields.
@@ -22,10 +22,7 @@ pub struct UriAction {
 
 impl UriAction {
     pub fn new(uri: String) -> Self {
-        Self {
-            uri,
-            is_map: false,
-        }
+        Self { uri, is_map: false }
     }
 
     pub fn with_is_map(mut self, is_map: bool) -> Self {
@@ -193,32 +190,26 @@ pub enum Destination {
     },
 
     /// [page /Fit] - Fit entire page in window.
-    Fit {
-        page: usize,
-    },
+    Fit { page: usize },
 
     /// [page /FitH top] - Fit page width, position at top.
-    FitH {
-        page: usize,
-        top: Option<f64>,
-    },
+    FitH { page: usize, top: Option<f64> },
 
     /// [page /FitV left] - Fit page height, position at left.
-    FitV {
-        page: usize,
-        left: Option<f64>,
-    },
+    FitV { page: usize, left: Option<f64> },
 
     /// [page /FitR left bottom right top] - Fit rectangle in window.
-    FitR {
-        page: usize,
-        rect: Rect,
-    },
+    FitR { page: usize, rect: Rect },
 }
 
 impl Destination {
     pub fn xyz(page: usize, left: Option<f64>, top: Option<f64>, zoom: Option<f64>) -> Self {
-        Self::XYZ { page, left, top, zoom }
+        Self::XYZ {
+            page,
+            left,
+            top,
+            zoom,
+        }
     }
 
     pub fn fit(page: usize) -> Self {
@@ -229,7 +220,12 @@ impl Destination {
         let mut arr = ArrayObject::new(None);
 
         match self {
-            Destination::XYZ { page, left, top, zoom } => {
+            Destination::XYZ {
+                page,
+                left,
+                top,
+                zoom,
+            } => {
                 arr.push_number(NumberType::Integer(*page as i64));
                 arr.push_name("XYZ");
                 arr.push_optional_real(*left);

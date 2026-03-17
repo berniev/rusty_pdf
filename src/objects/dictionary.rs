@@ -1,9 +1,8 @@
 use std::default::Default;
 use std::rc::Rc;
 
-use crate::PdfObject;
 use crate::objects::metadata::PdfMetadata;
-use crate::{IndirectObject, NameObject};
+use crate::{IndirectObject, NameObject, PdfObject};
 
 //--------------------------- DictionaryObject----------------------//
 
@@ -132,7 +131,6 @@ impl PdfObject for DictionaryObject {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::NameObject;
 
     #[test]
     fn test_dictionary_methods() {

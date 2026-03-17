@@ -1,6 +1,12 @@
 use std::rc::Rc;
 
-use crate::{BooleanObject, DictionaryObject, IndirectObject, NameObject, NumberObject, NumberType, PdfMetadata, PdfObject, StringObject, util::{Posn, Rect, Matrix}, action::Destination, color::{RGB, RGBA, CMYK}};
+use crate::{
+    BooleanObject, DictionaryObject, IndirectObject, NameObject, NumberObject, NumberType,
+    PdfMetadata, PdfObject, StringObject,
+    action::Destination,
+    color::{CMYK, RGB, RGBA},
+    util::{Matrix, Posn, Rect},
+};
 
 //-------------------ArrayObject ----------------------
 

@@ -1,6 +1,5 @@
 use crate::{DictionaryObject, PdfError, PdfResult};
 use std::collections::HashMap;
-use std::rc::Rc;
 
 pub const STANDARD_RESOURCE_CATEGORIES: &[&str] = &[
     "ColorSpace",
@@ -82,7 +81,7 @@ impl ResourceDictionary {
                 sub_dict.set_indirect(name, id);
             }
             // Inlines the sub-dictionary directly into the Resources dictionary
-            root.set(category, Rc::new(sub_dict));
+            root.set_dict(category, sub_dict);
         }
 
         root

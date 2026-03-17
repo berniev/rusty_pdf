@@ -202,7 +202,10 @@ impl AxialShading {
     pub fn to_dict(&self) -> DictionaryObject {
         let mut dict = DictionaryObject::new(None);
 
-        dict.set_number("ShadingType", NumberType::Integer(ShadingType::Axial as i64));
+        dict.set_number(
+            "ShadingType",
+            NumberType::Integer(ShadingType::Axial as i64),
+        );
         dict.set_name("ColorSpace", "DeviceRGB");
         dict.set_array("Coords", ArrayObject::from_points(self.start, self.end));
 
@@ -250,6 +253,7 @@ impl Resource for AxialShading {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::color::Color;
 
     #[test]
     fn test_tiling_pattern_creation() {
@@ -298,8 +302,6 @@ mod tests {
 
     #[test]
     fn test_axial_shading_creation() {
-        use crate::color::Color;
-
         let shading = AxialShading::new(
             Posn { x: 0.0, y: 0.0 },
             Posn { x: 100.0, y: 0.0 },
@@ -321,8 +323,6 @@ mod tests {
 
     #[test]
     fn test_axial_shading_to_dict() {
-        use crate::color::Color;
-
         let shading = AxialShading::new(
             Posn { x: 0.0, y: 0.0 },
             Posn { x: 100.0, y: 100.0 },
@@ -346,8 +346,6 @@ mod tests {
 
     #[test]
     fn test_axial_shading_resource_trait() {
-        use crate::color::Color;
-
         let shading = AxialShading::new(
             Posn { x: 0.0, y: 0.0 },
             Posn { x: 100.0, y: 0.0 },

@@ -108,10 +108,10 @@ impl CrossRefTable {
 /// • More compact representation of cross-reference information
 /// • Ability to access compressed objects that are stored in object streams (see 7.5.7,
 ///   "Object Streams") and to allow new cross-reference entry types to be added in the future.
-/// 
+///
 /// Cross-reference streams are stream objects (see 7.3.8, "Stream Objects"), and contain a
-/// dictionary and a data stream. 
-/// 
+/// dictionary and a data stream.
+///
 /// Each cross-reference stream contains the information equivalent
 /// to the cross-reference table (see 7.5.4, "Cross-Reference Table") and trailer (see 7.5.5, "File
 /// Trailer") for one cross-reference section.
@@ -197,15 +197,27 @@ impl CrossRefEntry {
     /// Returns minimum (field2_width, field3_width) needed for this entry
     pub fn required_widths(&self) -> (usize, usize) {
         match self {
-            CrossRefEntry::FreeObject { next_free_obj, generation } => {
-                (Self::bytes_needed_usize(*next_free_obj), Self::bytes_needed_u16(*generation))
-            }
-            CrossRefEntry::Uncompressed { byte_offset, generation } => {
-                (Self::bytes_needed_usize(*byte_offset), Self::bytes_needed_u16(*generation))
-            }
-            CrossRefEntry::CompressedInObjstm { objstm_number, index_within_objstm } => {
-                (Self::bytes_needed_usize(*objstm_number), Self::bytes_needed_u16(*index_within_objstm))
-            }
+            CrossRefEntry::FreeObject {
+                next_free_obj,
+                generation,
+            } => (
+                Self::bytes_needed_usize(*next_free_obj),
+                Self::bytes_needed_u16(*generation),
+            ),
+            CrossRefEntry::Uncompressed {
+                byte_offset,
+                generation,
+            } => (
+                Self::bytes_needed_usize(*byte_offset),
+                Self::bytes_needed_u16(*generation),
+            ),
+            CrossRefEntry::CompressedInObjstm {
+                objstm_number,
+                index_within_objstm,
+            } => (
+                Self::bytes_needed_usize(*objstm_number),
+                Self::bytes_needed_u16(*index_within_objstm),
+            ),
         }
     }
 }
@@ -224,7 +236,6 @@ impl CrossRefStream {
         });
         stream
     }
-
 
     pub fn add_entry(&mut self, entry: CrossRefEntry) {
         self.entries.push(entry);
@@ -247,15 +258,18 @@ impl CrossRefStream {
             data.push(entry.type_byte());
 
             let (field2, field3) = match entry {
-                CrossRefEntry::FreeObject { next_free_obj, generation } => {
-                    (*next_free_obj, *generation)
-                }
-                CrossRefEntry::Uncompressed { byte_offset, generation } => {
-                    (*byte_offset, *generation)
-                }
-                CrossRefEntry::CompressedInObjstm { objstm_number, index_within_objstm } => {
-                    (*objstm_number, *index_within_objstm)
-                }
+                CrossRefEntry::FreeObject {
+                    next_free_obj,
+                    generation,
+                } => (*next_free_obj, *generation),
+                CrossRefEntry::Uncompressed {
+                    byte_offset,
+                    generation,
+                } => (*byte_offset, *generation),
+                CrossRefEntry::CompressedInObjstm {
+                    objstm_number,
+                    index_within_objstm,
+                } => (*objstm_number, *index_within_objstm),
             };
 
             // Encode field2 in big-endian
@@ -302,9 +316,8 @@ impl CrossRefStream {
 
         let dict_str = format!("<< {} >>", dict_entries.join(" "));
         let mut stream_bytes = Vec::new();
-        stream_bytes.extend_from_slice(
-            format!("{} 0 obj\n{}\nstream\n", stream_num, dict_str).as_bytes()
-        );
+        stream_bytes
+            .extend_from_slice(format!("{} 0 obj\n{}\nstream\n", stream_num, dict_str).as_bytes());
         stream_bytes.extend_from_slice(&xref_data);
         stream_bytes.extend_from_slice(b"\nendstream\nendobj");
 

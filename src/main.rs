@@ -1,11 +1,11 @@
 // Main entry point for pydyf
 // This is a simple example/test program
 
-use pydyf::{PageObject, PDF, StreamObject, FileIdentifierMode};
-use pydyf::page::PageSize;
 use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
-use pydyf::util::{Posn, Dims};
+use pydyf::page::PageSize;
+use pydyf::util::{Dims, Posn};
+use pydyf::{FileIdentifierMode, PDF, PageObject, StreamObject};
 use std::fs::File;
 use std::io::Write;
 
@@ -24,7 +24,10 @@ fn main() {
     let _ = stream.set_color_rgb(color, StrokeOrFill::Fill);
     stream.rectangle(
         Posn { x: 100.0, y: 100.0 },
-        Dims { height: 200.0, width: 300.0 },
+        Dims {
+            height: 200.0,
+            width: 300.0,
+        },
     );
     stream.fill(WindingRule::EvenOdd);
 

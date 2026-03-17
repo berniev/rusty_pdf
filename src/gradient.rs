@@ -3,8 +3,7 @@ use std::rc::Rc;
 use crate::color::RGBA;
 use crate::util::{Dims, Posn};
 use crate::{
-    ArrayObject, DictionaryObject, NumberObject, NumberType, PDF, PdfObject,
-    StreamObject,
+    ArrayObject, DictionaryObject, NumberObject, NumberType, PDF, PdfObject, StreamObject,
 };
 //--------------------------- PDF Function ---------------------------//
 
@@ -127,8 +126,16 @@ impl Gradient {
 
         // 2. Create Color Function (Type 2 - Exponential Interpolation)
         let color_func = create_interpolation_function_type_2(
-            vec![first.red.color as f64, first.green.color as f64, first.blue.color as f64],
-            vec![last.red.color as f64, last.green.color as f64, last.blue.color as f64],
+            vec![
+                first.red.color as f64,
+                first.green.color as f64,
+                first.blue.color as f64,
+            ],
+            vec![
+                last.red.color as f64,
+                last.green.color as f64,
+                last.blue.color as f64,
+            ],
             0.0,
         );
         let color_func_num = pdf.add_object(Box::new(color_func));
@@ -256,14 +263,14 @@ fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: 
     group_dict.set_name("S", "Transparency");
     group_dict.set_name("CS", "DeviceGray");
 
-    xobj.set("Group", Rc::new(group_dict));
+    xobj.set_dict("Group", group_dict);
 
     let mut shading_res = DictionaryObject::new(None);
     shading_res.set_indirect("Sh0", alpha_shading_num);
 
     let mut resources = DictionaryObject::new(None);
-    resources.set("Shading", Rc::new(shading_res));
-    xobj.set("Resources", Rc::new(resources));
+    resources.set_dict("Shading", shading_res);
+    xobj.set_dict("Resources", resources);
 
     let mut form_stream = StreamObject::compressed();
     form_stream.paint_shading("Sh0");

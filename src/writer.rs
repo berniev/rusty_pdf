@@ -68,11 +68,8 @@ pub(crate) trait WriteStrategy {
     const VERSION: &[u8];
     fn get_version(&self) -> &[u8];
 
-    fn write_body<W: Write>(
-        &self,
-        pdf: &mut PDF,
-        stream: &mut PdfStream<W>,
-    ) -> std::io::Result<()>;
+    fn write_body<W: Write>(&self, pdf: &mut PDF, stream: &mut PdfStream<W>)
+    -> std::io::Result<()>;
 
     fn write_index<W: Write>(
         &self,
@@ -99,8 +96,7 @@ pub(crate) trait WriteStrategy {
             }
         }
         let hash_result = context.finalize().0;
-        let data_hash_hex: String =
-            hash_result.iter().map(|b| format!("{:02x}", b)).collect();
+        let data_hash_hex: String = hash_result.iter().map(|b| format!("{:02x}", b)).collect();
         let data_hash_bytes = data_hash_hex.as_bytes().to_vec();
         (data_hash_hex, data_hash_bytes)
     }
@@ -138,7 +134,6 @@ pub(crate) trait WriteStrategy {
         stream.write_line(&header)?;
         stream.write_line(b"%\xf0\x9f\x96\xa4") // Binary marker
     }
-
 }
 //------------------------------ Legacy Strategy -----------------
 
@@ -178,7 +173,8 @@ impl WriteStrategy for LegacyStrategy {
         stream.write_line(format!("0 {}", pdf.object_count()).as_bytes())?;
 
         // Per PDF spec, object 0 is always free (head of free list)
-        stream.write_line(format!("0000000000 {:05} f ", Generation::ROOT_GENERATION).as_bytes())?;
+        stream
+            .write_line(format!("0000000000 {:05} f ", Generation::ROOT_GENERATION).as_bytes())?;
 
         // Write entries for actual objects (1 through N-1)
         let xref_entries: Vec<String> = pdf

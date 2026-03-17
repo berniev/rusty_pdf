@@ -305,9 +305,7 @@ mod tests {
 
     #[test]
     fn test_alpha_clamping() {
-        let gs = ExtGState::new()
-            .set_stroke_alpha(1.5)
-            .set_fill_alpha(-0.5);
+        let gs = ExtGState::new().set_stroke_alpha(1.5).set_fill_alpha(-0.5);
 
         assert_eq!(gs.stroke_alpha, Some(1.0));
         assert_eq!(gs.fill_alpha, Some(0.0));
@@ -316,6 +314,9 @@ mod tests {
     #[test]
     fn test_rendering_intent() {
         assert_eq!(RenderingIntent::Perceptual.as_str(), "Perceptual");
-        assert_eq!(RenderingIntent::RelativeColorimetric.as_str(), "RelativeColorimetric");
+        assert_eq!(
+            RenderingIntent::RelativeColorimetric.as_str(),
+            "RelativeColorimetric"
+        );
     }
 }

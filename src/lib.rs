@@ -22,9 +22,13 @@ pub mod util;
 pub mod writer;
 
 // Re-export main types for user API convenience
-pub use action::{Action, Destination, GoToAction, JavaScriptAction, LaunchAction, NamedAction, NamedActionType, UriAction};
-pub use annotation::{Annotation, AnnotationFlags, BorderStyle, LinkAction, LinkAnnotation, TextAnnotation, TextIcon};
-pub use util::Rect;
+pub use action::{
+    Action, Destination, GoToAction, JavaScriptAction, LaunchAction, NamedAction, NamedActionType,
+    UriAction,
+};
+pub use annotation::{
+    Annotation, AnnotationFlags, BorderStyle, LinkAction, LinkAnnotation, TextAnnotation, TextIcon,
+};
 pub use error::{PdfError, PdfResult};
 pub use extended_graphics_state::{BlendMode, ExtGState, RenderingIntent};
 pub use gradient::ColorStop;
@@ -41,7 +45,9 @@ pub use objects::pdf_object::PdfObject;
 pub use objects::stream::StreamObject as Stream;
 pub use objects::stream::{CompressionMethod, StreamObject};
 pub use objects::string::StringObject;
-pub use optional_content::{LayerOrder, OptionalContentConfig, OptionalContentGroup, VisibilityInitialState};
+pub use optional_content::{
+    LayerOrder, OptionalContentConfig, OptionalContentGroup, VisibilityInitialState,
+};
 pub use outline::{DocumentOutline, OutlineItem, OutlineItemFlags};
 pub use page::{PageObject, PageSize};
 pub use pattern::{AxialShading, PaintType, PatternType, ShadingType, TilingPattern, TilingType};
@@ -49,3 +55,4 @@ pub use pdf::{FileIdentifierMode, PDF};
 pub use resource::{Resource, ResourceCategory, ResourceManager};
 pub use resources::ResourceDictionary;
 pub use text::{StandardFont, WrapMode, wrap_text};
+pub use util::Rect;

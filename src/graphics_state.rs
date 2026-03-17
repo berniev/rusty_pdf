@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use crate::DictionaryObject;
 use crate::objects::stream::StreamObject;
 use crate::pdf::PDF;
-use crate::DictionaryObject;
 
 pub struct GraphicsStateManager {
     opacity_states: HashMap<u32, usize>, // opacity values (scaled to u32) to object numbers

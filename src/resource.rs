@@ -4,10 +4,13 @@
 //! patterns, graphics states, etc.). This module provides a unified framework for
 //! managing all resource types.
 
-use crate::{PdfObject, PdfResult};
 use std::any::Any;
-use std::collections::HashMap;
 use std::rc::Rc;
+
+#[cfg(test)]
+use crate::NameObject;
+use crate::{PdfObject, PdfResult};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ResourceCategory {
@@ -100,28 +103,34 @@ impl ResourceManager {
 
         let obj_id = allocate_object_id();
 
-        self.registry.insert(resource_id.clone(), (obj_id, name.clone()));
+        self.registry
+            .insert(resource_id.clone(), (obj_id, name.clone()));
         self.cache.insert(resource_id, resource);
 
         Ok((obj_id, name))
     }
 
     pub fn get(&self, resource_id: &str) -> Option<(usize, String)> {
-        self.registry.get(resource_id).map(|(id, name)| (*id, name.clone()))
+        self.registry
+            .get(resource_id)
+            .map(|(id, name)| (*id, name.clone()))
     }
 
     pub fn get_resource(&self, resource_id: &str) -> Option<Rc<dyn Resource>> {
         self.cache.get(resource_id).cloned()
     }
 
-    pub fn get_by_category(&self, category: ResourceCategory) -> Vec<(usize, String, Rc<dyn Resource>)> {
+    pub fn get_by_category(
+        &self,
+        category: ResourceCategory,
+    ) -> Vec<(usize, String, Rc<dyn Resource>)> {
         self.cache
             .iter()
             .filter_map(|(res_id, resource)| {
                 if resource.category() == category {
-                    self.registry.get(res_id).map(|(obj_id, name)| {
-                        (*obj_id, name.clone(), resource.clone())
-                    })
+                    self.registry
+                        .get(res_id)
+                        .map(|(obj_id, name)| (*obj_id, name.clone(), resource.clone()))
                 } else {
                     None
                 }
@@ -175,9 +184,7 @@ impl Default for ResourceManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::NameObject;
 
-    // Mock resource for testing
     struct MockFont {
         name: String,
     }

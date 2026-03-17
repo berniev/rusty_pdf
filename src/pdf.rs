@@ -3,7 +3,6 @@ use std::io::Write;
 
 use crate::cross_ref::CrossRefTable;
 use crate::{DictionaryObject, PdfObject};
-use std::rc::Rc;
 
 //--------------------------- PDF -------------------------
 
@@ -203,7 +202,7 @@ impl PDF {
         let resources_number = self.allocate_object_id();
         let mut resources = DictionaryObject::new(None);
         resources.metadata.object_identifier = Some(resources_number);
-        resources.set("Font", Rc::new(font_dict));
+        resources.set_dict("Font", font_dict);
         self.objects.push(Box::new(resources));
         resources_number
     }

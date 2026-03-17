@@ -5,7 +5,7 @@
 
 use crate::color::Color;
 use crate::color::RGB;
-use crate::util::{Rect, Posn};
+use crate::util::{Posn, Rect};
 use crate::{ArrayObject, DictionaryObject, NumberType, PdfResult};
 
 //-------------------AnnotationFlags ----------------------
@@ -283,7 +283,7 @@ impl LinkAnnotation {
             action: LinkAction::GoTo {
                 page,
                 position,
-                zoom
+                zoom,
             },
         }
     }
@@ -335,7 +335,11 @@ impl Annotation for LinkAnnotation {
                 action_dict.set_string("URI", uri.clone());
                 dict.set_dict("A", action_dict);
             }
-            LinkAction::GoTo { page, position, zoom } => {
+            LinkAction::GoTo {
+                page,
+                position,
+                zoom,
+            } => {
                 // Create explicit destination array [page /XYZ x y zoom]
                 let mut dest = ArrayObject::new(None);
                 dest.push_number(NumberType::Integer(*page as i64));
