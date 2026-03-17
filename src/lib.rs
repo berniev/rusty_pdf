@@ -41,7 +41,7 @@ pub use objects::pdf_object::PdfObject;
 pub use objects::stream::StreamObject as Stream;
 pub use objects::stream::{CompressionMethod, StreamObject};
 pub use objects::string::StringObject;
-pub use optional_content::{LayerOrder, OptionalContentConfig, OptionalContentGroup, VisibilityState};
+pub use optional_content::{LayerOrder, OptionalContentConfig, OptionalContentGroup, VisibilityInitialState};
 pub use outline::{DocumentOutline, OutlineItem, OutlineItemFlags};
 pub use page::{PageObject, PageSize};
 pub use pattern::{AxialShading, PaintType, PatternType, ShadingType, TilingPattern, TilingType};

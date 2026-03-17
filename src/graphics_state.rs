@@ -56,8 +56,6 @@ impl GraphicsStateManager {
         stream.set_state(&resource_name);
     }
 
-    /// Get the ExtGState resources dictionary.
-    ///
     /// Returns a HashMap that can be used to build the page Resources dictionary.
     /// Maps resource names (e.g., "GS0") to object references (e.g., "5 0 R").
     pub fn get_extgstate_dict(&self) -> HashMap<String, Vec<u8>> {
@@ -72,8 +70,6 @@ impl GraphicsStateManager {
         extgstate_dict
     }
 
-    /// Add a soft mask for transparent gradients.
-    ///
     /// Returns the graphics state resource name that should be applied before using the pattern.
     pub fn add_soft_mask(&mut self, shading_obj: usize) -> String {
         let name = format!("GS{}", self.resource_counter);

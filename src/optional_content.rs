@@ -13,16 +13,14 @@ use std::rc::Rc;
 pub struct OptionalContentGroup {
     pub name: String,
     pub intent: Option<Vec<String>>,
-    pub initial_state: VisibilityState,
+    pub initial_state: VisibilityInitialState,
     pub usage: Option<UsageDict>,
 }
 
 /// Visibility state for layers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum VisibilityState {
-    /// Layer is initially visible.
+pub enum VisibilityInitialState {
     On,
-    /// Layer is initially hidden.
     Off,
 }
 
@@ -36,7 +34,7 @@ pub struct UsageDict {
 
 #[derive(Clone)]
 pub struct UsageEntry {
-    pub state: VisibilityState,
+    pub state: VisibilityInitialState,
 }
 
 impl OptionalContentGroup {
@@ -44,12 +42,12 @@ impl OptionalContentGroup {
         Self {
             name,
             intent: None,
-            initial_state: VisibilityState::On,
+            initial_state: VisibilityInitialState::On,
             usage: None,
         }
     }
 
-    pub fn with_state(mut self, state: VisibilityState) -> Self {
+    pub fn with_state(mut self, state: VisibilityInitialState) -> Self {
         self.initial_state = state;
         self
     }
@@ -59,14 +57,14 @@ impl OptionalContentGroup {
         self
     }
 
-    pub fn with_print_state(mut self, state: VisibilityState) -> Self {
+    pub fn with_print_state(mut self, state: VisibilityInitialState) -> Self {
         let mut usage = self.usage.unwrap_or_default();
         usage.print = Some(UsageEntry { state });
         self.usage = Some(usage);
         self
     }
 
-    pub fn with_view_state(mut self, state: VisibilityState) -> Self {
+    pub fn with_view_state(mut self, state: VisibilityInitialState) -> Self {
         let mut usage = self.usage.unwrap_or_default();
         usage.view = Some(UsageEntry { state });
         self.usage = Some(usage);
@@ -79,7 +77,6 @@ impl OptionalContentGroup {
         dict.set_name("Type", "OCG");
         dict.set_string("Name", self.name.clone());
 
-        // Intent
         if let Some(ref intent) = self.intent {
             if intent.len() == 1 {
                 dict.set_name("Intent", &intent[0]);
@@ -92,15 +89,14 @@ impl OptionalContentGroup {
             }
         }
 
-        // Usage
         if let Some(ref usage) = self.usage {
             let mut usage_dict = DictionaryObject::new(None);
 
             if let Some(ref print) = usage.print {
                 let mut print_dict = DictionaryObject::new(None);
                 print_dict.set_name("PrintState", match print.state {
-                    VisibilityState::On => "ON",
-                    VisibilityState::Off => "OFF",
+                    VisibilityInitialState::On => "ON",
+                    VisibilityInitialState::Off => "OFF",
                 });
                 usage_dict.set_dict("Print", print_dict);
             }
@@ -108,8 +104,8 @@ impl OptionalContentGroup {
             if let Some(ref view) = usage.view {
                 let mut view_dict = DictionaryObject::new(None);
                 view_dict.set_name("ViewState", match view.state {
-                    VisibilityState::On => "ON",
-                    VisibilityState::Off => "OFF",
+                    VisibilityInitialState::On => "ON",
+                    VisibilityInitialState::Off => "OFF",
                 });
                 usage_dict.set_dict("View", view_dict);
             }
@@ -117,8 +113,8 @@ impl OptionalContentGroup {
             if let Some(ref export) = usage.export {
                 let mut export_dict = DictionaryObject::new(None);
                 export_dict.set_name("ExportState", match export.state {
-                    VisibilityState::On => "ON",
-                    VisibilityState::Off => "OFF",
+                    VisibilityInitialState::On => "ON",
+                    VisibilityInitialState::Off => "OFF",
                 });
                 usage_dict.set_dict("Export", export_dict);
             }
@@ -130,13 +126,11 @@ impl OptionalContentGroup {
     }
 }
 
-/// Optional Content Configuration.
-///
 /// Defines the default layer visibility and ordering.
 pub struct OptionalContentConfig {
     pub name: String,
     pub creator: Option<String>,
-    pub base_state: VisibilityState,
+    pub base_state: VisibilityInitialState,
     pub on_list: Vec<usize>,
     pub off_list: Vec<usize>,
     pub order: Vec<LayerOrder>,
@@ -156,14 +150,14 @@ impl OptionalContentConfig {
         Self {
             name,
             creator: None,
-            base_state: VisibilityState::On,
+            base_state: VisibilityInitialState::On,
             on_list: Vec::new(),
             off_list: Vec::new(),
             order: Vec::new(),
         }
     }
 
-    pub fn with_base_state(mut self, state: VisibilityState) -> Self {
+    pub fn with_base_state(mut self, state: VisibilityInitialState) -> Self {
         self.base_state = state;
         self
     }
@@ -193,8 +187,8 @@ impl OptionalContentConfig {
         }
 
         dict.set_name("BaseState", match self.base_state {
-            VisibilityState::On => "ON",
-            VisibilityState::Off => "OFF",
+            VisibilityInitialState::On => "ON",
+            VisibilityInitialState::Off => "OFF",
         });
 
         if !self.on_list.is_empty() {
@@ -250,21 +244,21 @@ mod tests {
     fn test_ocg_creation() {
         let ocg = OptionalContentGroup::new("Layer 1".to_string());
         assert_eq!(ocg.name, "Layer 1");
-        assert_eq!(ocg.initial_state, VisibilityState::On);
+        assert_eq!(ocg.initial_state, VisibilityInitialState::On);
     }
 
     #[test]
     fn test_ocg_with_state() {
         let ocg = OptionalContentGroup::new("Hidden Layer".to_string())
-            .with_state(VisibilityState::Off);
+            .with_state(VisibilityInitialState::Off);
 
-        assert_eq!(ocg.initial_state, VisibilityState::Off);
+        assert_eq!(ocg.initial_state, VisibilityInitialState::Off);
     }
 
     #[test]
     fn test_ocg_to_dict() {
         let ocg = OptionalContentGroup::new("Test Layer".to_string())
-            .with_print_state(VisibilityState::Off);
+            .with_print_state(VisibilityInitialState::Off);
 
         let dict = ocg.to_dict();
         assert!(dict.contains_key("Type"));
@@ -275,18 +269,18 @@ mod tests {
     #[test]
     fn test_oc_config_creation() {
         let config = OptionalContentConfig::new("Default".to_string())
-            .with_base_state(VisibilityState::On)
+            .with_base_state(VisibilityInitialState::On)
             .add_off(5);
 
         assert_eq!(config.name, "Default");
-        assert_eq!(config.base_state, VisibilityState::On);
+        assert_eq!(config.base_state, VisibilityInitialState::On);
         assert_eq!(config.off_list, vec![5]);
     }
 
     #[test]
     fn test_oc_config_to_dict() {
         let config = OptionalContentConfig::new("Config".to_string())
-            .with_base_state(VisibilityState::Off)
+            .with_base_state(VisibilityInitialState::Off)
             .add_on(1)
             .add_on(2);
 

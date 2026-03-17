@@ -9,9 +9,6 @@ use crate::{
 };
 use std::rc::Rc;
 
-/// A bookmark item in the document outline.
-///
-/// Bookmarks form a tree structure where each item can have children.
 #[derive(Clone)]
 pub struct OutlineItem {
     pub title: String,
@@ -81,12 +78,8 @@ impl OutlineItem {
     }
 }
 
-/// The document outline (bookmark tree).
-///
-/// Represents the entire bookmark structure of the PDF document.
 pub struct DocumentOutline {
-    /// Root-level outline items.
-    pub items: Vec<OutlineItem>,
+    pub items: Vec<OutlineItem>, // Root-level outline items.
 }
 
 impl DocumentOutline {
@@ -110,8 +103,6 @@ impl DocumentOutline {
         count
     }
 
-    /// Convert the outline to PDF dictionary objects.
-    ///
     /// Returns a tuple of (outline_dict, all_item_dicts) where object IDs need to be assigned.
     pub fn to_dicts(
         &self,
@@ -149,7 +140,6 @@ impl DocumentOutline {
             )?;
         }
 
-        // Build outline dictionary
         let mut outline_dict = DictionaryObject::new(None);
         outline_dict.set(
             "Type",
