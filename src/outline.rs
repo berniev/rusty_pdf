@@ -4,8 +4,8 @@
 //! to navigate through the document.
 
 use crate::{
-    ArrayObject, DictionaryObject, NameObject, NumberObject, NumberType, PdfResult, StringObject,
-    action::Destination,
+    ArrayObject, DictionaryObject, NameObject, NumberType, PdfResult, StringObject,
+    action::Destination, color::RGB,
 };
 use std::rc::Rc;
 
@@ -38,7 +38,7 @@ pub struct OutlineItem {
     pub destination: Option<Destination>,
     pub children: Vec<OutlineItem>,
     pub is_open: bool,
-    pub color: Option<(f64, f64, f64)>,
+    pub color: Option<RGB>,
     pub flags: OutlineItemFlags,
 }
 
@@ -63,8 +63,8 @@ impl OutlineItem {
         self
     }
 
-    pub fn with_color(mut self, r: f64, g: f64, b: f64) -> Self {
-        self.color = Some((r, g, b));
+    pub fn with_color(mut self, rgb: RGB) -> Self {
+        self.color = Some(rgb);
         self
     }
 
@@ -86,6 +86,12 @@ impl OutlineItem {
 
 pub struct DocumentOutline {
     pub items: Vec<OutlineItem>, // Root-level outline items.
+}
+
+impl Default for DocumentOutline {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DocumentOutline {
@@ -124,11 +130,9 @@ impl DocumentOutline {
         let outline_id = allocate_id();
         let mut item_dicts = Vec::new();
 
-        // Allocate IDs for all items first
         let mut item_ids = Vec::new();
         self.allocate_item_ids(&self.items, allocate_id, &mut item_ids);
 
-        // Build item dictionaries
         let mut idx = 0;
         for (i, item) in self.items.iter().enumerate() {
             self.build_item_dict(
@@ -156,11 +160,7 @@ impl DocumentOutline {
             outline_dict.set_indirect("First", item_ids[0]);
             outline_dict.set_indirect("Last", item_ids[self.items.len() - 1]);
 
-            let count = self.total_count() as i64;
-            outline_dict.set(
-                "Count",
-                Rc::new(NumberObject::new(NumberType::Integer(count))),
-            );
+            outline_dict.set_number("Count", NumberType::Integer(self.total_count() as i64));
         }
 
         Ok(OutlineDictionaries {
@@ -198,16 +198,13 @@ impl DocumentOutline {
 
         let mut dict = DictionaryObject::new(None);
 
-        // Title
         dict.set(
             "Title",
             Rc::new(StringObject::new(Some(item.title.clone()))),
         );
 
-        // Parent
         dict.set_indirect("Parent", parent_id);
 
-        // Prev/Next siblings
         if let Some(prev) = prev_id {
             dict.set_indirect("Prev", prev);
         }
@@ -249,8 +246,8 @@ impl DocumentOutline {
             dict.set_number("Count", NumberType::Integer(count_val as i64));
         }
 
-        if let Some((r, g, b)) = item.color {
-            dict.set_array("C", ArrayObject::from_rgb_tuple(r, g, b));
+        if let Some(rgb) = item.color {
+            dict.set_array("C", ArrayObject::from_rgb(rgb));
         }
 
         if item.flags.bits() != 0 {
@@ -262,18 +259,10 @@ impl DocumentOutline {
     }
 }
 
-impl Default for DocumentOutline {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+//------------------ OutlineDictionaries -----------------------
 
-/// Result of converting outline to dictionaries.
 pub struct OutlineDictionaries {
-    /// The main outline dictionary (Type /Outlines), if any.
     pub outline_dict: Option<(usize, DictionaryObject)>,
-
-    /// All outline item dictionaries with their object IDs.
     pub item_dicts: Vec<(usize, DictionaryObject)>,
 }
 

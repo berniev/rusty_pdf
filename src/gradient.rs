@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::color::RGBA;
 use crate::util::{Dims, Posn};
 use crate::{
-    ArrayObject, BooleanObject, DictionaryObject, NameObject, NumberObject, PDF, PdfObject,
+    ArrayObject, BooleanObject, DictionaryObject, NameObject, NumberObject, NumberType, PDF, PdfObject,
     StreamObject,
 };
 //--------------------------- PDF Function ---------------------------//
@@ -135,10 +135,7 @@ impl Gradient {
 
         // 3. Create Color Shading Dictionary
         let mut shading_dict = DictionaryObject::new(None);
-        shading_dict.set(
-            "ShadingType",
-            Rc::new(NumberObject::from(shading_type as i64)),
-        );
+        shading_dict.set_number("ShadingType", NumberType::Integer(shading_type as i64));
         shading_dict.set(
             "ColorSpace",
             Rc::new(NameObject::new(Option::from("DeviceRGB".to_string()))),
@@ -165,10 +162,7 @@ impl Gradient {
 
             // Alpha Shading (DeviceGray)
             let mut alpha_shading = DictionaryObject::new(None);
-            alpha_shading.set(
-                "ShadingType",
-                Rc::new(NumberObject::from(shading_type as i64)),
-            );
+            alpha_shading.set_number("ShadingType", NumberType::Integer(shading_type as i64));
             alpha_shading.set(
                 "ColorSpace",
                 Rc::new(NameObject::new(Option::from("DeviceGray".to_string()))),
@@ -263,7 +257,7 @@ fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: 
         "Subtype",
         Rc::new(NameObject::new(Option::from("Form".to_string()))),
     );
-    xobj.set("FormType", Rc::new(NumberObject::from(1)));
+    xobj.set_number("FormType", NumberType::Integer(1));
     xobj.set("BBox", to_array(vec![0.0, 0.0, width, height]));
 
     let mut group_dict = DictionaryObject::new(None);
