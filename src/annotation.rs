@@ -5,6 +5,7 @@
 
 use crate::util::Rect;
 use crate::{DictionaryObject, NumberType, PdfResult, ArrayObject};
+use crate::color::RGB;
 
 /// Rectangle defining the annotation's location on the page.
 ///
@@ -71,7 +72,7 @@ pub trait Annotation {
         None
     }
 
-    fn color(&self) -> Option<(f64, f64, f64)> {
+    fn color(&self) -> Option<RGB> {
         None
     }
 
@@ -103,8 +104,8 @@ pub trait Annotation {
 
         self.add_border_style_to_dict(&mut dict);
 
-        if let Some((r, g, b)) = self.color() {
-            dict.set_array("C", ArrayObject::from_rgb_tuple(r, g, b));
+        if let Some(rgb) = self.color() {
+            dict.set_array("C", ArrayObject::from_rgb(rgb));
         }
 
         if let Some(contents) = self.contents() {
@@ -119,7 +120,7 @@ pub struct TextAnnotation {
     pub rect: Rect,
     pub contents: String,
     pub flags: AnnotationFlags,
-    pub color: Option<(f64, f64, f64)>,
+    pub color: Option<RGB>,
     pub icon: TextIcon,
 }
 
@@ -150,11 +151,16 @@ impl TextIcon {
 
 impl TextAnnotation {
     pub fn new(rect: Rect, contents: String) -> Self {
+        use crate::color::Color;
         Self {
             rect,
             contents,
             flags: AnnotationFlags::PRINT,
-            color: Some((1.0, 1.0, 0.0)), // Default: yellow
+            color: Some(RGB {
+                red: Color { color: 1.0 },
+                green: Color { color: 1.0 },
+                blue: Color { color: 0.0 },
+            }), // Default: yellow
             icon: TextIcon::Note,
         }
     }
@@ -164,8 +170,8 @@ impl TextAnnotation {
         self
     }
 
-    pub fn with_color(mut self, r: f64, g: f64, b: f64) -> Self {
-        self.color = Some((r, g, b));
+    pub fn with_color(mut self, rgb: RGB) -> Self {
+        self.color = Some(rgb);
         self
     }
 }
@@ -183,7 +189,7 @@ impl Annotation for TextAnnotation {
         self.flags
     }
 
-    fn color(&self) -> Option<(f64, f64, f64)> {
+    fn color(&self) -> Option<RGB> {
         self.color
     }
 
@@ -205,8 +211,8 @@ impl Annotation for TextAnnotation {
             dict.set_number("F", NumberType::Integer(flags.bits() as i64));
         }
 
-        if let Some((r, g, b)) = self.color() {
-            dict.set_array("C", ArrayObject::from_rgb_tuple(r, g, b));
+        if let Some(rgb) = self.color() {
+            dict.set_array("C", ArrayObject::from_rgb(rgb));
         }
 
         if let Some(contents) = self.contents() {
