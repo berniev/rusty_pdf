@@ -27,9 +27,15 @@ impl AnnotationFlags {
     pub const fn from_bits(bits: u32) -> Self {
         Self(bits)
     }
+
     pub const fn bits(&self) -> u32 {
         self.0
     }
+
+    pub fn is_empty(&self) -> bool{
+        self.bits() == 0
+    }
+
     pub const fn or(self, other: Self) -> Self {
         Self(self.0 | other.0)
     }
@@ -227,7 +233,7 @@ impl Annotation for TextAnnotation {
         dict.set("Subtype", NameObject::make_pdf_obj(self.subtype()));
         dict.set("Rect", self.rect.make_pdf_obj());
 
-        if self.flags.bits() != 0 {
+        if !self.flags.is_empty() {
             dict.set("F", NumberObject::make_pdf_obj(self.flags.bits() as i64));
         }
 
@@ -235,7 +241,10 @@ impl Annotation for TextAnnotation {
             dict.set("C", rgb.make_pdf_obj());
         }
 
-        dict.set("Contents", StringObject::make_pdf_obj(self.contents.clone()));
+        dict.set(
+            "Contents",
+            StringObject::make_pdf_obj(self.contents.clone()),
+        );
 
         dict.set("Name", NameObject::make_pdf_obj(self.icon.as_str()));
 
