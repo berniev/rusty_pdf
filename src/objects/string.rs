@@ -17,7 +17,7 @@ impl StringObject {
         }
     }
 
-    pub fn build(value: impl Into<String>) -> std::rc::Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(value: impl Into<String>) -> std::rc::Rc<dyn PdfObject> {
         std::rc::Rc::new(Self::new(Some(value.into())))
     }
 }

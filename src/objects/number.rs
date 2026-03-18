@@ -83,7 +83,7 @@ impl NumberObject {
         self.value = value.into();
     }
 
-    pub fn build(value: impl Into<NumberType>) -> Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(value: impl Into<NumberType>) -> Rc<dyn PdfObject> {
         Rc::new(Self::new(value.into()))
     }
 }

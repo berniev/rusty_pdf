@@ -76,18 +76,18 @@ impl OptionalContentGroup {
     pub fn to_dict(&self) -> DictionaryObject {
         let mut dict = DictionaryObject::new(None);
 
-        dict.set("Type", NameObject::build("OCG"));
-        dict.set("Name", StringObject::build(self.name.clone()));
+        dict.set("Type", NameObject::make_pdf_obj("OCG"));
+        dict.set("Name", StringObject::make_pdf_obj(self.name.clone()));
 
         if let Some(ref intent) = self.intent {
             if intent.len() == 1 {
-                dict.set("Intent", NameObject::build(&intent[0]));
+                dict.set("Intent", NameObject::make_pdf_obj(&intent[0]));
             } else {
                 let mut arr = ArrayObject::new(None);
                 for i in intent {
                     arr.push_name(i);
                 }
-                dict.set("Intent", ArrayObject::build(arr.values));
+                dict.set("Intent", ArrayObject::make_pdf_obj(arr.values));
             }
         }
 
@@ -98,39 +98,39 @@ impl OptionalContentGroup {
                 let mut print_dict = DictionaryObject::new(None);
                 print_dict.set(
                     "PrintState",
-                    NameObject::build(match print.state {
+                    NameObject::make_pdf_obj(match print.state {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
                     }),
                 );
-                usage_dict.set("Print", DictionaryObject::build(print_dict.values));
+                usage_dict.set("Print", DictionaryObject::make_pdf_obj(print_dict.values));
             }
 
             if let Some(ref view) = usage.view {
                 let mut view_dict = DictionaryObject::new(None);
                 view_dict.set(
                     "ViewState",
-                    NameObject::build(match view.state {
+                    NameObject::make_pdf_obj(match view.state {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
                     }),
                 );
-                usage_dict.set("View", DictionaryObject::build(view_dict.values));
+                usage_dict.set("View", DictionaryObject::make_pdf_obj(view_dict.values));
             }
 
             if let Some(ref export) = usage.export {
                 let mut export_dict = DictionaryObject::new(None);
                 export_dict.set(
                     "ExportState",
-                    NameObject::build(match export.state {
+                    NameObject::make_pdf_obj(match export.state {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
                     }),
                 );
-                usage_dict.set("Export", DictionaryObject::build(export_dict.values));
+                usage_dict.set("Export", DictionaryObject::make_pdf_obj(export_dict.values));
             }
 
-            dict.set("Usage", DictionaryObject::build(usage_dict.values));
+            dict.set("Usage", DictionaryObject::make_pdf_obj(usage_dict.values));
         }
 
         dict
@@ -195,15 +195,15 @@ impl OptionalContentConfig {
     pub fn to_dict(&self) -> DictionaryObject {
         let mut dict = DictionaryObject::new(None);
 
-        dict.set("Name", StringObject::build(self.name.clone()));
+        dict.set("Name", StringObject::make_pdf_obj(self.name.clone()));
 
         if let Some(ref creator) = self.creator {
-            dict.set("Creator", StringObject::build(creator.clone()));
+            dict.set("Creator", StringObject::make_pdf_obj(creator.clone()));
         }
 
         dict.set(
             "BaseState",
-            NameObject::build(match self.base_state {
+            NameObject::make_pdf_obj(match self.base_state {
                 VisibilityInitialState::On => "ON",
                 VisibilityInitialState::Off => "OFF",
             }),
@@ -214,7 +214,7 @@ impl OptionalContentConfig {
             for &id in &self.on_list {
                 arr.push_indirect(id);
             }
-            dict.set("ON", ArrayObject::build(arr.values));
+            dict.set("ON", ArrayObject::make_pdf_obj(arr.values));
         }
 
         if !self.off_list.is_empty() {
@@ -222,13 +222,13 @@ impl OptionalContentConfig {
             for &id in &self.off_list {
                 arr.push_indirect(id);
             }
-            dict.set("OFF", ArrayObject::build(arr.values));
+            dict.set("OFF", ArrayObject::make_pdf_obj(arr.values));
         }
 
         // Order array (simplified - full implementation would handle nested groups)
         if !self.order.is_empty() {
             let order_arr = self.build_order_array(&self.order);
-            dict.set("Order", ArrayObject::build(order_arr.values));
+            dict.set("Order", ArrayObject::make_pdf_obj(order_arr.values));
         }
 
         dict

@@ -132,9 +132,9 @@ impl PDF {
 
         for (name, subtype) in fonts {
             let mut f = DictionaryObject::typed("Font");
-            f.set("Subtype", NameObject::build(subtype));
-            f.set("BaseFont", NameObject::build(name));
-            font_dict.set(name, DictionaryObject::build(f.values));
+            f.set("Subtype", NameObject::make_pdf_obj(subtype));
+            f.set("BaseFont", NameObject::make_pdf_obj(name));
+            font_dict.set(name, DictionaryObject::make_pdf_obj(f.values));
         }
 
         font_dict
@@ -202,7 +202,7 @@ impl PDF {
         let resources_number = self.allocate_object_id();
         let mut resources = DictionaryObject::new(None);
         resources.metadata.object_identifier = Some(resources_number);
-        resources.set("Font", DictionaryObject::build(font_dict.values));
+        resources.set("Font", DictionaryObject::make_pdf_obj(font_dict.values));
         self.objects.push(Box::new(resources));
         resources_number
     }
@@ -282,7 +282,7 @@ impl PDF {
 
         // Add reference to page tree
         let pages_id = self.page_tree.metadata.object_identifier.unwrap();
-        self.catalog.set("Pages", IndirectObject::build(pages_id));
+        self.catalog.set("Pages", IndirectObject::make_pdf_obj(pages_id));
 
         let catalog_copy = self.catalog.clone();
         self.objects.push(Box::new(catalog_copy));

@@ -150,13 +150,13 @@ impl DocumentOutline {
         }
 
         let mut outline_dict = DictionaryObject::new(None);
-        outline_dict.set("Type", NameObject::build("Outlines"));
+        outline_dict.set("Type", NameObject::make_pdf_obj("Outlines"));
 
         if !self.items.is_empty() {
-            outline_dict.set("First", IndirectObject::build(item_ids[0]));
-            outline_dict.set("Last", IndirectObject::build(item_ids[self.items.len() - 1]));
+            outline_dict.set("First", IndirectObject::make_pdf_obj(item_ids[0]));
+            outline_dict.set("Last", IndirectObject::make_pdf_obj(item_ids[self.items.len() - 1]));
 
-            outline_dict.set("Count", NumberObject::build(self.total_count() as i64));
+            outline_dict.set("Count", NumberObject::make_pdf_obj(self.total_count() as i64));
         }
 
         Ok(OutlineDictionaries {
@@ -194,19 +194,19 @@ impl DocumentOutline {
 
         let mut dict = DictionaryObject::new(None);
 
-        dict.set("Title", StringObject::build(item.title.clone()));
+        dict.set("Title", StringObject::make_pdf_obj(item.title.clone()));
 
-        dict.set("Parent", IndirectObject::build(parent_id));
+        dict.set("Parent", IndirectObject::make_pdf_obj(parent_id));
 
         if let Some(prev) = prev_id {
-            dict.set("Prev", IndirectObject::build(prev));
+            dict.set("Prev", IndirectObject::make_pdf_obj(prev));
         }
         if let Some(next) = next_id {
-            dict.set("Next", IndirectObject::build(next));
+            dict.set("Next", IndirectObject::make_pdf_obj(next));
         }
 
         if let Some(dest) = item.destination.clone() {
-            dict.set("Dest", dest.build());
+            dict.set("Dest", dest.make_pdf_obj());
         }
 
         if !item.children.is_empty() {
@@ -230,21 +230,21 @@ impl DocumentOutline {
                 )?;
             }
 
-            dict.set("First", IndirectObject::build(first_child_id));
-            dict.set("Last", IndirectObject::build(all_ids[first_child_idx + item.children.len() - 1]));
+            dict.set("First", IndirectObject::make_pdf_obj(first_child_id));
+            dict.set("Last", IndirectObject::make_pdf_obj(all_ids[first_child_idx + item.children.len() - 1]));
 
             // Count: positive if open, negative if closed
             let count = item.count_descendants();
             let count_val = if item.is_open { count } else { -count };
-            dict.set("Count", NumberObject::build(count_val as i64));
+            dict.set("Count", NumberObject::make_pdf_obj(count_val as i64));
         }
 
         if let Some(rgb) = item.color {
-            dict.set("C", rgb.build());
+            dict.set("C", rgb.make_pdf_obj());
         }
 
         if item.flags.bits() != 0 {
-            dict.set("F", NumberObject::build(item.flags.bits() as i64));
+            dict.set("F", NumberObject::make_pdf_obj(item.flags.bits() as i64));
         }
 
         dicts.push((current_id, dict));

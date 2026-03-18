@@ -112,7 +112,7 @@ pub struct RGB {
 }
 
 impl RGB {
-    pub fn build(self) -> Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
         Rc::new(ArrayObject::from_rgb(self))
     }
 }
@@ -130,7 +130,7 @@ pub struct RGBA {
 }
 
 impl RGBA {
-    pub fn build(self) -> Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
         Rc::new(ArrayObject::from_rgba(self))
     }
 }
@@ -148,7 +148,7 @@ pub struct CMYK {
 }
 
 impl CMYK {
-    pub fn build(self) -> Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
         Rc::new(ArrayObject::from_cmyk(self))
     }
 }

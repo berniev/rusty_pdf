@@ -73,7 +73,7 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub fn build(self) -> std::rc::Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(self) -> std::rc::Rc<dyn PdfObject> {
         std::rc::Rc::new(ArrayObject::from_rect(self))
     }
 }
@@ -110,7 +110,7 @@ pub struct Matrix {
 }
 
 impl Matrix {
-    pub fn build(self) -> std::rc::Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(self) -> std::rc::Rc<dyn PdfObject> {
         std::rc::Rc::new(ArrayObject::from_matrix(self))
     }
 }

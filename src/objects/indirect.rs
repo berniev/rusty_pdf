@@ -30,7 +30,7 @@ impl IndirectObject {
         }
     }
 
-    pub fn build(id: usize) -> std::rc::Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(id: usize) -> std::rc::Rc<dyn PdfObject> {
         std::rc::Rc::new(Self::new(Some(id)))
     }
 }

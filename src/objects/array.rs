@@ -32,7 +32,7 @@ impl ArrayObject {
         }
     }
 
-    pub fn build(values: Vec<Rc<dyn PdfObject>>) -> Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(values: Vec<Rc<dyn PdfObject>>) -> Rc<dyn PdfObject> {
         Rc::new(Self::new(Some(values)))
     }
 
@@ -59,23 +59,23 @@ impl ArrayObject {
     }
 
     pub fn push_name(&mut self, name: &str) {
-        self.push_object(NameObject::build(name));
+        self.push_object(NameObject::make_pdf_obj(name));
     }
 
     pub fn push_string(&mut self, value: String) {
-        self.push_object(StringObject::build(value));
+        self.push_object(StringObject::make_pdf_obj(value));
     }
 
     pub fn push_number(&mut self, value: impl Into<NumberType>) {
-        self.push_object(NumberObject::build(value));
+        self.push_object(NumberObject::make_pdf_obj(value));
     }
 
     pub fn push_bool(&mut self, value: bool) {
-        self.push_object(BooleanObject::build(value));
+        self.push_object(BooleanObject::make_pdf_obj(value));
     }
 
     pub fn push_indirect(&mut self, id: usize) {
-        self.push_object(IndirectObject::build(id));
+        self.push_object(IndirectObject::make_pdf_obj(id));
     }
 
     pub fn push_array(&mut self, array: ArrayObject) {

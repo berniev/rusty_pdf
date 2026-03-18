@@ -41,8 +41,8 @@ impl GraphicsStateManager {
         self.resource_counter += 1;
 
         let mut gs_dict = DictionaryObject::typed("/ExtGState");
-        gs_dict.set("CA", NumberObject::build(alpha)); // Stroke alpha
-        gs_dict.set("ca", NumberObject::build(alpha)); // Fill alpha
+        gs_dict.set("CA", NumberObject::make_pdf_obj(alpha)); // Stroke alpha
+        gs_dict.set("ca", NumberObject::make_pdf_obj(alpha)); // Fill alpha
         let obj_num = pdf.objects.len();
         pdf.add_object(Box::new(gs_dict));
 

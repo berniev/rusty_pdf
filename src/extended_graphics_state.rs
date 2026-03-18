@@ -151,70 +151,70 @@ impl ExtGState {
 
     pub fn to_dict(&self) -> DictionaryObject {
         let mut dict = DictionaryObject::new(None);
-        dict.set("Type", NameObject::build("ExtGState"));
+        dict.set("Type", NameObject::make_pdf_obj("ExtGState"));
 
         if let Some(lw) = self.line_width {
-            dict.set("LW", NumberObject::build(lw));
+            dict.set("LW", NumberObject::make_pdf_obj(lw));
         }
 
         if let Some(lc) = self.line_cap {
-            dict.set("LC", NumberObject::build(lc as i64));
+            dict.set("LC", NumberObject::make_pdf_obj(lc as i64));
         }
 
         if let Some(lj) = self.line_join {
-            dict.set("LJ", NumberObject::build(lj as i64));
+            dict.set("LJ", NumberObject::make_pdf_obj(lj as i64));
         }
 
         if let Some(ml) = self.miter_limit {
-            dict.set("ML", NumberObject::build(ml));
+            dict.set("ML", NumberObject::make_pdf_obj(ml));
         }
 
         if let Some(ca) = self.stroke_alpha {
-            dict.set("CA", NumberObject::build(ca));
+            dict.set("CA", NumberObject::make_pdf_obj(ca));
         }
 
         if let Some(ca) = self.fill_alpha {
-            dict.set("ca", NumberObject::build(ca));
+            dict.set("ca", NumberObject::make_pdf_obj(ca));
         }
 
         if let Some(bm) = self.blend_mode {
-            dict.set("BM", NameObject::build(bm.as_str()));
+            dict.set("BM", NameObject::make_pdf_obj(bm.as_str()));
         }
 
         if let Some(ri) = self.rendering_intent {
-            dict.set("RI", NameObject::build(ri.as_str()));
+            dict.set("RI", NameObject::make_pdf_obj(ri.as_str()));
         }
 
         if let Some(op) = self.overprint_stroke {
-            dict.set("OP", BooleanObject::build(op));
+            dict.set("OP", BooleanObject::make_pdf_obj(op));
         }
 
         if let Some(op) = self.overprint_fill {
-            dict.set("op", BooleanObject::build(op));
+            dict.set("op", BooleanObject::make_pdf_obj(op));
         }
 
         if let Some(opm) = self.overprint_mode {
-            dict.set("OPM", NumberObject::build(opm as i64));
+            dict.set("OPM", NumberObject::make_pdf_obj(opm as i64));
         }
 
         if let Some(fl) = self.flatness {
-            dict.set("FL", NumberObject::build(fl));
+            dict.set("FL", NumberObject::make_pdf_obj(fl));
         }
 
         if let Some(sm) = self.smoothness {
-            dict.set("SM", NumberObject::build(sm));
+            dict.set("SM", NumberObject::make_pdf_obj(sm));
         }
 
         if let Some(sa) = self.stroke_adjust {
-            dict.set("SA", BooleanObject::build(sa));
+            dict.set("SA", BooleanObject::make_pdf_obj(sa));
         }
 
         if let Some(ais) = self.alpha_is_shape {
-            dict.set("AIS", BooleanObject::build(ais));
+            dict.set("AIS", BooleanObject::make_pdf_obj(ais));
         }
 
         if let Some(tk) = self.text_knockout {
-            dict.set("TK", BooleanObject::build(tk));
+            dict.set("TK", BooleanObject::make_pdf_obj(tk));
         }
 
         dict

@@ -36,10 +36,10 @@ impl DictionaryObject {
     }
 
     pub(crate) fn typed(name: &str) -> Self {
-        Self::new(Some(vec![("Type".to_string(), NameObject::build(name))]))
+        Self::new(Some(vec![("Type".to_string(), NameObject::make_pdf_obj(name))]))
     }
 
-    pub fn build(values: Vec<(String, Rc<dyn PdfObject>)>) -> Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(values: Vec<(String, Rc<dyn PdfObject>)>) -> Rc<dyn PdfObject> {
         Rc::new(Self::new(Some(values)))
     }
 
@@ -109,13 +109,13 @@ mod tests {
         assert!(dict.is_empty());
         assert_eq!(dict.len(), 0);
 
-        dict.set("Key1", NameObject::build("Value1"));
+        dict.set("Key1", NameObject::make_pdf_obj("Value1"));
         assert!(!dict.is_empty());
         assert_eq!(dict.len(), 1);
         assert!(dict.contains_key("Key1"));
         assert!(!dict.contains_key("Key2"));
 
-        dict.set("Key2", NameObject::build("Value2"));
+        dict.set("Key2", NameObject::make_pdf_obj("Value2"));
         assert_eq!(dict.len(), 2);
         assert!(dict.contains_key("Key2"));
     }

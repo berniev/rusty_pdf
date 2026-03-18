@@ -87,8 +87,8 @@ pub trait Annotation {
     fn add_border_style_to_dict(&self, dict: &mut DictionaryObject) {
         if let Some(style) = self.border_style() {
             let mut bs = DictionaryObject::new(None);
-            bs.set("S", NameObject::build(style.as_str()));
-            dict.set("BS", DictionaryObject::build(bs.values));
+            bs.set("S", NameObject::make_pdf_obj(style.as_str()));
+            dict.set("BS", DictionaryObject::make_pdf_obj(bs.values));
         }
     }
 
@@ -96,24 +96,24 @@ pub trait Annotation {
         let mut dict = DictionaryObject::new(None);
 
         // Required entries
-        dict.set("Type", NameObject::build("Annot"));
-        dict.set("Subtype", NameObject::build(self.subtype()));
-        dict.set("Rect", self.rect().build());
+        dict.set("Type", NameObject::make_pdf_obj("Annot"));
+        dict.set("Subtype", NameObject::make_pdf_obj(self.subtype()));
+        dict.set("Rect", self.rect().make_pdf_obj());
 
         // Optional common entries
         let flags = self.flags();
         if flags.bits() != 0 {
-            dict.set("F", NumberObject::build(flags.bits() as i64));
+            dict.set("F", NumberObject::make_pdf_obj(flags.bits() as i64));
         }
 
         self.add_border_style_to_dict(&mut dict);
 
         if let Some(rgb) = self.color() {
-            dict.set("C", rgb.build());
+            dict.set("C", rgb.make_pdf_obj());
         }
 
         if let Some(contents) = self.contents() {
-            dict.set("Contents", StringObject::build(contents.to_string()));
+            dict.set("Contents", StringObject::make_pdf_obj(contents.to_string()));
         }
 
         Ok(dict)
@@ -223,22 +223,21 @@ impl Annotation for TextAnnotation {
     fn to_dict(&self) -> PdfResult<DictionaryObject> {
         let mut dict = DictionaryObject::new(None);
 
-        // Required
-        dict.set("Type", NameObject::build("Annot"));
-        dict.set("Subtype", NameObject::build(self.subtype()));
-        dict.set("Rect", self.rect.build());
+        dict.set("Type", NameObject::make_pdf_obj("Annot"));
+        dict.set("Subtype", NameObject::make_pdf_obj(self.subtype()));
+        dict.set("Rect", self.rect.make_pdf_obj());
 
         if self.flags.bits() != 0 {
-            dict.set("F", NumberObject::build(self.flags.bits() as i64));
+            dict.set("F", NumberObject::make_pdf_obj(self.flags.bits() as i64));
         }
 
         if let Some(rgb) = self.color {
-            dict.set("C", rgb.build());
+            dict.set("C", rgb.make_pdf_obj());
         }
 
-        dict.set("Contents", StringObject::build(self.contents.clone()));
+        dict.set("Contents", StringObject::make_pdf_obj(self.contents.clone()));
 
-        dict.set("Name", NameObject::build(self.icon.as_str()));
+        dict.set("Name", NameObject::make_pdf_obj(self.icon.as_str()));
 
         Ok(dict)
     }
@@ -314,33 +313,29 @@ impl Annotation for LinkAnnotation {
     fn to_dict(&self) -> PdfResult<DictionaryObject> {
         let mut dict = DictionaryObject::new(None);
 
-        // Required
-        dict.set("Type", NameObject::build("Annot"));
-        dict.set("Subtype", NameObject::build(self.subtype()));
-        dict.set("Rect", self.rect().build());
+        dict.set("Type", NameObject::make_pdf_obj("Annot"));
+        dict.set("Subtype", NameObject::make_pdf_obj(self.subtype()));
+        dict.set("Rect", self.rect().make_pdf_obj());
 
-        // Optional
         let flags = self.flags();
         if flags.bits() != 0 {
-            dict.set("F", NumberObject::build(flags.bits() as i64));
+            dict.set("F", NumberObject::make_pdf_obj(flags.bits() as i64));
         }
 
         self.add_border_style_to_dict(&mut dict);
 
-        // Link-specific action
         match &self.action {
             LinkAction::Uri(uri) => {
                 let mut action_dict = DictionaryObject::new(None);
-                action_dict.set("S", NameObject::build("URI"));
-                action_dict.set("URI", StringObject::build(uri.clone()));
-                dict.set("A", DictionaryObject::build(action_dict.values));
+                action_dict.set("S", NameObject::make_pdf_obj("URI"));
+                action_dict.set("URI", StringObject::make_pdf_obj(uri.clone()));
+                dict.set("A", DictionaryObject::make_pdf_obj(action_dict.values));
             }
             LinkAction::GoTo {
                 page,
                 position,
                 zoom,
             } => {
-                // Create explicit destination array [page /XYZ x y zoom]
                 let mut dest = ArrayObject::new(None);
                 dest.push_number(*page as i64);
                 dest.push_name("XYZ");
@@ -351,7 +346,7 @@ impl Annotation for LinkAnnotation {
                 } else {
                     dest.push_name("null");
                 }
-                dict.set("Dest", ArrayObject::build(dest.values));
+                dict.set("Dest", ArrayObject::make_pdf_obj(dest.values));
             }
         }
 

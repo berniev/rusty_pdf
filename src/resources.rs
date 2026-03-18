@@ -78,10 +78,10 @@ impl ResourceDictionary {
         for (category, map) in &self.categories {
             let mut sub_dict = DictionaryObject::new(None);
             for (name, &id) in map {
-                sub_dict.set(name, IndirectObject::build(id));
+                sub_dict.set(name, IndirectObject::make_pdf_obj(id));
             }
             // Inlines the sub-dictionary directly into the Resources dictionary
-            root.set(category, DictionaryObject::build(sub_dict.values));
+            root.set(category, DictionaryObject::make_pdf_obj(sub_dict.values));
         }
 
         root

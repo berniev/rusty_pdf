@@ -199,7 +199,7 @@ mod tests {
         }
 
         fn to_pdf_object(&self) -> Rc<dyn PdfObject> {
-            NameObject::build(self.name.clone())
+            NameObject::make_pdf_obj(self.name.clone())
         }
 
         fn as_any(&self) -> &dyn Any {

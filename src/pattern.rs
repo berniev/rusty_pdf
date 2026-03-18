@@ -76,43 +76,43 @@ impl TilingPattern {
 
         extra_entries.push((
             "Type".to_string(),
-            NameObject::build("Pattern"),
+            NameObject::make_pdf_obj("Pattern"),
         ));
 
         extra_entries.push((
             "PatternType".to_string(),
-            NumberObject::build(PatternType::Tiling as i64),
+            NumberObject::make_pdf_obj(PatternType::Tiling as i64),
         ));
 
         extra_entries.push((
             "PaintType".to_string(),
-            NumberObject::build(self.paint_type as i64),
+            NumberObject::make_pdf_obj(self.paint_type as i64),
         ));
 
         extra_entries.push((
             "TilingType".to_string(),
-            NumberObject::build(self.tiling_type as i64),
+            NumberObject::make_pdf_obj(self.tiling_type as i64),
         ));
 
         extra_entries.push((
             "BBox".to_string(),
-            self.bounding_box.build(),
+            self.bounding_box.make_pdf_obj(),
         ));
 
         extra_entries.push((
             "XStep".to_string(),
-            NumberObject::build(self.x_step),
+            NumberObject::make_pdf_obj(self.x_step),
         ));
 
         extra_entries.push((
             "YStep".to_string(),
-            NumberObject::build(self.y_step),
+            NumberObject::make_pdf_obj(self.y_step),
         ));
 
         if let Some(matrix) = self.matrix {
             extra_entries.push((
                 "Matrix".to_string(),
-                matrix.build(),
+                matrix.make_pdf_obj(),
             ));
         }
 
@@ -198,11 +198,11 @@ impl AxialShading {
 
         dict.set(
             "ShadingType",
-            NumberObject::build(ShadingType::Axial as i64),
+            NumberObject::make_pdf_obj(ShadingType::Axial as i64),
         );
-        dict.set("ColorSpace", NameObject::build("DeviceRGB"));
+        dict.set("ColorSpace", NameObject::make_pdf_obj("DeviceRGB"));
         let coords_array = ArrayObject::from_points(self.start, self.end);
-        dict.set("Coords", ArrayObject::build(coords_array.values));
+        dict.set("Coords", ArrayObject::make_pdf_obj(coords_array.values));
 
         // Function (simplified: direct color interpolation)
         // In a full implementation, this would be a proper PDF function object
@@ -211,7 +211,7 @@ impl AxialShading {
         let mut extend = ArrayObject::new(None);
         extend.push_bool(self.extend_start);
         extend.push_bool(self.extend_end);
-        dict.set("Extend", ArrayObject::build(extend.values));
+        dict.set("Extend", ArrayObject::make_pdf_obj(extend.values));
 
         dict
     }

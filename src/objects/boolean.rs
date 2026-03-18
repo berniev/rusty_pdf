@@ -18,7 +18,7 @@ impl BooleanObject {
         self.value = Some(value);
     }
 
-    pub fn build(value: bool) -> std::rc::Rc<dyn PdfObject> {
+    pub fn make_pdf_obj(value: bool) -> std::rc::Rc<dyn PdfObject> {
         std::rc::Rc::new(Self::new(Some(value)))
     }
 }

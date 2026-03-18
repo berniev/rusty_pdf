@@ -141,39 +141,39 @@ impl DocumentInfo {
         let mut dict = DictionaryObject::new(None);
 
         if let Some(ref title) = self.title {
-            dict.set("Title", StringObject::build(title.clone()));
+            dict.set("Title", StringObject::make_pdf_obj(title.clone()));
         }
 
         if let Some(ref author) = self.author {
-            dict.set("Author", StringObject::build(author.clone()));
+            dict.set("Author", StringObject::make_pdf_obj(author.clone()));
         }
 
         if let Some(ref subject) = self.subject {
-            dict.set("Subject", StringObject::build(subject.clone()));
+            dict.set("Subject", StringObject::make_pdf_obj(subject.clone()));
         }
 
         if let Some(ref keywords) = self.keywords {
-            dict.set("Keywords", StringObject::build(keywords.clone()));
+            dict.set("Keywords", StringObject::make_pdf_obj(keywords.clone()));
         }
 
         if let Some(ref creator) = self.creator {
-            dict.set("Creator", StringObject::build(creator.clone()));
+            dict.set("Creator", StringObject::make_pdf_obj(creator.clone()));
         }
 
         if let Some(ref producer) = self.producer {
-            dict.set("Producer", StringObject::build(producer.clone()));
+            dict.set("Producer", StringObject::make_pdf_obj(producer.clone()));
         }
 
         if let Some(ref creation_date) = self.creation_date {
-            dict.set("CreationDate", StringObject::build(creation_date.clone()));
+            dict.set("CreationDate", StringObject::make_pdf_obj(creation_date.clone()));
         }
 
         if let Some(ref mod_date) = self.mod_date {
-            dict.set("ModDate", StringObject::build(mod_date.clone()));
+            dict.set("ModDate", StringObject::make_pdf_obj(mod_date.clone()));
         }
 
         if let Some(trapped) = self.trapped {
-            dict.set("Trapped", NameObject::build(trapped.as_name()));
+            dict.set("Trapped", NameObject::make_pdf_obj(trapped.as_name()));
         }
 
         dict
@@ -259,11 +259,11 @@ impl XmpMetadata {
         let dict_entries = vec![
             (
                 "Type".to_string(),
-                NameObject::build("Metadata"),
+                NameObject::make_pdf_obj("Metadata"),
             ),
             (
                 "Subtype".to_string(),
-                NameObject::build("XML"),
+                NameObject::make_pdf_obj("XML"),
             ),
         ];
 
