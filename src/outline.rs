@@ -4,7 +4,8 @@
 //! to navigate through the document.
 
 use crate::{
-    DictionaryObject, NameObject, NumberObject, PdfResult, StringObject, action::FitDestination, color::RGB,
+    DictionaryObject, IndirectObject, NameObject, NumberObject, PdfResult, StringObject,
+    action::FitDestination, color::RGB,
 };
 
 //------------------ OutlineItemFlags -----------------------
@@ -152,8 +153,8 @@ impl DocumentOutline {
         outline_dict.set("Type", NameObject::build("Outlines"));
 
         if !self.items.is_empty() {
-            outline_dict.set_indirect("First", item_ids[0]);
-            outline_dict.set_indirect("Last", item_ids[self.items.len() - 1]);
+            outline_dict.set("First", IndirectObject::build(item_ids[0]));
+            outline_dict.set("Last", IndirectObject::build(item_ids[self.items.len() - 1]));
 
             outline_dict.set("Count", NumberObject::build(self.total_count() as i64));
         }
@@ -195,13 +196,13 @@ impl DocumentOutline {
 
         dict.set("Title", StringObject::build(item.title.clone()));
 
-        dict.set_indirect("Parent", parent_id);
+        dict.set("Parent", IndirectObject::build(parent_id));
 
         if let Some(prev) = prev_id {
-            dict.set_indirect("Prev", prev);
+            dict.set("Prev", IndirectObject::build(prev));
         }
         if let Some(next) = next_id {
-            dict.set_indirect("Next", next);
+            dict.set("Next", IndirectObject::build(next));
         }
 
         if let Some(dest) = item.destination.clone() {
@@ -229,8 +230,8 @@ impl DocumentOutline {
                 )?;
             }
 
-            dict.set_indirect("First", first_child_id);
-            dict.set_indirect("Last", all_ids[first_child_idx + item.children.len() - 1]);
+            dict.set("First", IndirectObject::build(first_child_id));
+            dict.set("Last", IndirectObject::build(all_ids[first_child_idx + item.children.len() - 1]));
 
             // Count: positive if open, negative if closed
             let count = item.count_descendants();

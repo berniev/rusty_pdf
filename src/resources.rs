@@ -1,4 +1,4 @@
-use crate::{DictionaryObject, PdfError, PdfResult};
+use crate::{DictionaryObject, IndirectObject, PdfError, PdfResult};
 use std::collections::HashMap;
 
 pub const STANDARD_RESOURCE_CATEGORIES: &[&str] = &[
@@ -78,7 +78,7 @@ impl ResourceDictionary {
         for (category, map) in &self.categories {
             let mut sub_dict = DictionaryObject::new(None);
             for (name, &id) in map {
-                sub_dict.set_indirect(name, id);
+                sub_dict.set(name, IndirectObject::build(id));
             }
             // Inlines the sub-dictionary directly into the Resources dictionary
             root.set(category, DictionaryObject::build(sub_dict.values));

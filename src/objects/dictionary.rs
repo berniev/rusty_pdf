@@ -2,7 +2,7 @@ use std::default::Default;
 use std::rc::Rc;
 
 use crate::objects::metadata::PdfMetadata;
-use crate::{IndirectObject, NameObject, PdfObject};
+use crate::{NameObject, PdfObject};
 
 //--------------------------- DictionaryObject----------------------//
 
@@ -49,10 +49,6 @@ impl DictionaryObject {
         } else {
             self.values.push((key.to_string(), value));
         }
-    }
-
-    pub fn set_indirect(&mut self, key: &str, id: usize) {
-        self.set(key, IndirectObject::build(id));
     }
 
     pub fn len(&self) -> usize {

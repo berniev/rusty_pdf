@@ -2,7 +2,7 @@ use crate::page::{ObjectId, PageObject, PageTreeItem, PageTreeNode};
 use std::io::Write;
 
 use crate::cross_ref::CrossRefTable;
-use crate::{DictionaryObject, NameObject, PdfObject};
+use crate::{DictionaryObject, IndirectObject, NameObject, PdfObject};
 
 //--------------------------- PDF -------------------------
 
@@ -282,7 +282,7 @@ impl PDF {
 
         // Add reference to page tree
         let pages_id = self.page_tree.metadata.object_identifier.unwrap();
-        self.catalog.set_indirect("Pages", pages_id);
+        self.catalog.set("Pages", IndirectObject::build(pages_id));
 
         let catalog_copy = self.catalog.clone();
         self.objects.push(Box::new(catalog_copy));

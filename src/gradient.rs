@@ -3,7 +3,8 @@ use std::rc::Rc;
 use crate::color::RGBA;
 use crate::util::{Dims, Posn};
 use crate::{
-    ArrayObject, DictionaryObject, NameObject, NumberObject, PDF, PdfObject, StreamObject,
+    ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject, PDF, PdfObject,
+    StreamObject,
 };
 //--------------------------- PDF Function ---------------------------//
 
@@ -145,7 +146,7 @@ impl Gradient {
         shading_dict.set("ShadingType", NumberObject::build(shading_type as i64));
         shading_dict.set("ColorSpace", NameObject::build("DeviceRGB"));
         shading_dict.set("Coords", to_array(coords.clone()));
-        shading_dict.set_indirect("Function", color_func_num);
+        shading_dict.set("Function", IndirectObject::build(color_func_num));
         shading_dict.set("Extend", extend.clone());
 
         let shading_num = pdf.add_object(Box::new(shading_dict));
@@ -169,7 +170,7 @@ impl Gradient {
             alpha_shading.set("ShadingType", NumberObject::build(shading_type as i64));
             alpha_shading.set("ColorSpace", NameObject::build("DeviceGray"));
             alpha_shading.set("Coords", to_array(coords));
-            alpha_shading.set_indirect("Function", alpha_func_num);
+            alpha_shading.set("Function", IndirectObject::build(alpha_func_num));
             alpha_shading.set("Extend", extend);
 
             let alpha_shading_num = pdf.add_object(Box::new(alpha_shading));
@@ -185,7 +186,7 @@ impl Gradient {
         // 5. Create Pattern Dictionary
         let mut pattern_dict = DictionaryObject::typed("Pattern");
         pattern_dict.set("PatternType", NumberObject::build(2));
-        pattern_dict.set_indirect("Shading", shading_num);
+        pattern_dict.set("Shading", IndirectObject::build(shading_num));
 
         pdf.add_object(Box::new(pattern_dict));
 
@@ -266,7 +267,7 @@ fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: 
     xobj.set("Group", DictionaryObject::build(group_dict.values));
 
     let mut shading_res = DictionaryObject::new(None);
-    shading_res.set_indirect("Sh0", alpha_shading_num);
+    shading_res.set("Sh0", IndirectObject::build(alpha_shading_num));
 
     let mut resources = DictionaryObject::new(None);
     resources.set("Shading", DictionaryObject::build(shading_res.values));
@@ -281,12 +282,12 @@ fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: 
     // 2. Create Mask Dictionary
     let mut smask_dict = DictionaryObject::typed("Mask");
     smask_dict.set("S", NameObject::build("Luminosity"));
-    smask_dict.set_indirect("G", form_number);
+    smask_dict.set("G", IndirectObject::build(form_number));
 
     let smask_number = pdf.add_object(Box::new(smask_dict));
 
     // 3. Create ExtGState with the SMask
     let mut gs_dict = DictionaryObject::typed("ExtGState");
-    gs_dict.set_indirect("SMask", smask_number);
+    gs_dict.set("SMask", IndirectObject::build(smask_number));
     pdf.add_object(Box::new(gs_dict));
 }
