@@ -48,8 +48,8 @@ impl PdfObject for BooleanObject {
 use std::rc::Rc;
 use crate::Build;
 
-impl Build for bool {
-    fn build(&self) -> Rc<dyn PdfObject> {
-        Rc::new(BooleanObject::new(Some(*self)))
+impl Build for BooleanObject {
+    fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(self)
     }
 }

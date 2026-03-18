@@ -155,3 +155,11 @@ mod tests {
         assert!(dict.contains_key("Key2"));
     }
 }
+
+use crate::Build;
+
+impl Build for DictionaryObject {
+    fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(self)
+    }
+}

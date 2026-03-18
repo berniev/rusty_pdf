@@ -18,5 +18,5 @@ use crate::PdfObject;
 /// ```
 pub trait Build {
     /// Build a PDF object representation of this value.
-    fn build(&self) -> Rc<dyn PdfObject>;
+    fn build(self) -> Rc<dyn PdfObject>;
 }

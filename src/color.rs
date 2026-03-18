@@ -141,19 +141,19 @@ use std::rc::Rc;
 use crate::{ArrayObject, Build, PdfObject};
 
 impl Build for RGB {
-    fn build(&self) -> Rc<dyn PdfObject> {
-        Rc::new(ArrayObject::from_rgb(*self))
+    fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(ArrayObject::from_rgb(self))
     }
 }
 
 impl Build for RGBA {
-    fn build(&self) -> Rc<dyn PdfObject> {
-        Rc::new(ArrayObject::from_rgba(*self))
+    fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(ArrayObject::from_rgba(self))
     }
 }
 
 impl Build for CMYK {
-    fn build(&self) -> Rc<dyn PdfObject> {
-        Rc::new(ArrayObject::from_cmyk(*self))
+    fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(ArrayObject::from_cmyk(self))
     }
 }

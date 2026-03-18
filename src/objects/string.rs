@@ -67,3 +67,12 @@ pub fn encode_non_ascii(string: &str) -> String {
 
     format!("FEFF<{}>", hex_content)
 }
+
+use std::rc::Rc;
+use crate::Build;
+
+impl Build for StringObject {
+    fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(self)
+    }
+}

@@ -178,3 +178,11 @@ impl PdfObject for ArrayObject {
         &mut self.metadata
     }
 }
+
+use crate::Build;
+
+impl Build for ArrayObject {
+    fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(self)
+    }
+}
