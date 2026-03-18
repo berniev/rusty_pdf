@@ -24,7 +24,7 @@ use crate::{NameObject, PdfObject};
 #[derive(Clone)]
 pub struct DictionaryObject {
     pub(crate) metadata: PdfMetadata,
-    pub values: Vec<(String, Rc<dyn PdfObject>)>,
+    pub(crate) values: Vec<(String, Rc<dyn PdfObject>)>,
 }
 
 impl DictionaryObject {
