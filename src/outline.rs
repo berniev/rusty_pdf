@@ -239,7 +239,7 @@ impl DocumentOutline {
         }
 
         if let Some(rgb) = item.color {
-            dict.set_array("C", ArrayObject::from_rgb(rgb));
+            dict.set("C", rgb.build());
         }
 
         if item.flags.bits() != 0 {

@@ -109,7 +109,7 @@ pub trait Annotation {
         self.add_border_style_to_dict(&mut dict);
 
         if let Some(rgb) = self.color() {
-            dict.set_array("C", ArrayObject::from_rgb(rgb));
+            dict.set("C", rgb.build());
         }
 
         if let Some(contents) = self.contents() {
@@ -233,7 +233,7 @@ impl Annotation for TextAnnotation {
         }
 
         if let Some(rgb) = self.color {
-            dict.set_array("C", ArrayObject::from_rgb(rgb));
+            dict.set("C", rgb.build());
         }
 
         dict.set("Contents", StringObject::build(self.contents.clone()));

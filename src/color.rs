@@ -111,6 +111,13 @@ pub struct RGB {
     pub blue: Color,
 }
 
+impl RGB {
+    pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
+        use crate::ArrayObject;
+        std::rc::Rc::new(ArrayObject::from_rgb(self))
+    }
+}
+
 impl_color_logic!(RGB, InvalidRGB, rgb, red: "r", green: "g", blue: "b");
 
 //------------------------ RGBA -------------------------------
@@ -121,6 +128,13 @@ pub struct RGBA {
     pub green: Color,
     pub blue: Color,
     pub alpha: Color,
+}
+
+impl RGBA {
+    pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
+        use crate::ArrayObject;
+        std::rc::Rc::new(ArrayObject::from_rgba(self))
+    }
 }
 
 impl_color_logic!(RGBA, InvalidRGBA, rgb, red: "r", green: "g", blue: "b", alpha: "a");
