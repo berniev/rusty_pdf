@@ -3,7 +3,7 @@
 //! Actions define behaviors that can be triggered by user interactions, such as
 //! clicking links, opening documents, or interacting with form fields.
 
-use crate::{ArrayObject, DictionaryObject, NameObject, PdfResult, util::Rect};
+use crate::{ArrayObject, BooleanObject, DictionaryObject, NameObject, PdfResult, util::Rect};
 
 /// Actions specify responses to various events in PDF documents, such as
 /// user interactions with annotations or form fields.
@@ -42,7 +42,7 @@ impl Action for UriAction {
         dict.set_string("URI", self.uri.clone());
 
         if self.is_map {
-            dict.set_bool("IsMap", true);
+            dict.set("IsMap", BooleanObject::build(true));
         }
 
         Ok(dict)
@@ -129,7 +129,7 @@ impl Action for LaunchAction {
         dict.set_dict("F", file_dict);
 
         if let Some(new_win) = self.new_window {
-            dict.set_bool("NewWindow", new_win);
+            dict.set("NewWindow", BooleanObject::build(new_win));
         }
 
         Ok(dict)

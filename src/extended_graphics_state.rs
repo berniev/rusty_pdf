@@ -3,7 +3,7 @@
 //! ExtGState objects control advanced graphics rendering features like
 //! transparency, blend modes, and rendering intent.
 
-use crate::{DictionaryObject, NameObject, NumberObject, PdfObject, Resource, ResourceCategory};
+use crate::{BooleanObject, DictionaryObject, NameObject, NumberObject, PdfObject, Resource, ResourceCategory};
 use std::any::Any;
 use std::rc::Rc;
 
@@ -186,11 +186,11 @@ impl ExtGState {
         }
 
         if let Some(op) = self.overprint_stroke {
-            dict.set_bool("OP", op);
+            dict.set("OP", BooleanObject::build(op));
         }
 
         if let Some(op) = self.overprint_fill {
-            dict.set_bool("op", op);
+            dict.set("op", BooleanObject::build(op));
         }
 
         if let Some(opm) = self.overprint_mode {
@@ -206,15 +206,15 @@ impl ExtGState {
         }
 
         if let Some(sa) = self.stroke_adjust {
-            dict.set_bool("SA", sa);
+            dict.set("SA", BooleanObject::build(sa));
         }
 
         if let Some(ais) = self.alpha_is_shape {
-            dict.set_bool("AIS", ais);
+            dict.set("AIS", BooleanObject::build(ais));
         }
 
         if let Some(tk) = self.text_knockout {
-            dict.set_bool("TK", tk);
+            dict.set("TK", BooleanObject::build(tk));
         }
 
         dict

@@ -67,7 +67,7 @@ impl ArrayObject {
     }
 
     pub fn push_bool(&mut self, value: bool) {
-        self.push_object(Rc::new(BooleanObject::new(Some(value))));
+        self.push_object(BooleanObject::build(value));
     }
 
     pub fn push_indirect(&mut self, id: usize) {

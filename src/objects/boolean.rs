@@ -17,6 +17,10 @@ impl BooleanObject {
     pub fn set(&mut self, value: bool) {
         self.value = Some(value);
     }
+
+    pub fn build(value: bool) -> std::rc::Rc<dyn PdfObject> {
+        std::rc::Rc::new(Self::new(Some(value)))
+    }
 }
 
 impl PdfObject for BooleanObject {
