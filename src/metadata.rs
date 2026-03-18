@@ -3,7 +3,7 @@
 //! Provides structures for embedding metadata in PDF documents, including
 //! both the legacy Info dictionary and modern XMP metadata streams.
 
-use crate::{DictionaryObject, NameObject, PdfResult, StreamObject};
+use crate::{DictionaryObject, NameObject, PdfResult, StreamObject, StringObject};
 
 #[cfg(test)]
 use crate::PdfObject;
@@ -141,35 +141,35 @@ impl DocumentInfo {
         let mut dict = DictionaryObject::new(None);
 
         if let Some(ref title) = self.title {
-            dict.set_string("Title", title.clone());
+            dict.set("Title", StringObject::build(title.clone()));
         }
 
         if let Some(ref author) = self.author {
-            dict.set_string("Author", author.clone());
+            dict.set("Author", StringObject::build(author.clone()));
         }
 
         if let Some(ref subject) = self.subject {
-            dict.set_string("Subject", subject.clone());
+            dict.set("Subject", StringObject::build(subject.clone()));
         }
 
         if let Some(ref keywords) = self.keywords {
-            dict.set_string("Keywords", keywords.clone());
+            dict.set("Keywords", StringObject::build(keywords.clone()));
         }
 
         if let Some(ref creator) = self.creator {
-            dict.set_string("Creator", creator.clone());
+            dict.set("Creator", StringObject::build(creator.clone()));
         }
 
         if let Some(ref producer) = self.producer {
-            dict.set_string("Producer", producer.clone());
+            dict.set("Producer", StringObject::build(producer.clone()));
         }
 
         if let Some(ref creation_date) = self.creation_date {
-            dict.set_string("CreationDate", creation_date.clone());
+            dict.set("CreationDate", StringObject::build(creation_date.clone()));
         }
 
         if let Some(ref mod_date) = self.mod_date {
-            dict.set_string("ModDate", mod_date.clone());
+            dict.set("ModDate", StringObject::build(mod_date.clone()));
         }
 
         if let Some(trapped) = self.trapped {

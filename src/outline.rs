@@ -4,7 +4,7 @@
 //! to navigate through the document.
 
 use crate::{
-    ArrayObject, DictionaryObject, NameObject, NumberObject, PdfResult, action::Destination, color::RGB,
+    ArrayObject, DictionaryObject, NameObject, NumberObject, PdfResult, StringObject, action::Destination, color::RGB,
 };
 
 //------------------ OutlineItemFlags -----------------------
@@ -193,7 +193,7 @@ impl DocumentOutline {
 
         let mut dict = DictionaryObject::new(None);
 
-        dict.set_string("Title", item.title.clone());
+        dict.set("Title", StringObject::build(item.title.clone()));
 
         dict.set_indirect("Parent", parent_id);
 

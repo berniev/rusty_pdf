@@ -3,7 +3,7 @@
 //! Actions define behaviors that can be triggered by user interactions, such as
 //! clicking links, opening documents, or interacting with form fields.
 
-use crate::{ArrayObject, BooleanObject, DictionaryObject, NameObject, PdfResult, util::Rect};
+use crate::{ArrayObject, BooleanObject, DictionaryObject, NameObject, PdfResult, StringObject, util::Rect};
 
 /// Actions specify responses to various events in PDF documents, such as
 /// user interactions with annotations or form fields.
@@ -39,7 +39,7 @@ impl Action for UriAction {
     fn to_dict(&self) -> PdfResult<DictionaryObject> {
         let mut dict = DictionaryObject::new(None);
         dict.set("S", NameObject::build(self.action_type()));
-        dict.set_string("URI", self.uri.clone());
+        dict.set("URI", StringObject::build(self.uri.clone()));
 
         if self.is_map {
             dict.set("IsMap", BooleanObject::build(true));
@@ -90,7 +90,7 @@ impl Action for JavaScriptAction {
     fn to_dict(&self) -> PdfResult<DictionaryObject> {
         let mut dict = DictionaryObject::new(None);
         dict.set("S", NameObject::build(self.action_type()));
-        dict.set_string("JS", self.script.clone());
+        dict.set("JS", StringObject::build(self.script.clone()));
         Ok(dict)
     }
 }
@@ -125,7 +125,7 @@ impl Action for LaunchAction {
 
         let mut file_dict = DictionaryObject::new(None);
         file_dict.set("Type", NameObject::build("Filespec"));
-        file_dict.set_string("F", self.file.clone());
+        file_dict.set("F", StringObject::build(self.file.clone()));
         dict.set_dict("F", file_dict);
 
         if let Some(new_win) = self.new_window {

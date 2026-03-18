@@ -59,7 +59,7 @@ impl ArrayObject {
     }
 
     pub fn push_string(&mut self, value: String) {
-        self.push_object(Rc::new(StringObject::new(Some(value))));
+        self.push_object(StringObject::build(value));
     }
 
     pub fn push_number(&mut self, value: impl Into<NumberType>) {

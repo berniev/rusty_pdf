@@ -6,7 +6,7 @@
 use crate::color::Color;
 use crate::color::RGB;
 use crate::util::{Posn, Rect};
-use crate::{ArrayObject, DictionaryObject, NameObject, NumberObject, PdfResult};
+use crate::{ArrayObject, DictionaryObject, NameObject, NumberObject, PdfResult, StringObject};
 
 //-------------------AnnotationFlags ----------------------
 
@@ -113,7 +113,7 @@ pub trait Annotation {
         }
 
         if let Some(contents) = self.contents() {
-            dict.set_string("Contents", contents.to_string());
+            dict.set("Contents", StringObject::build(contents.to_string()));
         }
 
         Ok(dict)
@@ -236,7 +236,7 @@ impl Annotation for TextAnnotation {
             dict.set_array("C", ArrayObject::from_rgb(rgb));
         }
 
-        dict.set_string("Contents", self.contents.clone());
+        dict.set("Contents", StringObject::build(self.contents.clone()));
 
         dict.set("Name", NameObject::build(self.icon.as_str()));
 
@@ -332,7 +332,7 @@ impl Annotation for LinkAnnotation {
             LinkAction::Uri(uri) => {
                 let mut action_dict = DictionaryObject::new(None);
                 action_dict.set("S", NameObject::build("URI"));
-                action_dict.set_string("URI", uri.clone());
+                action_dict.set("URI", StringObject::build(uri.clone()));
                 dict.set_dict("A", action_dict);
             }
             LinkAction::GoTo {

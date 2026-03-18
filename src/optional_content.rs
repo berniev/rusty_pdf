@@ -3,7 +3,7 @@
 //! Optional Content Groups (OCGs) allow parts of a PDF to be selectively
 //! visible or hidden, commonly used for layers in technical drawings.
 
-use crate::{ArrayObject, DictionaryObject, NameObject};
+use crate::{ArrayObject, DictionaryObject, NameObject, StringObject};
 
 //------------------ VisibilityInitialState -----------------------
 
@@ -77,7 +77,7 @@ impl OptionalContentGroup {
         let mut dict = DictionaryObject::new(None);
 
         dict.set("Type", NameObject::build("OCG"));
-        dict.set_string("Name", self.name.clone());
+        dict.set("Name", StringObject::build(self.name.clone()));
 
         if let Some(ref intent) = self.intent {
             if intent.len() == 1 {
@@ -195,10 +195,10 @@ impl OptionalContentConfig {
     pub fn to_dict(&self) -> DictionaryObject {
         let mut dict = DictionaryObject::new(None);
 
-        dict.set_string("Name", self.name.clone());
+        dict.set("Name", StringObject::build(self.name.clone()));
 
         if let Some(ref creator) = self.creator {
-            dict.set_string("Creator", creator.clone());
+            dict.set("Creator", StringObject::build(creator.clone()));
         }
 
         dict.set(

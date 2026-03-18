@@ -16,6 +16,10 @@ impl StringObject {
             metadata: Default::default(),
         }
     }
+
+    pub fn build(value: impl Into<String>) -> std::rc::Rc<dyn PdfObject> {
+        std::rc::Rc::new(Self::new(Some(value.into())))
+    }
 }
 
 impl PdfObject for StringObject {
