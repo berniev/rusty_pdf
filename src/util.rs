@@ -77,6 +77,21 @@ impl Rect {
     }
 }
 
+impl ToPdf for Rect {
+    fn to_pdf(&self) -> String {
+        format!(
+            "{} {} {} {}",
+            f_to_pdf_num(self.x1),
+            f_to_pdf_num(self.y1),
+            f_to_pdf_num(self.x2),
+            f_to_pdf_num(self.y2),
+        )
+    }
+    fn as_string(&self) -> String {
+        format!("[{} {} {} {}]", self.x1, self.y1, self.x2, self.y2)
+    }
+}
+
 //------------------------ Matrix -------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq)]
