@@ -96,7 +96,7 @@ impl TilingPattern {
 
         extra_entries.push((
             "BBox".to_string(),
-            ArrayObject::build(ArrayObject::from_rect(self.bounding_box).values),
+            self.bounding_box.build(),
         ));
 
         extra_entries.push((

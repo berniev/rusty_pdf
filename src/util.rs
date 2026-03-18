@@ -70,6 +70,13 @@ pub struct Rect {
     pub y2: f64,
 }
 
+impl Rect {
+    pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
+        use crate::ArrayObject;
+        std::rc::Rc::new(ArrayObject::from_rect(self))
+    }
+}
+
 //------------------------ Matrix -------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq)]
