@@ -42,6 +42,10 @@ impl DictionaryObject {
         )]))
     }
 
+    pub fn build(values: Vec<(String, Rc<dyn PdfObject>)>) -> Rc<dyn PdfObject> {
+        Rc::new(Self::new(Some(values)))
+    }
+
     pub fn set(&mut self, key: &str, value: Rc<dyn PdfObject>) {
         if let Some(pos) = self.values.iter().position(|(k, _)| k == key) {
             self.values[pos].1 = value;
@@ -51,8 +55,7 @@ impl DictionaryObject {
     }
 
     pub fn set_indirect(&mut self, key: &str, id: usize) {
-        let ir = IndirectObject::new(Some(id));
-        self.set(key, Rc::new(ir));
+        self.set(key, IndirectObject::build(id));
     }
 
     pub fn len(&self) -> usize {
@@ -88,7 +91,7 @@ impl DictionaryObject {
     }
 
     pub fn set_bool(&mut self, key: &str, value: bool) {
-        self.set(key, Rc::new(crate::BooleanObject::new(Some(value))));
+        self.set(key, crate::BooleanObject::build(value));
     }
 
     pub fn get(&self, key: &str) -> Option<&Rc<dyn PdfObject>> {

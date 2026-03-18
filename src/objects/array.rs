@@ -75,7 +75,7 @@ impl ArrayObject {
     }
 
     pub fn push_indirect(&mut self, id: usize) {
-        self.push_object(Rc::new(IndirectObject::new(Some(id))));
+        self.push_object(IndirectObject::build(id));
     }
 
     pub fn push_array(&mut self, array: ArrayObject) {
