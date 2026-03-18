@@ -3,7 +3,10 @@
 //! Provides structures for embedding metadata in PDF documents, including
 //! both the legacy Info dictionary and modern XMP metadata streams.
 
-use crate::{DictionaryObject, NameObject, PdfObject, PdfResult, StreamObject};
+use crate::{DictionaryObject, NameObject, PdfResult, StreamObject};
+
+#[cfg(test)]
+use crate::PdfObject;
 
 /// Document information dictionary (legacy PDF metadata).
 ///
