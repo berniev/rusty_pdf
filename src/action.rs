@@ -187,10 +187,10 @@ pub enum FitDestination {
         top: Option<f64>,
         zoom: Option<f64>,
     },
-    Window { page: usize },
-    Width { page: usize, top: Option<f64> },
-    Height { page: usize, left: Option<f64> },
-    Rectangle { page: usize, rect: Rect },
+    Fit { page: usize },
+    FitH { page: usize, top: Option<f64> },
+    FitV { page: usize, left: Option<f64> },
+    FitR { page: usize, rect: Rect },
 }
 
 impl FitDestination {
@@ -204,7 +204,7 @@ impl FitDestination {
     }
 
     pub fn fit(page: usize) -> Self {
-        Self::Window { page }
+        Self::Fit { page }
     }
 
     pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
@@ -227,21 +227,21 @@ impl FitDestination {
                 arr.push_optional_real(*top);
                 arr.push_optional_real(*zoom);
             }
-            FitDestination::Window { page } => {
+            FitDestination::Fit { page } => {
                 arr.push_number(*page as i64);
                 arr.push_name("Fit");
             }
-            FitDestination::Width { page, top } => {
+            FitDestination::FitH { page, top } => {
                 arr.push_number(*page as i64);
                 arr.push_name("FitH");
                 arr.push_optional_real(*top);
             }
-            FitDestination::Height { page, left } => {
+            FitDestination::FitV { page, left } => {
                 arr.push_number(*page as i64);
                 arr.push_name("FitV");
                 arr.push_optional_real(*left);
             }
-            FitDestination::Rectangle { page, rect } => {
+            FitDestination::FitR { page, rect } => {
                 arr.push_number(*page as i64);
                 arr.push_name("FitR");
                 arr.push_real(rect.x1);
