@@ -48,12 +48,3 @@ impl PdfObject for NameObject {
         &mut self.metadata
     }
 }
-
-use std::rc::Rc;
-use crate::Build;
-
-impl Build for NameObject {
-    fn build(self) -> Rc<dyn PdfObject> {
-        Rc::new(self)
-    }
-}

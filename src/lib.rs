@@ -1,6 +1,5 @@
 pub mod action;
 pub mod annotation;
-pub mod build;
 pub mod catalog;
 pub mod color;
 pub mod cross_ref;
@@ -57,4 +56,3 @@ pub use resource::{Resource, ResourceCategory, ResourceManager};
 pub use resources::ResourceDictionary;
 pub use text::{StandardFont, WrapMode, wrap_text};
 pub use util::Rect;
-pub use build::Build;

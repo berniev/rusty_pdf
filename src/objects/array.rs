@@ -179,10 +179,3 @@ impl PdfObject for ArrayObject {
     }
 }
 
-use crate::Build;
-
-impl Build for ArrayObject {
-    fn build(self) -> Rc<dyn PdfObject> {
-        Rc::new(self)
-    }
-}

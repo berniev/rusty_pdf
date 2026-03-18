@@ -156,10 +156,3 @@ mod tests {
     }
 }
 
-use crate::Build;
-
-impl Build for DictionaryObject {
-    fn build(self) -> Rc<dyn PdfObject> {
-        Rc::new(self)
-    }
-}

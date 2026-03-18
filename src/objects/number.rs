@@ -63,10 +63,6 @@ impl NumberObject {
         }
     }
 
-    pub fn build(value: impl Into<NumberType>) -> std::rc::Rc<dyn PdfObject> {
-        std::rc::Rc::new(Self::new(value.into()))
-    }
-
     pub fn as_int(&self) -> i64 {
         match self.value {
             NumberType::Integer(i) => i,
@@ -83,6 +79,10 @@ impl NumberObject {
 
     pub fn set_value<T: Into<NumberType>>(&mut self, value: T) {
         self.value = value.into();
+    }
+
+    pub fn build(value: impl Into<NumberType>) -> std::rc::Rc<dyn PdfObject> {
+        std::rc::Rc::new(Self::new(value.into()))
     }
 }
 
@@ -141,14 +141,5 @@ impl From<i32> for NumberObject {
 impl From<f32> for NumberObject {
     fn from(f: f32) -> Self {
         Self::new(NumberType::Real(f as f64))
-    }
-}
-
-use std::rc::Rc;
-use crate::Build;
-
-impl Build for NumberObject {
-    fn build(self) -> Rc<dyn PdfObject> {
-        Rc::new(self)
     }
 }
