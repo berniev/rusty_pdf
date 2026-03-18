@@ -32,6 +32,10 @@ impl ArrayObject {
         }
     }
 
+    pub fn build(values: Vec<Rc<dyn PdfObject>>) -> Rc<dyn PdfObject> {
+        Rc::new(Self::new(Some(values)))
+    }
+
     pub fn push_object(&mut self, value: Rc<dyn PdfObject>) {
         self.values.push(value);
     }

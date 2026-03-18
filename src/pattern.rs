@@ -96,7 +96,7 @@ impl TilingPattern {
 
         extra_entries.push((
             "BBox".to_string(),
-            Rc::new(ArrayObject::from_rect(self.bounding_box)) as Rc<dyn PdfObject>,
+            ArrayObject::build(ArrayObject::from_rect(self.bounding_box).values),
         ));
 
         extra_entries.push((
@@ -112,7 +112,7 @@ impl TilingPattern {
         if let Some(matrix) = self.matrix {
             extra_entries.push((
                 "Matrix".to_string(),
-                Rc::new(ArrayObject::from_matrix(matrix)) as Rc<dyn PdfObject>,
+                ArrayObject::build(ArrayObject::from_matrix(matrix).values),
             ));
         }
 

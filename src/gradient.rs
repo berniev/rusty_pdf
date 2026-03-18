@@ -243,11 +243,11 @@ fn create_interpolation_function_type_2(
 }
 
 fn to_array(v: Vec<f64>) -> Rc<dyn PdfObject> {
-    Rc::new(ArrayObject::new(Some(
+    ArrayObject::build(
         v.into_iter()
-            .map(|v| Rc::new(NumberObject::from(v)) as Rc<dyn PdfObject>)
+            .map(|v| NumberObject::build(v))
             .collect(),
-    )))
+    )
 }
 
 /// Soft Mask (/SMask) object graph.
