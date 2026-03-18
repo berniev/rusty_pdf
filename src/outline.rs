@@ -4,7 +4,7 @@
 //! to navigate through the document.
 
 use crate::{
-    DictionaryObject, NameObject, NumberObject, PdfResult, StringObject, action::Destination, color::RGB,
+    DictionaryObject, NameObject, NumberObject, PdfResult, StringObject, action::FitDestination, color::RGB,
 };
 
 //------------------ OutlineItemFlags -----------------------
@@ -33,7 +33,7 @@ impl OutlineItemFlags {
 #[derive(Clone)]
 pub struct OutlineItem {
     pub title: String,
-    pub destination: Option<Destination>,
+    pub destination: Option<FitDestination>,
     pub children: Vec<OutlineItem>,
     pub is_open: bool,
     pub color: Option<RGB>,
@@ -41,7 +41,7 @@ pub struct OutlineItem {
 }
 
 impl OutlineItem {
-    pub fn new(title: String, destination: Option<Destination>) -> Self {
+    pub fn new(title: String, destination: Option<FitDestination>) -> Self {
         Self {
             title,
             destination,
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn test_outline_item_creation() {
-        let item = OutlineItem::new("Chapter 1".to_string(), Some(Destination::fit(0)));
+        let item = OutlineItem::new("Chapter 1".to_string(), Some(FitDestination::fit(0)));
 
         assert_eq!(item.title, "Chapter 1");
         assert!(item.destination.is_some());
@@ -275,16 +275,16 @@ mod tests {
 
     #[test]
     fn test_outline_item_with_children() {
-        let mut parent = OutlineItem::new("Part 1".to_string(), Some(Destination::fit(0)));
+        let mut parent = OutlineItem::new("Part 1".to_string(), Some(FitDestination::fit(0)));
 
         parent.add_child(OutlineItem::new(
             "Chapter 1".to_string(),
-            Some(Destination::fit(1)),
+            Some(FitDestination::fit(1)),
         ));
 
         parent.add_child(OutlineItem::new(
             "Chapter 2".to_string(),
-            Some(Destination::fit(2)),
+            Some(FitDestination::fit(2)),
         ));
 
         assert_eq!(parent.children.len(), 2);
@@ -297,12 +297,12 @@ mod tests {
 
         outline.add_item(OutlineItem::new(
             "Introduction".to_string(),
-            Some(Destination::fit(0)),
+            Some(FitDestination::fit(0)),
         ));
 
         outline.add_item(OutlineItem::new(
             "Conclusion".to_string(),
-            Some(Destination::fit(10)),
+            Some(FitDestination::fit(10)),
         ));
 
         assert_eq!(outline.items.len(), 2);
@@ -324,13 +324,13 @@ mod tests {
 
     #[test]
     fn test_nested_bookmarks() {
-        let mut root = OutlineItem::new("Part 1".to_string(), Some(Destination::fit(0)));
+        let mut root = OutlineItem::new("Part 1".to_string(), Some(FitDestination::fit(0)));
 
-        let mut chapter = OutlineItem::new("Chapter 1".to_string(), Some(Destination::fit(1)));
+        let mut chapter = OutlineItem::new("Chapter 1".to_string(), Some(FitDestination::fit(1)));
 
         chapter.add_child(OutlineItem::new(
             "Section 1.1".to_string(),
-            Some(Destination::fit(2)),
+            Some(FitDestination::fit(2)),
         ));
 
         root.add_child(chapter);

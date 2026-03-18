@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
-use std::fmt;
-use std::fmt::Display;
+use std::fmt::{self, Display};
+use std::rc::Rc;
 
 use crate::encoding::f_to_pdf_num;
 use crate::util::ToPdf;
-use crate::{PdfError, PdfResult};
+use crate::{ArrayObject, PdfError, PdfObject, PdfResult};
 
 //------------------------ ColorSpace -------------------------------
 
@@ -112,9 +112,8 @@ pub struct RGB {
 }
 
 impl RGB {
-    pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
-        use crate::ArrayObject;
-        std::rc::Rc::new(ArrayObject::from_rgb(self))
+    pub fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(ArrayObject::from_rgb(self))
     }
 }
 
@@ -131,9 +130,8 @@ pub struct RGBA {
 }
 
 impl RGBA {
-    pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
-        use crate::ArrayObject;
-        std::rc::Rc::new(ArrayObject::from_rgba(self))
+    pub fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(ArrayObject::from_rgba(self))
     }
 }
 
@@ -150,9 +148,8 @@ pub struct CMYK {
 }
 
 impl CMYK {
-    pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
-        use crate::ArrayObject;
-        std::rc::Rc::new(ArrayObject::from_cmyk(self))
+    pub fn build(self) -> Rc<dyn PdfObject> {
+        Rc::new(ArrayObject::from_cmyk(self))
     }
 }
 

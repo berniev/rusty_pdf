@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::PdfMetadata;
 use crate::PdfObject;
 
@@ -81,8 +83,8 @@ impl NumberObject {
         self.value = value.into();
     }
 
-    pub fn build(value: impl Into<NumberType>) -> std::rc::Rc<dyn PdfObject> {
-        std::rc::Rc::new(Self::new(value.into()))
+    pub fn build(value: impl Into<NumberType>) -> Rc<dyn PdfObject> {
+        Rc::new(Self::new(value.into()))
     }
 }
 

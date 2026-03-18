@@ -36,10 +36,7 @@ impl DictionaryObject {
     }
 
     pub(crate) fn typed(name: &str) -> Self {
-        Self::new(Some(vec![(
-            "Type".to_string(),
-            NameObject::build(name),
-        )]))
+        Self::new(Some(vec![("Type".to_string(), NameObject::build(name))]))
     }
 
     pub fn build(values: Vec<(String, Rc<dyn PdfObject>)>) -> Rc<dyn PdfObject> {
@@ -70,28 +67,12 @@ impl DictionaryObject {
         self.values.iter().any(|(k, _)| k == key)
     }
 
-    pub fn set_name(&mut self, key: &str, name: &str) {
-        self.set(key, Rc::new(crate::NameObject::new(Some(name.to_string()))));
-    }
-
-    pub fn set_string(&mut self, key: &str, value: String) {
-        self.set(key, Rc::new(crate::StringObject::new(Some(value))));
-    }
-
-    pub fn set_number(&mut self, key: &str, value: impl Into<crate::NumberType>) {
-        self.set(key, Rc::new(crate::NumberObject::new(value.into())));
-    }
-
     pub fn set_array(&mut self, key: &str, array: crate::ArrayObject) {
         self.set(key, Rc::new(array));
     }
 
     pub fn set_dict(&mut self, key: &str, dict: DictionaryObject) {
         self.set(key, Rc::new(dict));
-    }
-
-    pub fn set_bool(&mut self, key: &str, value: bool) {
-        self.set(key, crate::BooleanObject::build(value));
     }
 
     pub fn get(&self, key: &str) -> Option<&Rc<dyn PdfObject>> {
@@ -141,21 +122,14 @@ mod tests {
         assert!(dict.is_empty());
         assert_eq!(dict.len(), 0);
 
-        dict.set(
-            "Key1",
-            NameObject::build("Value1"),
-        );
+        dict.set("Key1", NameObject::build("Value1"));
         assert!(!dict.is_empty());
         assert_eq!(dict.len(), 1);
         assert!(dict.contains_key("Key1"));
         assert!(!dict.contains_key("Key2"));
 
-        dict.set(
-            "Key2",
-            NameObject::build("Value2"),
-        );
+        dict.set("Key2", NameObject::build("Value2"));
         assert_eq!(dict.len(), 2);
         assert!(dict.contains_key("Key2"));
     }
 }
-

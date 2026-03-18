@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::{
     BooleanObject, DictionaryObject, IndirectObject, NameObject, NumberObject, NumberType,
     PdfMetadata, PdfObject, StringObject,
-    action::Destination,
+    action::FitDestination,
     color::{CMYK, RGB, RGBA},
     util::{Matrix, Posn, Rect},
 };
@@ -115,11 +115,11 @@ impl ArrayObject {
         arr
     }
 
-    pub fn from_destination(dest: Destination) -> Self {
+    pub fn from_destination(dest: FitDestination) -> Self {
         dest.to_array()
     }
 
-    pub fn from_destination_ref(dest: &Destination) -> Self {
+    pub fn from_destination_ref(dest: &FitDestination) -> Self {
         dest.to_array()
     }
 

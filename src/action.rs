@@ -50,11 +50,11 @@ impl Action for UriAction {
 }
 
 pub struct GoToAction {
-    pub destination: Destination,
+    pub destination: FitDestination,
 }
 
 impl GoToAction {
-    pub fn new(destination: Destination) -> Self {
+    pub fn new(destination: FitDestination) -> Self {
         Self { destination }
     }
 }
@@ -180,29 +180,20 @@ impl Action for NamedAction {
 
 /// Destinations specify a particular view of a PDF page.
 #[derive(Debug, Clone)]
-pub enum Destination {
-    /// [page /XYZ left top zoom] - Display page at (left, top) with zoom factor.
+pub enum FitDestination {
     XYZ {
         page: usize,
         left: Option<f64>,
         top: Option<f64>,
         zoom: Option<f64>,
     },
-
-    /// [page /Fit] - Fit entire page in window.
-    Fit { page: usize },
-
-    /// [page /FitH top] - Fit page width, position at top.
-    FitH { page: usize, top: Option<f64> },
-
-    /// [page /FitV left] - Fit page height, position at left.
-    FitV { page: usize, left: Option<f64> },
-
-    /// [page /FitR left bottom right top] - Fit rectangle in window.
-    FitR { page: usize, rect: Rect },
+    Window { page: usize },
+    Width { page: usize, top: Option<f64> },
+    Height { page: usize, left: Option<f64> },
+    Rectangle { page: usize, rect: Rect },
 }
 
-impl Destination {
+impl FitDestination {
     pub fn xyz(page: usize, left: Option<f64>, top: Option<f64>, zoom: Option<f64>) -> Self {
         Self::XYZ {
             page,
@@ -213,7 +204,7 @@ impl Destination {
     }
 
     pub fn fit(page: usize) -> Self {
-        Self::Fit { page }
+        Self::Window { page }
     }
 
     pub fn build(self) -> std::rc::Rc<dyn crate::PdfObject> {
@@ -224,7 +215,7 @@ impl Destination {
         let mut arr = ArrayObject::new(None);
 
         match self {
-            Destination::XYZ {
+            FitDestination::XYZ {
                 page,
                 left,
                 top,
@@ -236,21 +227,21 @@ impl Destination {
                 arr.push_optional_real(*top);
                 arr.push_optional_real(*zoom);
             }
-            Destination::Fit { page } => {
+            FitDestination::Window { page } => {
                 arr.push_number(*page as i64);
                 arr.push_name("Fit");
             }
-            Destination::FitH { page, top } => {
+            FitDestination::Width { page, top } => {
                 arr.push_number(*page as i64);
                 arr.push_name("FitH");
                 arr.push_optional_real(*top);
             }
-            Destination::FitV { page, left } => {
+            FitDestination::Height { page, left } => {
                 arr.push_number(*page as i64);
                 arr.push_name("FitV");
                 arr.push_optional_real(*left);
             }
-            Destination::FitR { page, rect } => {
+            FitDestination::Rectangle { page, rect } => {
                 arr.push_number(*page as i64);
                 arr.push_name("FitR");
                 arr.push_real(rect.x1);
@@ -278,7 +269,7 @@ mod tests {
 
     #[test]
     fn test_goto_action() {
-        let dest = Destination::xyz(1, Some(0.0), Some(0.0), Some(1.0));
+        let dest = FitDestination::xyz(1, Some(0.0), Some(0.0), Some(1.0));
         let action = GoToAction::new(dest);
         let dict = action.to_dict().unwrap();
         assert!(dict.contains_key("S"));
@@ -303,14 +294,14 @@ mod tests {
 
     #[test]
     fn test_destination_xyz() {
-        let dest = Destination::xyz(0, Some(100.0), Some(200.0), None);
+        let dest = FitDestination::xyz(0, Some(100.0), Some(200.0), None);
         let arr = ArrayObject::from_destination(dest);
         assert_eq!(arr.values.len(), 5); // page, /XYZ, left, top, zoom
     }
 
     #[test]
     fn test_destination_fit() {
-        let dest = Destination::fit(2);
+        let dest = FitDestination::fit(2);
         let arr = ArrayObject::from_destination(dest);
         assert_eq!(arr.values.len(), 2); // page, /Fit
     }
