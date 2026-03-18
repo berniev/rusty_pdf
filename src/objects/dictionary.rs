@@ -75,9 +75,7 @@ impl PdfObject for DictionaryObject {
             self.values
                 .iter()
                 .map(|(k, v)| {
-                    // For objects with no identifier, embed them directly
-                    // For objects with an identifier, use an indirect reference
-                    if v.metadata().object_identifier.is_none() {
+                     if v.metadata().object_identifier.is_none() {
                         format!("/{} {}", k, v.data())
                     } else {
                         format!("/{} {}", k, v.reference())
@@ -87,6 +85,7 @@ impl PdfObject for DictionaryObject {
                 .join(" ")
         )
     }
+
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }

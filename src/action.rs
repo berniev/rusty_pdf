@@ -39,7 +39,7 @@ impl Action for UriAction {
     fn to_dict(&self) -> PdfResult<DictionaryObject> {
         let mut dict = DictionaryObject::new(None);
         dict.set("S", NameObject::build(self.action_type()));
-        dict.set("URI", StringObject::build(self.uri.clone()));
+        dict.set("URI", StringObject::build(&self.uri));
 
         if self.is_map {
             dict.set("IsMap", BooleanObject::build(true));
@@ -175,6 +175,12 @@ impl Action for NamedAction {
         dict.set("S", NameObject::build(self.action_type()));
         dict.set("N", NameObject::build(self.name.as_str()));
         Ok(dict)
+    }
+}
+
+impl std::fmt::Display for NamedActionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
