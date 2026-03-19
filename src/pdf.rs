@@ -282,7 +282,8 @@ impl PDF {
 
         // Add reference to page tree
         let pages_id = self.page_tree.metadata.object_identifier.unwrap();
-        self.catalog.set("Pages", IndirectObject::make_pdf_obj(pages_id));
+        self.catalog
+            .set("Pages", IndirectObject::make_pdf_obj(pages_id));
 
         let catalog_copy = self.catalog.clone();
         self.objects.push(Box::new(catalog_copy));

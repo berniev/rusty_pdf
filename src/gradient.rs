@@ -127,23 +127,18 @@ impl Gradient {
 
         // 2. Create Color Function (Type 2 - Exponential Interpolation)
         let color_func = create_interpolation_function_type_2(
-            vec![
-                first.red.color as f64,
-                first.green.color as f64,
-                first.blue.color as f64,
-            ],
-            vec![
-                last.red.color as f64,
-                last.green.color as f64,
-                last.blue.color as f64,
-            ],
+            first.as_vec_64().to_vec(),
+            last.as_vec_64().to_vec(),
             0.0,
         );
         let color_func_num = pdf.add_object(Box::new(color_func));
 
         // 3. Create Color Shading Dictionary
         let mut shading_dict = DictionaryObject::new(None);
-        shading_dict.set("ShadingType", NumberObject::make_pdf_obj(shading_type as i64));
+        shading_dict.set(
+            "ShadingType",
+            NumberObject::make_pdf_obj(shading_type as i64),
+        );
         shading_dict.set("ColorSpace", NameObject::make_pdf_obj("DeviceRGB"));
         shading_dict.set("Coords", to_array(coords.clone()));
         shading_dict.set("Function", IndirectObject::make_pdf_obj(color_func_num));
@@ -152,22 +147,25 @@ impl Gradient {
         let shading_num = pdf.add_object(Box::new(shading_dict));
 
         // 4. Handle Transparency (Soft Mask)
-        let has_transparency = first.alpha < 1.0 || last.alpha < 1.0;
+        let has_transparency = first.has_transparency() || last.has_transparency();
         let gs_name = if has_transparency {
             let name = format!("GS{}", *resource_counter);
             *resource_counter += 1;
 
             // Alpha Interpolation Function
             let alpha_func = create_interpolation_function_type_2(
-                vec![first.alpha.color as f64, last.alpha.color as f64],
-                vec![last.alpha.color as f64],
+                vec![first.a().to_f64(), last.a().to_f64()],
+                vec![last.a().to_f64()],
                 0.0,
             );
             let alpha_func_num = pdf.add_object(Box::new(alpha_func));
 
             // Alpha Shading (DeviceGray)
             let mut alpha_shading = DictionaryObject::new(None);
-            alpha_shading.set("ShadingType", NumberObject::make_pdf_obj(shading_type as i64));
+            alpha_shading.set(
+                "ShadingType",
+                NumberObject::make_pdf_obj(shading_type as i64),
+            );
             alpha_shading.set("ColorSpace", NameObject::make_pdf_obj("DeviceGray"));
             alpha_shading.set("Coords", to_array(coords));
             alpha_shading.set("Function", IndirectObject::make_pdf_obj(alpha_func_num));
@@ -232,7 +230,7 @@ impl Gradient {
 fn create_interpolation_function_type_2(
     c0: Vec<f64>,
     c1: Vec<f64>,
-    exponent: f64,
+    exponent: f32,
 ) -> DictionaryObject {
     let mut dict = DictionaryObject::new(None);
     dict.set("FunctionType", NumberObject::make_pdf_obj(2));
@@ -270,8 +268,14 @@ fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: 
     shading_res.set("Sh0", IndirectObject::make_pdf_obj(alpha_shading_num));
 
     let mut resources = DictionaryObject::new(None);
-    resources.set("Shading", DictionaryObject::make_pdf_obj(shading_res.values));
-    xobj.set("Resources", DictionaryObject::make_pdf_obj(resources.values));
+    resources.set(
+        "Shading",
+        DictionaryObject::make_pdf_obj(shading_res.values),
+    );
+    xobj.set(
+        "Resources",
+        DictionaryObject::make_pdf_obj(resources.values),
+    );
 
     let mut form_stream = StreamObject::compressed();
     form_stream.paint_shading("Sh0");

@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
-use crate::{ArrayObject, PdfObject};
 use crate::encoding::f_to_pdf_num;
+use crate::{ArrayObject, PdfObject};
 
 //------------------------- ToPdf -----------------------------
 
@@ -135,4 +135,3 @@ impl ToPdf for Matrix {
         )
     }
 }
-

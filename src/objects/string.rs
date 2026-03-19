@@ -71,4 +71,3 @@ pub fn encode_non_ascii(string: &str) -> String {
 
     format!("FEFF<{}>", hex_content)
 }
-

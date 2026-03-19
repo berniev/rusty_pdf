@@ -154,9 +154,15 @@ impl DocumentOutline {
 
         if !self.items.is_empty() {
             outline_dict.set("First", IndirectObject::make_pdf_obj(item_ids[0]));
-            outline_dict.set("Last", IndirectObject::make_pdf_obj(item_ids[self.items.len() - 1]));
+            outline_dict.set(
+                "Last",
+                IndirectObject::make_pdf_obj(item_ids[self.items.len() - 1]),
+            );
 
-            outline_dict.set("Count", NumberObject::make_pdf_obj(self.total_count() as i64));
+            outline_dict.set(
+                "Count",
+                NumberObject::make_pdf_obj(self.total_count() as i64),
+            );
         }
 
         Ok(OutlineDictionaries {
@@ -231,7 +237,10 @@ impl DocumentOutline {
             }
 
             dict.set("First", IndirectObject::make_pdf_obj(first_child_id));
-            dict.set("Last", IndirectObject::make_pdf_obj(all_ids[first_child_idx + item.children.len() - 1]));
+            dict.set(
+                "Last",
+                IndirectObject::make_pdf_obj(all_ids[first_child_idx + item.children.len() - 1]),
+            );
 
             // Count: positive if open, negative if closed
             let count = item.count_descendants();

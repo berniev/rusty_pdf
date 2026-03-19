@@ -165,7 +165,10 @@ impl DocumentInfo {
         }
 
         if let Some(ref creation_date) = self.creation_date {
-            dict.set("CreationDate", StringObject::make_pdf_obj(creation_date.clone()));
+            dict.set(
+                "CreationDate",
+                StringObject::make_pdf_obj(creation_date.clone()),
+            );
         }
 
         if let Some(ref mod_date) = self.mod_date {
@@ -257,14 +260,8 @@ impl XmpMetadata {
     pub fn to_stream(&self) -> PdfResult<StreamObject> {
         // Add required dictionary entries
         let dict_entries = vec![
-            (
-                "Type".to_string(),
-                NameObject::make_pdf_obj("Metadata"),
-            ),
-            (
-                "Subtype".to_string(),
-                NameObject::make_pdf_obj("XML"),
-            ),
+            ("Type".to_string(), NameObject::make_pdf_obj("Metadata")),
+            ("Subtype".to_string(), NameObject::make_pdf_obj("XML")),
         ];
 
         let stream = StreamObject::new().with_data(

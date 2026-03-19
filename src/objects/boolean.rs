@@ -48,4 +48,3 @@ impl PdfObject for BooleanObject {
         self.metadata.generation_number == Generation::Normal
     }
 }
-

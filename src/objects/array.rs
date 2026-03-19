@@ -133,27 +133,27 @@ impl ArrayObject {
 
     pub fn from_rgb(rgb: RGB) -> Self {
         let mut arr = Self::new(None);
-        arr.push_real(rgb.red.color as f64);
-        arr.push_real(rgb.green.color as f64);
-        arr.push_real(rgb.blue.color as f64);
+        arr.push_real(rgb.r().to_f64());
+        arr.push_real(rgb.g().to_f64());
+        arr.push_real(rgb.b().to_f64());
         arr
     }
 
     pub fn from_rgba(rgba: RGBA) -> Self {
         let mut arr = Self::new(None);
-        arr.push_real(rgba.red.color as f64);
-        arr.push_real(rgba.green.color as f64);
-        arr.push_real(rgba.blue.color as f64);
-        arr.push_real(rgba.alpha.color as f64);
+        arr.push_real(rgba.r().to_f64());
+        arr.push_real(rgba.g().to_f64());
+        arr.push_real(rgba.b().to_f64());
+        arr.push_real(rgba.a().to_f64());
         arr
     }
 
     pub fn from_cmyk(cmyk: CMYK) -> Self {
         let mut arr = Self::new(None);
-        arr.push_real(cmyk.cyan.color as f64);
-        arr.push_real(cmyk.magenta.color as f64);
-        arr.push_real(cmyk.yellow.color as f64);
-        arr.push_real(cmyk.black.color as f64);
+        arr.push_real(cmyk.c().to_f64());
+        arr.push_real(cmyk.m().to_f64());
+        arr.push_real(cmyk.y().to_f64());
+        arr.push_real(cmyk.k().to_f64());
         arr
     }
 }
@@ -182,4 +182,3 @@ impl PdfObject for ArrayObject {
         &mut self.metadata
     }
 }
-

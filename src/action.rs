@@ -3,7 +3,9 @@
 //! Actions define behaviors that can be triggered by user interactions, such as
 //! clicking links, opening documents, or interacting with form fields.
 
-use crate::{ArrayObject, BooleanObject, DictionaryObject, NameObject, PdfResult, StringObject, util::Rect};
+use crate::{
+    ArrayObject, BooleanObject, DictionaryObject, NameObject, PdfResult, StringObject, util::Rect,
+};
 
 /// Actions specify responses to various events in PDF documents, such as
 /// user interactions with annotations or form fields.
@@ -193,10 +195,21 @@ pub enum FitDestination {
         top: Option<f64>,
         zoom: Option<f64>,
     },
-    Fit { page: usize },
-    FitH { page: usize, top: Option<f64> },
-    FitV { page: usize, left: Option<f64> },
-    FitR { page: usize, rect: Rect },
+    Fit {
+        page: usize,
+    },
+    FitH {
+        page: usize,
+        top: Option<f64>,
+    },
+    FitV {
+        page: usize,
+        left: Option<f64>,
+    },
+    FitR {
+        page: usize,
+        rect: Rect,
+    },
 }
 
 impl FitDestination {

@@ -23,8 +23,8 @@ pub mod writer;
 
 // Re-export main types for user API convenience
 pub use action::{
-    Action, FitDestination, GoToAction, JavaScriptAction, LaunchAction, NamedAction, NamedActionType,
-    UriAction,
+    Action, FitDestination, GoToAction, JavaScriptAction, LaunchAction, NamedAction,
+    NamedActionType, UriAction,
 };
 pub use annotation::{
     Annotation, AnnotationFlags, BorderStyle, LinkAction, LinkAnnotation, TextAnnotation, TextIcon,

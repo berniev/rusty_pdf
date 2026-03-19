@@ -3,7 +3,10 @@
 //! ExtGState objects control advanced graphics rendering features like
 //! transparency, blend modes, and rendering intent.
 
-use crate::{BooleanObject, DictionaryObject, NameObject, NumberObject, PdfObject, Resource, ResourceCategory};
+use crate::{
+    BooleanObject, DictionaryObject, NameObject, NumberObject, PdfObject, Resource,
+    ResourceCategory,
+};
 use std::any::Any;
 use std::rc::Rc;
 

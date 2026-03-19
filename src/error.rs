@@ -53,21 +53,29 @@ impl fmt::Display for PdfError {
                 write!(
                     f,
                     "Invalid color values: r={}, g={}, b={} (must be 0.0-1.0)",
-                    rgb.red, rgb.green, rgb.blue
+                    rgb.r(),
+                    rgb.g(),
+                    rgb.b()
                 )
             }
             PdfError::InvalidRGBA { rgb } => {
                 write!(
                     f,
                     "Invalid color values: r={}, g={}, b={}, a={} (must be 0.0-1.0)",
-                    rgb.red, rgb.green, rgb.blue, rgb.alpha
+                    rgb.r(),
+                    rgb.g(),
+                    rgb.b(),
+                    rgb.a()
                 )
             }
             PdfError::InvalidCMYK { cmyk } => {
                 write!(
                     f,
                     "Invalid color values: c={}, m={}, y={}, k={} (must be 0.0-1.0)",
-                    cmyk.cyan, cmyk.magenta, cmyk.yellow, cmyk.black
+                    cmyk.c(),
+                    cmyk.m(),
+                    cmyk.y(),
+                    cmyk.k()
                 )
             }
             PdfError::InvalidImage(msg) => write!(f, "Invalid image: {}", msg),

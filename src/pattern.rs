@@ -6,11 +6,12 @@
 use std::any::Any;
 use std::rc::Rc;
 
+#[cfg(test)]
+use crate::color::Color;
 use crate::color::RGB;
 use crate::util::{Matrix, Posn, Rect, ToPdf};
 use crate::{
-    ArrayObject, DictionaryObject, NameObject, NumberObject, PdfObject, Resource,
-    ResourceCategory,
+    ArrayObject, DictionaryObject, NameObject, NumberObject, PdfObject, Resource, ResourceCategory,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,10 +75,7 @@ impl TilingPattern {
     pub fn to_stream(&self) -> crate::StreamObject {
         let mut extra_entries = Vec::new();
 
-        extra_entries.push((
-            "Type".to_string(),
-            NameObject::make_pdf_obj("Pattern"),
-        ));
+        extra_entries.push(("Type".to_string(), NameObject::make_pdf_obj("Pattern")));
 
         extra_entries.push((
             "PatternType".to_string(),
@@ -94,26 +92,14 @@ impl TilingPattern {
             NumberObject::make_pdf_obj(self.tiling_type as i64),
         ));
 
-        extra_entries.push((
-            "BBox".to_string(),
-            self.bounding_box.make_pdf_obj(),
-        ));
+        extra_entries.push(("BBox".to_string(), self.bounding_box.make_pdf_obj()));
 
-        extra_entries.push((
-            "XStep".to_string(),
-            NumberObject::make_pdf_obj(self.x_step),
-        ));
+        extra_entries.push(("XStep".to_string(), NumberObject::make_pdf_obj(self.x_step)));
 
-        extra_entries.push((
-            "YStep".to_string(),
-            NumberObject::make_pdf_obj(self.y_step),
-        ));
+        extra_entries.push(("YStep".to_string(), NumberObject::make_pdf_obj(self.y_step)));
 
         if let Some(matrix) = self.matrix {
-            extra_entries.push((
-                "Matrix".to_string(),
-                matrix.make_pdf_obj(),
-            ));
+            extra_entries.push(("Matrix".to_string(), matrix.make_pdf_obj()));
         }
 
         crate::StreamObject::new().with_data(Some(vec![self.content.clone()]), Some(extra_entries))
@@ -248,7 +234,6 @@ impl Resource for AxialShading {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::color::Color;
 
     #[test]
     fn test_tiling_pattern_creation() {
@@ -300,16 +285,8 @@ mod tests {
         let shading = AxialShading::new(
             Posn { x: 0.0, y: 0.0 },
             Posn { x: 100.0, y: 0.0 },
-            RGB {
-                red: Color { color: 1.0 },
-                green: Color { color: 0.0 },
-                blue: Color { color: 0.0 },
-            }, // Red
-            RGB {
-                red: Color { color: 0.0 },
-                green: Color { color: 0.0 },
-                blue: Color { color: 1.0 },
-            }, // Blue
+            RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)), // Red
+            RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0)), // Blue
         );
 
         assert_eq!(shading.start, Posn { x: 0.0, y: 0.0 });
@@ -321,16 +298,8 @@ mod tests {
         let shading = AxialShading::new(
             Posn { x: 0.0, y: 0.0 },
             Posn { x: 100.0, y: 100.0 },
-            RGB {
-                red: Color { color: 1.0 },
-                green: Color { color: 0.0 },
-                blue: Color { color: 0.0 },
-            },
-            RGB {
-                red: Color { color: 0.0 },
-                green: Color { color: 1.0 },
-                blue: Color { color: 0.0 },
-            },
+            RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
+            RGB::new(Color::new(0.0), Color::new(1.0), Color::new(0.0)),
         );
 
         let dict = shading.to_dict();
@@ -344,16 +313,8 @@ mod tests {
         let shading = AxialShading::new(
             Posn { x: 0.0, y: 0.0 },
             Posn { x: 100.0, y: 0.0 },
-            RGB {
-                red: Color { color: 0.0 },
-                green: Color { color: 0.0 },
-                blue: Color { color: 0.0 },
-            },
-            RGB {
-                red: Color { color: 1.0 },
-                green: Color { color: 1.0 },
-                blue: Color { color: 1.0 },
-            },
+            RGB::new(Color::new(0.0), Color::new(0.0), Color::new(0.0)),
+            RGB::new(Color::new(1.0), Color::new(1.0), Color::new(1.0)),
         );
 
         assert_eq!(shading.category(), ResourceCategory::Shading);

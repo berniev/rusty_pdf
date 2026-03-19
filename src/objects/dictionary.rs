@@ -36,7 +36,10 @@ impl DictionaryObject {
     }
 
     pub(crate) fn typed(name: &str) -> Self {
-        Self::new(Some(vec![("Type".to_string(), NameObject::make_pdf_obj(name))]))
+        Self::new(Some(vec![(
+            "Type".to_string(),
+            NameObject::make_pdf_obj(name),
+        )]))
     }
 
     pub fn make_pdf_obj(values: Vec<(String, Rc<dyn PdfObject>)>) -> Rc<dyn PdfObject> {
@@ -75,7 +78,7 @@ impl PdfObject for DictionaryObject {
             self.values
                 .iter()
                 .map(|(k, v)| {
-                     if v.metadata().object_identifier.is_none() {
+                    if v.metadata().object_identifier.is_none() {
                         format!("/{} {}", k, v.data())
                     } else {
                         format!("/{} {}", k, v.reference())

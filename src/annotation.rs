@@ -32,7 +32,7 @@ impl AnnotationFlags {
         self.0
     }
 
-    pub fn is_empty(&self) -> bool{
+    pub fn is_empty(&self) -> bool {
         self.bits() == 0
     }
 
@@ -174,12 +174,12 @@ impl Default for TextAnnotation {
             },
             contents: String::new(),
             flags: AnnotationFlags::PRINT,
-            color: Some(RGB {
+            color: Some(RGB::new(
                 // Default: yellow
-                red: Color { color: 1.0 },
-                green: Color { color: 1.0 },
-                blue: Color { color: 0.0 },
-            }),
+                Color::new(1.0),
+                Color::new(1.0),
+                Color::new(0.0),
+            )),
             icon: TextIcon::Note,
         }
     }

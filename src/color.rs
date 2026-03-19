@@ -60,10 +60,22 @@ macro_rules! impl_color_logic {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
-    pub color: f32,
+    color: f32,
 }
 
 impl Color {
+    pub fn new(color: f32) -> Self {
+        Self { color }
+    }
+
+    pub fn to_f32(&self) -> f32 {
+        self.color
+    }
+
+    pub fn to_f64(&self) -> f64 {
+        self.color as f64
+    }
+
     pub fn validate(&self) -> PdfResult<()> {
         if !(0.0..=1.0).contains(&self.color) {
             return Err(PdfError::InvalidColorChannel {
@@ -106,14 +118,33 @@ impl PartialOrd<f32> for Color {
 
 #[derive(Debug, Clone, Copy)]
 pub struct RGB {
-    pub red: Color,
-    pub green: Color,
-    pub blue: Color,
+    red: Color,
+    green: Color,
+    blue: Color,
 }
 
 impl RGB {
+    pub fn new(red: Color, green: Color, blue: Color) -> Self {
+        Self { red, green, blue }
+    }
+
     pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
         Rc::new(ArrayObject::from_rgb(self))
+    }
+    pub fn as_vec(&self) -> [Color; 3] {
+        [self.red, self.green, self.blue]
+    }
+
+    pub fn r(&self) -> Color {
+        self.red
+    }
+
+    pub fn g(&self) -> Color {
+        self.green
+    }
+
+    pub fn b(&self) -> Color {
+        self.blue
     }
 }
 
@@ -123,15 +154,57 @@ impl_color_logic!(RGB, InvalidRGB, rgb, red: "r", green: "g", blue: "b");
 
 #[derive(Debug, Clone, Copy)]
 pub struct RGBA {
-    pub red: Color,
-    pub green: Color,
-    pub blue: Color,
-    pub alpha: Color,
+    red: Color,
+    green: Color,
+    blue: Color,
+    alpha: Color,
 }
 
 impl RGBA {
+    pub fn new(red: Color, green: Color, blue: Color, alpha: Color) -> Self {
+        Self {
+            red,
+            green,
+            blue,
+            alpha,
+        }
+    }
+
     pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
         Rc::new(ArrayObject::from_rgba(self))
+    }
+
+    pub fn as_vec(&self) -> [Color; 4] {
+        [self.red, self.green, self.blue, self.alpha]
+    }
+
+    pub fn as_vec_64(&self) -> [f64; 4] {
+        [
+            self.red.to_f64(),
+            self.green.to_f64(),
+            self.blue.to_f64(),
+            self.alpha.to_f64(),
+        ]
+    }
+
+    pub fn has_transparency(&self) -> bool {
+        self.alpha.color < 1.0
+    }
+
+    pub fn r(&self) -> Color {
+        self.red
+    }
+
+    pub fn g(&self) -> Color {
+        self.green
+    }
+
+    pub fn b(&self) -> Color {
+        self.blue
+    }
+
+    pub fn a(&self) -> Color {
+        self.alpha
     }
 }
 
@@ -141,17 +214,45 @@ impl_color_logic!(RGBA, InvalidRGBA, rgb, red: "r", green: "g", blue: "b", alpha
 
 #[derive(Debug, Clone, Copy)]
 pub struct CMYK {
-    pub cyan: Color,
-    pub magenta: Color,
-    pub yellow: Color,
-    pub black: Color,
+    cyan: Color,
+    magenta: Color,
+    yellow: Color,
+    black: Color,
 }
 
 impl CMYK {
+    pub fn new(cyan: Color, magenta: Color, yellow: Color, black: Color) -> Self {
+        Self {
+            cyan,
+            magenta,
+            yellow,
+            black,
+        }
+    }
+
+    pub fn as_vec(&self) -> [Color; 4] {
+        [self.cyan, self.magenta, self.yellow, self.black]
+    }
+
     pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
         Rc::new(ArrayObject::from_cmyk(self))
+    }
+
+    pub fn c(&self) -> Color {
+        self.cyan
+    }
+
+    pub fn m(&self) -> Color {
+        self.magenta
+    }
+
+    pub fn y(&self) -> Color {
+        self.yellow
+    }
+
+    pub fn k(&self) -> Color {
+        self.black
     }
 }
 
 impl_color_logic!(CMYK, InvalidCMYK, cmyk, cyan: "c", magenta: "m", yellow: "y", black: "k");
-
