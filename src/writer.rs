@@ -5,10 +5,9 @@ use std::rc::Rc;
 
 use crate::cross_ref::CrossRefStream;
 use crate::cross_ref::{CrossRefEntry, ObjectStatus};
-use crate::objects::metadata::Generation;
 use crate::objects::string::encode_pdf_string;
 use crate::{FileIdentifierMode, PDF, PdfObject};
-
+use crate::generation::Generation;
 //------------------------------ PdfStream ------------------
 
 pub(crate) struct PdfStream<W: Write> {

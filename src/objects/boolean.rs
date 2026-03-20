@@ -1,6 +1,6 @@
+use crate::generation::Generation;
 use crate::PdfMetadata;
 use crate::PdfObject;
-use crate::objects::metadata::Generation;
 
 pub struct BooleanObject {
     pub metadata: PdfMetadata,

@@ -1,4 +1,5 @@
-pub use crate::objects::metadata::{Generation, ObjectStatus};
+pub use crate::generation::Generation;
+pub use crate::objects::metadata::ObjectStatus;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CrossRefError {

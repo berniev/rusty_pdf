@@ -1,4 +1,4 @@
-use crate::objects::metadata::Generation;
+use crate::generation::Generation;
 
 pub trait PdfObject {
     fn data(&self) -> String;

@@ -6,6 +6,7 @@ pub mod cross_ref;
 pub mod encoding;
 pub mod error;
 pub mod extended_graphics_state;
+pub mod generation;
 pub mod gradient;
 pub mod graphics_state;
 pub mod metadata;
