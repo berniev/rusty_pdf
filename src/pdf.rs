@@ -60,7 +60,6 @@ pub struct PDF {
     pub cross_ref_table: CrossRefTable,
     pub last_num: usize,
     pub info: DictionaryObject,
-    pub current_position: usize,
     pub xref_position: Option<usize>,
     next_object_id: usize, // Single source of truth for object ID allocation.
 }
@@ -82,7 +81,6 @@ impl PDF {
             cross_ref_table: CrossRefTable::new(),
             last_num: 0,
             info: DictionaryObject::new(None),
-            current_position: 0,
             xref_position: None,
         }
     }
