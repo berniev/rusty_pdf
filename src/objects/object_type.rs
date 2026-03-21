@@ -64,23 +64,23 @@ enum PdfObjectType {
     String(StreamObject),
 }
 
-/// The PDF spec identity of an indirect object (§7.3.10)
+// The PDF spec identity of an __ indirect __ object (§7.3.10)
 #[derive(Debug, Clone, PartialEq)]
 pub struct ObjectId {
     pub number: usize,
     pub generation: Generation,
 }
 
-// Direct objects carry NO metadata at all
+// __ Direct __ objects carry NO metadata at all
 pub struct NameObject {
     pub value: Option<String>,
 }
 
-/// Tracks where an object ended up after serialisation — not intrinsic to the object itself
+// Tracks where an object ended up after serialisation — not intrinsic to the object itself
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct SerialLocation {
     pub offset: usize,
-    pub status: ObjectStatus,
+    pub status: ObjectStatus, // free or inuse
 }
 
 // Indirect is a wrapper, not a peer variant
