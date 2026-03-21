@@ -2,47 +2,9 @@ use once_cell::sync::Lazy;
 use std::any::Any;
 use std::collections::HashMap;
 
-use crate::page::{ObjectId, PageTreeNode};
+use crate::page::PageTreeNode;
 use crate::{ArrayObject, BooleanObject, IndirectObject, NameObject};
 use crate::{DictionaryObject, PdfMetadata, PdfObject};
-
-//--------------------------- DirectRef -------------------------
-
-#[allow(dead_code)]
-#[derive(Default)]
-struct DirectRef {
-    object_id: ObjectId,
-}
-
-#[allow(dead_code)]
-impl DirectRef {
-    pub fn new(object_id: ObjectId) -> Self {
-        Self { object_id }
-    }
-
-    fn reference(&self) -> String {
-        format!("{} 0 R", self.object_id)
-    }
-}
-
-//--------------------------- IndirectRef -------------------------
-
-#[allow(dead_code)]
-#[derive(Default)]
-struct IndirectRef {
-    object_id: ObjectId,
-}
-
-#[allow(dead_code)]
-impl IndirectRef {
-    pub fn new(object_id: ObjectId) -> Self {
-        Self { object_id }
-    }
-
-    pub fn reference(&self) -> String {
-        format!("{} 0 R", self.object_id)
-    }
-}
 
 //--------------------------- Catalog -------------------------
 
@@ -127,13 +89,13 @@ pub enum CatalogError {
 //--------------------------- Catalog Entry Metadata -------------------------
 
 #[derive(Debug, Clone, Copy)]
-pub struct CatalogEntryInfo {
-    pub pdf_version: f32,
-    pub entry_type: CatalogEntryType,
+pub struct Info {
+    pub pdf_ver: f32,
+    pub ent_type: Type,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CatalogEntryType {
+pub enum Type {
     Dictionary,
     Array,
     Name,
@@ -143,37 +105,37 @@ pub enum CatalogEntryType {
 
 #[allow(dead_code)]
 #[rustfmt::skip]
-static SUPPORTED_CATALOG_ENTRIES: Lazy<HashMap<&'static str, CatalogEntryInfo>> = Lazy::new(|| {
+static SUPPORTED_CATALOG_ENTRIES: Lazy<HashMap<&'static str, Info>> = Lazy::new(|| {
     HashMap::from([
-        ("Type",              CatalogEntryInfo {  pdf_version: 1.0, entry_type: CatalogEntryType::Name }),
-        ("Version",           CatalogEntryInfo {  pdf_version: 1.4, entry_type: CatalogEntryType::Name }),
-        ("Extensions",        CatalogEntryInfo {  pdf_version: 1.3, entry_type: CatalogEntryType::Dictionary }),
-        ("Pages",             CatalogEntryInfo {  pdf_version: 1.0, entry_type: CatalogEntryType::IndirectRef }),
-        ("PageLabels",        CatalogEntryInfo {  pdf_version: 1.3, entry_type: CatalogEntryType::Dictionary }),
-        ("Names",             CatalogEntryInfo {  pdf_version: 1.2, entry_type: CatalogEntryType::Dictionary }),
-        ("Dests",             CatalogEntryInfo {  pdf_version: 1.1, entry_type: CatalogEntryType::Dictionary }),
-        ("ViewerPreferences", CatalogEntryInfo {  pdf_version: 1.2, entry_type: CatalogEntryType::Dictionary }),
-        ("PageLayout",        CatalogEntryInfo {  pdf_version: 1.0, entry_type: CatalogEntryType::Name }),
-        ("PageMode",          CatalogEntryInfo {  pdf_version: 1.0, entry_type: CatalogEntryType::Name }),
-        ("Outlines",          CatalogEntryInfo {  pdf_version: 1.1, entry_type: CatalogEntryType::IndirectRef }),
-        ("Threads",           CatalogEntryInfo {  pdf_version: 1.1, entry_type: CatalogEntryType::Array }),
-        ("OpenAction",        CatalogEntryInfo {  pdf_version: 1.1, entry_type: CatalogEntryType::Array }),
-        ("AA",                CatalogEntryInfo {  pdf_version: 1.4, entry_type: CatalogEntryType::Dictionary }),
-        ("URI",               CatalogEntryInfo {  pdf_version: 1.1, entry_type: CatalogEntryType::Dictionary }),
-        ("AcroForm",          CatalogEntryInfo {  pdf_version: 1.2, entry_type: CatalogEntryType::Dictionary }),
-        ("Metadata",          CatalogEntryInfo {  pdf_version: 1.4, entry_type: CatalogEntryType::IndirectRef }),
-        ("StructTreeRoot",    CatalogEntryInfo {  pdf_version: 1.3, entry_type: CatalogEntryType::Dictionary }),
-        ("MarkInfo",          CatalogEntryInfo {  pdf_version: 1.4, entry_type: CatalogEntryType::Dictionary }),
-        ("Lang",              CatalogEntryInfo {  pdf_version: 1.4, entry_type: CatalogEntryType::Name }),
-        ("SpiderInfo",        CatalogEntryInfo {  pdf_version: 1.3, entry_type: CatalogEntryType::Dictionary }),
-        ("OutputIntents",     CatalogEntryInfo {  pdf_version: 1.4, entry_type: CatalogEntryType::Array }),
-        ("PieceInfo",         CatalogEntryInfo {  pdf_version: 1.4, entry_type: CatalogEntryType::Dictionary }),
-        ("OCProperties",      CatalogEntryInfo {  pdf_version: 1.5, entry_type: CatalogEntryType::Dictionary }),
-        ("Perms",             CatalogEntryInfo {  pdf_version: 1.5, entry_type: CatalogEntryType::Dictionary }),
-        ("Legal",             CatalogEntryInfo {  pdf_version: 1.5, entry_type: CatalogEntryType::Dictionary }),
-        ("Requirements",      CatalogEntryInfo {  pdf_version: 1.7, entry_type: CatalogEntryType::Array }),
-        ("Collection",        CatalogEntryInfo {  pdf_version: 1.7, entry_type: CatalogEntryType::Dictionary }),
-        ("NeedsRendering",    CatalogEntryInfo {  pdf_version: 1.7, entry_type: CatalogEntryType::Boolean }),
+        ("Type",              Info {  pdf_ver: 1.0, ent_type: Type::Name }),
+        ("Version",           Info {  pdf_ver: 1.4, ent_type: Type::Name }),
+        ("Extensions",        Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
+        ("Pages",             Info {  pdf_ver: 1.0, ent_type: Type::IndirectRef }),
+        ("PageLabels",        Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
+        ("Names",             Info {  pdf_ver: 1.2, ent_type: Type::Dictionary }),
+        ("Dests",             Info {  pdf_ver: 1.1, ent_type: Type::Dictionary }),
+        ("ViewerPreferences", Info {  pdf_ver: 1.2, ent_type: Type::Dictionary }),
+        ("PageLayout",        Info {  pdf_ver: 1.0, ent_type: Type::Name }),
+        ("PageMode",          Info {  pdf_ver: 1.0, ent_type: Type::Name }),
+        ("Outlines",          Info {  pdf_ver: 1.1, ent_type: Type::IndirectRef }),
+        ("Threads",           Info {  pdf_ver: 1.1, ent_type: Type::Array }),
+        ("OpenAction",        Info {  pdf_ver: 1.1, ent_type: Type::Array }),
+        ("AA",                Info {  pdf_ver: 1.4, ent_type: Type::Dictionary }),
+        ("URI",               Info {  pdf_ver: 1.1, ent_type: Type::Dictionary }),
+        ("AcroForm",          Info {  pdf_ver: 1.2, ent_type: Type::Dictionary }),
+        ("Metadata",          Info {  pdf_ver: 1.4, ent_type: Type::IndirectRef }),
+        ("StructTreeRoot",    Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
+        ("MarkInfo",          Info {  pdf_ver: 1.4, ent_type: Type::Dictionary }),
+        ("Lang",              Info {  pdf_ver: 1.4, ent_type: Type::Name }),
+        ("SpiderInfo",        Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
+        ("OutputIntents",     Info {  pdf_ver: 1.4, ent_type: Type::Array }),
+        ("PieceInfo",         Info {  pdf_ver: 1.4, ent_type: Type::Dictionary }),
+        ("OCProperties",      Info {  pdf_ver: 1.5, ent_type: Type::Dictionary }),
+        ("Perms",             Info {  pdf_ver: 1.5, ent_type: Type::Dictionary }),
+        ("Legal",             Info {  pdf_ver: 1.5, ent_type: Type::Dictionary }),
+        ("Requirements",      Info {  pdf_ver: 1.7, ent_type: Type::Array }),
+        ("Collection",        Info {  pdf_ver: 1.7, ent_type: Type::Dictionary }),
+        ("NeedsRendering",    Info {  pdf_ver: 1.7, ent_type: Type::Boolean }),
     ])
 });
 
@@ -195,7 +157,7 @@ impl Catalog {
     }
 
     /// Validate the catalog entry name is supported
-    pub fn lookup_catalog_entry(&self, name: &str) -> Result<&CatalogEntryInfo, CatalogError> {
+    pub fn lookup_catalog_entry(&self, name: &str) -> Result<&Info, CatalogError> {
         let info = SUPPORTED_CATALOG_ENTRIES
             .get(name)
             .ok_or_else(|| CatalogError::UnsupportedEntry(name.to_string()))?;
@@ -206,12 +168,12 @@ impl Catalog {
     pub fn make_catalog_item(&self, name: &str) -> Result<Box<dyn PdfObject>, CatalogError> {
         let info = self.lookup_catalog_entry(name)?;
 
-        let res: Box<dyn PdfObject> = match info.entry_type {
-            CatalogEntryType::Dictionary => Box::new(DictionaryObject::typed(name)),
-            CatalogEntryType::Array => Box::new(ArrayObject::new(None)),
-            CatalogEntryType::Boolean => Box::new(BooleanObject::new(None)),
-            CatalogEntryType::Name => Box::new(NameObject::new(None)),
-            CatalogEntryType::IndirectRef => Box::new(IndirectObject::new(None)),
+        let res: Box<dyn PdfObject> = match info.ent_type {
+            Type::Dictionary => Box::new(DictionaryObject::typed(name)),
+            Type::Array => Box::new(ArrayObject::new(None)),
+            Type::Boolean => Box::new(BooleanObject::new(None)),
+            Type::Name => Box::new(NameObject::new(None)),
+            Type::IndirectRef => Box::new(IndirectObject::new(None)),
         };
 
         Ok(res)

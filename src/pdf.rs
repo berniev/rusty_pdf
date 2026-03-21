@@ -121,7 +121,7 @@ impl PDF {
         self.page_tree.add_page(page);
     }
 
-    fn setup_write(&mut self) {
+    fn write_common(&mut self) {
         let resources_number = self.add_font_resources();
         self.initialize_page_tree(resources_number);
         self.initialize_catalog();
@@ -133,17 +133,16 @@ impl PDF {
         output: W,
         id_mode: FileIdentifierMode,
     ) -> std::io::Result<()> {
-        self.setup_write();
+        self.write_common();
         PdfWriter::new(output, LegacyStrategy::default(), id_mode).perform(self)
     }
 
-    /// Write PDF to output using compressed format (PDF 1.5+)
     pub fn write_compressed<W: Write>(
         &mut self,
         output: W,
         id_mode: FileIdentifierMode,
     ) -> std::io::Result<()> {
-        self.setup_write();
+        self.write_common();
         PdfWriter::new(output, CompressedStrategy::default(), id_mode).perform(self)
     }
 
