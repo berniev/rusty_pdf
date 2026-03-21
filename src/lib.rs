@@ -21,6 +21,7 @@ pub mod resources;
 pub mod text;
 pub mod util;
 pub mod writer;
+pub mod fonts;
 
 // Re-export main types for user API convenience
 pub use action::{
