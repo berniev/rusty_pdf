@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::objects::stream::StreamObject;
+use crate::objects::stream::PdfStreamObject;
 use crate::pdf::PDF;
-use crate::{DictionaryObject, NumberObject};
+use crate::{NumberType, PdfDictionaryObject, PdfNumberObject, PdfObject};
 
 pub struct GraphicsStateManager {
     opacity_states: HashMap<u32, usize>, // opacity values (scaled to u32) to object numbers
@@ -40,9 +40,9 @@ impl GraphicsStateManager {
         let resource_name = format!("GS{}", self.resource_counter);
         self.resource_counter += 1;
 
-        let mut gs_dict = DictionaryObject::typed("/ExtGState");
-        gs_dict.set("CA", NumberObject::make_pdf_obj(alpha)); // Stroke alpha
-        gs_dict.set("ca", NumberObject::make_pdf_obj(alpha)); // Fill alpha
+        let mut gs_dict = PdfDictionaryObject::new().typed("/ExtGState");
+        gs_dict.set("CA", PdfNumberObject::new(NumberType::from(alpha)).boxed()); // Stroke alpha
+        gs_dict.set("ca", PdfNumberObject::new(NumberType::from(alpha)).boxed()); // Fill alpha
         let obj_num = pdf.objects.len();
         pdf.add_object(Box::new(gs_dict));
 
@@ -51,7 +51,7 @@ impl GraphicsStateManager {
         resource_name
     }
 
-    pub fn apply_opacity(&mut self, stream: &mut StreamObject, pdf: &mut PDF, alpha: f32) {
+    pub fn apply_opacity(&mut self, stream: &mut PdfStreamObject, pdf: &mut PDF, alpha: f32) {
         let resource_name = self.get_or_create_opacity_state(pdf, alpha);
         stream.set_state(&resource_name);
     }

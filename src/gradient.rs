@@ -3,8 +3,8 @@ use std::rc::Rc;
 use crate::color::RGBA;
 use crate::util::{Dims, Posn};
 use crate::{
-    ArrayObject, DictionaryObject, IndirectObject, NameObject, NumberObject, PDF, PdfObject,
-    StreamObject,
+    NumberType, PDF, PdfArrayObject, PdfDictionaryObject, PdfIndirectObject, PdfNameObject,
+    PdfNumberObject, PdfObject, PdfStreamObject,
 };
 //--------------------------- PDF Function ---------------------------//
 
@@ -103,7 +103,7 @@ impl Gradient {
         &self,
         pdf: &mut PDF,
         resource_counter: &mut u32,
-        posn: Posn<f64>,
+        posn: Posn,
         size: Dims,
         stroke_width: f64,
     ) -> Option<(String, Option<String>)> {
@@ -120,10 +120,9 @@ impl Gradient {
         let first = &self.stops[0].rgba;
         let last = &self.stops.last().unwrap().rgba;
 
-        let mut extend_array = ArrayObject::new(None);
+        let mut extend_array = PdfArrayObject::new();
         extend_array.push_bool(true);
         extend_array.push_bool(true);
-        let extend: Rc<dyn PdfObject> = Rc::new(extend_array);
 
         // 2. Create Color Function (Type 2 - Exponential Interpolation)
         let color_func = create_interpolation_function_type_2(
@@ -134,15 +133,15 @@ impl Gradient {
         let color_func_num = pdf.add_object(Box::new(color_func));
 
         // 3. Create Color Shading Dictionary
-        let mut shading_dict = DictionaryObject::new(None);
+        let mut shading_dict = PdfDictionaryObject::new();
         shading_dict.set(
             "ShadingType",
-            NumberObject::make_pdf_obj(shading_type as i64),
+            PdfNumberObject::new(NumberType::from(shading_type as i64)).boxed(),
         );
-        shading_dict.set("ColorSpace", NameObject::make_pdf_obj("DeviceRGB"));
-        shading_dict.set("Coords", to_array(coords.clone()));
-        shading_dict.set("Function", IndirectObject::make_pdf_obj(color_func_num));
-        shading_dict.set("Extend", extend.clone());
+        shading_dict.add_name("ColorSpace", "DeviceRGB");
+        shading_dict.add_pdf_array("Coords", to_array(coords.clone()));
+        shading_dict.add_indirect("Function", color_func_num);
+        shading_dict.add_pdf_array("Extend", extend_array);
 
         let shading_num = pdf.add_object(Box::new(shading_dict));
 
@@ -161,15 +160,16 @@ impl Gradient {
             let alpha_func_num = pdf.add_object(Box::new(alpha_func));
 
             // Alpha Shading (DeviceGray)
-            let mut alpha_shading = DictionaryObject::new(None);
-            alpha_shading.set(
-                "ShadingType",
-                NumberObject::make_pdf_obj(shading_type as i64),
-            );
-            alpha_shading.set("ColorSpace", NameObject::make_pdf_obj("DeviceGray"));
-            alpha_shading.set("Coords", to_array(coords));
-            alpha_shading.set("Function", IndirectObject::make_pdf_obj(alpha_func_num));
-            alpha_shading.set("Extend", extend);
+            let mut alpha_shading = PdfDictionaryObject::new();
+            alpha_shading.add_inti64("ShadingType", shading_type as i64);
+            alpha_shading.add_name("ColorSpace", "DeviceGray");
+            alpha_shading.add_pdf_array("Coords", to_array(coords));
+            alpha_shading.add_indirect("Function", alpha_func_num);
+
+            let mut extend_array = PdfArrayObject::new();
+            extend_array.push_bool(true);
+            extend_array.push_bool(true);
+            alpha_shading.add_pdf_array("Extend", extend_array);
 
             let alpha_shading_num = pdf.add_object(Box::new(alpha_shading));
 
@@ -182,9 +182,12 @@ impl Gradient {
         };
 
         // 5. Create Pattern Dictionary
-        let mut pattern_dict = DictionaryObject::typed("Pattern");
-        pattern_dict.set("PatternType", NumberObject::make_pdf_obj(2));
-        pattern_dict.set("Shading", IndirectObject::make_pdf_obj(shading_num));
+        let mut pattern_dict = PdfDictionaryObject::new().typed("Pattern");
+        pattern_dict.set(
+            "PatternType",
+            PdfNumberObject::new(NumberType::from(2)).boxed(),
+        );
+        pattern_dict.set("Shading", PdfIndirectObject::new(shading_num).boxed());
 
         pdf.add_object(Box::new(pattern_dict));
 
@@ -192,7 +195,7 @@ impl Gradient {
     }
 
     /// Calculates geometry parameters (Type and Coords) based on gradient kind.
-    fn get_shading_params(&self, posn: Posn<f64>, size: Dims, stroke_width: f64) -> (u8, Vec<f64>) {
+    fn get_shading_params(&self, posn: Posn, size: Dims, stroke_width: f64) -> (u8, Vec<f64>) {
         let Posn { x, y } = posn;
         let Dims { width, height } = size;
         match self.kind {
@@ -231,67 +234,61 @@ fn create_interpolation_function_type_2(
     c0: Vec<f64>,
     c1: Vec<f64>,
     exponent: f32,
-) -> DictionaryObject {
-    let mut dict = DictionaryObject::new(None);
-    dict.set("FunctionType", NumberObject::make_pdf_obj(2));
-    dict.set("Domain", to_array(vec![0.0, 1.0]));
-    dict.set("C0", to_array(c0));
-    dict.set("C1", to_array(c1));
-    dict.set("N", NumberObject::make_pdf_obj(exponent)); // Linear interpolation
+) -> PdfDictionaryObject {
+    let mut dict = PdfDictionaryObject::new();
+    dict.add_inti64("FunctionType", 2);
+    dict.add_pdf_array("Domain", to_array(vec![0.0, 1.0]));
+    dict.add_pdf_array("C0", to_array(c0));
+    dict.add_pdf_array("C1", to_array(c1));
+    dict.set(
+        "N",
+        PdfNumberObject::new(NumberType::from(exponent)).boxed(),
+    ); // Linear interpolation
     dict
 }
 
-fn to_array(v: Vec<f64>) -> Rc<dyn PdfObject> {
-    ArrayObject::make_pdf_obj(
-        v.into_iter()
-            .map(|v| NumberObject::make_pdf_obj(v))
-            .collect(),
-    )
+fn to_array(v: Vec<f64>) -> PdfArrayObject {
+    let mut arr = PdfArrayObject::new();
+    for val in v {
+        arr.push_real(val);
+    }
+
+    arr
 }
 
-/// Soft Mask (/SMask) object graph.
 fn create_soft_mask_for_shading(pdf: &mut PDF, alpha_shading_num: usize, width: f64, height: f64) {
-    // 1. Create Form XObject (Transparency Group)
-    let mut xobj = DictionaryObject::typed("XObject");
-    xobj.set("Subtype", NameObject::make_pdf_obj("Form"));
-    xobj.set("FormType", NumberObject::make_pdf_obj(1));
-    xobj.set("BBox", to_array(vec![0.0, 0.0, width, height]));
+    let mut xobj = PdfDictionaryObject::new().typed("XObject");
+    xobj.add_name("Subtype", "Form");
+    xobj.add_inti64("FormType", 1);
+    xobj.add_pdf_array("BBox", to_array(vec![0.0, 0.0, width, height]));
 
-    let mut group_dict = DictionaryObject::new(None);
-    group_dict.set("Type", NameObject::make_pdf_obj("Group"));
-    group_dict.set("S", NameObject::make_pdf_obj("Transparency"));
-    group_dict.set("CS", NameObject::make_pdf_obj("DeviceGray"));
+    let mut group_dict = PdfDictionaryObject::new().typed("Group");
+    group_dict.set("S", PdfNameObject::new("Transparency").boxed());
+    group_dict.set("CS", PdfNameObject::new("DeviceGray").boxed());
 
-    xobj.set("Group", DictionaryObject::make_pdf_obj(group_dict.values));
+    xobj.set("Group", group_dict.boxed());
 
-    let mut shading_res = DictionaryObject::new(None);
-    shading_res.set("Sh0", IndirectObject::make_pdf_obj(alpha_shading_num));
+    let mut shading_res = PdfDictionaryObject::new();
+    shading_res.set("Sh0", PdfIndirectObject::new(alpha_shading_num).boxed());
 
-    let mut resources = DictionaryObject::new(None);
-    resources.set(
-        "Shading",
-        DictionaryObject::make_pdf_obj(shading_res.values),
-    );
-    xobj.set(
-        "Resources",
-        DictionaryObject::make_pdf_obj(resources.values),
-    );
+    let mut resources = PdfDictionaryObject::new();
+    resources.set("Shading", shading_res.boxed());
+    xobj.set("Resources", resources.boxed());
 
-    let mut form_stream = StreamObject::compressed();
-    form_stream.paint_shading("Sh0");
-    form_stream.extra = xobj.values;
+    let mut form_stream = PdfStreamObject::compressed();
+    let mut cmd = b"/".to_vec();
+    cmd.extend(b"Sh0");
+    cmd.extend(b" sh");
+    form_stream.add_to_content(cmd);
 
-    let form_number = pdf.add_object(Box::new(form_stream));
+    let form_number = pdf.add_object(form_stream.boxed());
 
-    // 2. Create Mask Dictionary
-    let mut smask_dict = DictionaryObject::typed("Mask");
-    smask_dict.set("S", NameObject::make_pdf_obj("Luminosity"));
-    smask_dict.set("G", IndirectObject::make_pdf_obj(form_number));
+    let mut smask_dict = PdfDictionaryObject::new().typed("Mask");
+    smask_dict.set("S", PdfNameObject::new("Luminosity").boxed());
+    smask_dict.set("G", PdfIndirectObject::new(form_number).boxed());
+    let smask_number = pdf.add_object(smask_dict.boxed());
 
-    let smask_number = pdf.add_object(Box::new(smask_dict));
-
-    // 3. Create ExtGState with the SMask
-    let mut gs_dict = DictionaryObject::typed("ExtGState");
-    gs_dict.set("SMask", IndirectObject::make_pdf_obj(smask_number));
-    pdf.add_object(Box::new(gs_dict));
+    let mut gs_dict = PdfDictionaryObject::new().typed("ExtGState");
+    gs_dict.set("SMask", PdfIndirectObject::new(smask_number).boxed());
+    pdf.add_object(gs_dict.boxed());
 }

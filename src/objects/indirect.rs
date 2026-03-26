@@ -1,5 +1,3 @@
-use crate::{PdfMetadata, PdfObject};
-
 /// PDF Spec:
 /// Any object in a PDF file may be labelled as an indirect object. This gives the object a
 /// unique object identifier by which other objects can refer to it (for example, as an
@@ -15,40 +13,33 @@ use crate::{PdfMetadata, PdfObject};
 ///
 /// Together, the combination of an object number and a generation number shall uniquely
 /// identify an indirect object.
-pub struct IndirectObject {
-    value: Option<usize>,
+///
+use crate::{PdfObject};
+
+//-------------------------- PdfIndirectObject ----------------------//
+
+pub struct PdfIndirectObject {
+    id: usize,
     generation_number: u16,
-    metadata: PdfMetadata,
+    location: usize,
 }
 
-impl IndirectObject {
-    pub fn new(obj: Option<usize>) -> Self {
-        IndirectObject {
-            value: obj,
+impl PdfIndirectObject {
+    pub fn new(obj: usize) -> Self {
+        PdfIndirectObject {
+            id: obj,
             generation_number: 0,
-            metadata: Default::default(),
+            location: 0,
         }
     }
 
-    pub fn make_pdf_obj(id: usize) -> std::rc::Rc<dyn PdfObject> {
-        std::rc::Rc::new(Self::new(Some(id)))
+    fn data(&self) -> String {
+        format!("{} {} R", self.id, self.generation_number)
     }
 }
 
-impl PdfObject for IndirectObject {
-    fn data(&self) -> String {
-        format!("{} {} R", self.value.unwrap_or(0), self.generation_number)
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self as &mut dyn std::any::Any
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
-    }
+impl PdfObject for PdfIndirectObject {
+    fn data(&mut self) -> Vec<u8> {
+        self.data()
+    }   
 }

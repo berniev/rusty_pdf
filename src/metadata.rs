@@ -3,53 +3,21 @@
 //! Provides structures for embedding metadata in PDF documents, including
 //! both the legacy Info dictionary and modern XMP metadata streams.
 
-use crate::{DictionaryObject, NameObject, PdfResult, StreamObject, StringObject};
-
-#[cfg(test)]
-use crate::PdfObject;
-
 /// Document information dictionary (legacy PDF metadata).
 ///
 /// This is the traditional way of storing document metadata in PDF,
 /// predating XMP. Still widely supported and used.
-#[derive(Clone, Debug, Default)]
-pub struct DocumentInfo {
-    /// Document title.
-    pub title: Option<String>,
+///
+use crate::{
+    PdfDictionaryObject, PdfNameObject, PdfObject, PdfResult, PdfStreamObject, PdfStringObject,
+};
 
-    /// Name of person who created the document.
-    pub author: Option<String>,
+//--------------------------TrappedState-------------------------------//
 
-    /// Subject of the document.
-    pub subject: Option<String>,
-
-    /// Keywords associated with the document.
-    pub keywords: Option<String>,
-
-    /// Name of application that created the original document.
-    pub creator: Option<String>,
-
-    /// Name of application that converted to PDF.
-    pub producer: Option<String>,
-
-    /// Document creation date (PDF date format).
-    pub creation_date: Option<String>,
-
-    /// Document modification date (PDF date format).
-    pub mod_date: Option<String>,
-
-    /// PDF trapping state.
-    pub trapped: Option<TrappedState>,
-}
-
-/// PDF trapping state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TrappedState {
-    /// Document has been trapped.
     True,
-    /// Document has not been trapped.
     False,
-    /// Unknown trapping state.
     Unknown,
 }
 
@@ -63,67 +31,71 @@ impl TrappedState {
     }
 }
 
+//--------------------------DocumentInfo-------------------------------//
+
+#[derive(Clone, Debug, Default)]
+pub struct DocumentInfo {
+    pub title: Option<String>,
+    pub author: Option<String>,
+    pub subject: Option<String>,
+    pub keywords: Option<String>,
+    pub creator: Option<String>,
+    pub producer: Option<String>,
+    pub creation_date: Option<String>,
+    pub mod_date: Option<String>,
+    pub trapped: Option<TrappedState>,
+}
+
 impl DocumentInfo {
-    /// Create a new empty document info.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Set the title.
     pub fn with_title(mut self, title: String) -> Self {
         self.title = Some(title);
         self
     }
 
-    /// Set the author.
     pub fn with_author(mut self, author: String) -> Self {
         self.author = Some(author);
         self
     }
 
-    /// Set the subject.
     pub fn with_subject(mut self, subject: String) -> Self {
         self.subject = Some(subject);
         self
     }
 
-    /// Set keywords.
     pub fn with_keywords(mut self, keywords: String) -> Self {
         self.keywords = Some(keywords);
         self
     }
 
-    /// Set the creator application.
     pub fn with_creator(mut self, creator: String) -> Self {
         self.creator = Some(creator);
         self
     }
 
-    /// Set the producer application.
     pub fn with_producer(mut self, producer: String) -> Self {
         self.producer = Some(producer);
         self
     }
 
-    /// Set creation date (PDF date format: D:YYYYMMDDHHmmSSOHH'mm).
     pub fn with_creation_date(mut self, date: String) -> Self {
         self.creation_date = Some(date);
         self
     }
 
-    /// Set modification date (PDF date format: D:YYYYMMDDHHmmSSOHH'mm).
     pub fn with_mod_date(mut self, date: String) -> Self {
         self.mod_date = Some(date);
         self
     }
 
-    /// Set trapping state.
     pub fn with_trapped(mut self, trapped: TrappedState) -> Self {
         self.trapped = Some(trapped);
         self
     }
 
-    /// Check if any metadata is set.
     pub fn is_empty(&self) -> bool {
         self.title.is_none()
             && self.author.is_none()
@@ -136,47 +108,46 @@ impl DocumentInfo {
             && self.trapped.is_none()
     }
 
-    /// Convert to PDF dictionary.
-    pub fn to_dict(&self) -> DictionaryObject {
-        let mut dict = DictionaryObject::new(None);
+    pub fn to_dict(&self) -> PdfDictionaryObject {
+        let mut dict = PdfDictionaryObject::new();
 
         if let Some(ref title) = self.title {
-            dict.set("Title", StringObject::make_pdf_obj(title.clone()));
+            dict.set("Title", PdfStringObject::new(title.clone()).boxed());
         }
 
         if let Some(ref author) = self.author {
-            dict.set("Author", StringObject::make_pdf_obj(author.clone()));
+            dict.set("Author", PdfStringObject::new(author.clone()).boxed());
         }
 
         if let Some(ref subject) = self.subject {
-            dict.set("Subject", StringObject::make_pdf_obj(subject.clone()));
+            dict.set("Subject", PdfStringObject::new(subject.clone()).boxed());
         }
 
         if let Some(ref keywords) = self.keywords {
-            dict.set("Keywords", StringObject::make_pdf_obj(keywords.clone()));
+            dict.set("Keywords", PdfStringObject::new(keywords.clone()).boxed());
         }
 
         if let Some(ref creator) = self.creator {
-            dict.set("Creator", StringObject::make_pdf_obj(creator.clone()));
+            dict.set("Creator", PdfStringObject::new(creator.clone()).boxed());
         }
 
         if let Some(ref producer) = self.producer {
-            dict.set("Producer", StringObject::make_pdf_obj(producer.clone()));
+            dict.set("Producer", PdfStringObject::new(producer.clone()).boxed());
         }
 
         if let Some(ref creation_date) = self.creation_date {
             dict.set(
                 "CreationDate",
-                StringObject::make_pdf_obj(creation_date.clone()),
+                PdfStringObject::new(creation_date.clone()).boxed(),
             );
         }
 
         if let Some(ref mod_date) = self.mod_date {
-            dict.set("ModDate", StringObject::make_pdf_obj(mod_date.clone()));
+            dict.set("ModDate", PdfStringObject::new(mod_date.clone()).boxed());
         }
 
         if let Some(trapped) = self.trapped {
-            dict.set("Trapped", NameObject::make_pdf_obj(trapped.as_name()));
+            dict.set("Trapped", PdfNameObject::new(trapped.as_name()).boxed());
         }
 
         dict
@@ -256,17 +227,13 @@ impl XmpMetadata {
         Self { xmp_packet: xmp }
     }
 
-    /// Convert to PDF metadata stream object.
-    pub fn to_stream(&self) -> PdfResult<StreamObject> {
-        // Add required dictionary entries
-        let dict_entries = vec![
-            ("Type".to_string(), NameObject::make_pdf_obj("Metadata")),
-            ("Subtype".to_string(), NameObject::make_pdf_obj("XML")),
-        ];
+    pub fn to_stream(&self) -> PdfResult<PdfStreamObject> {
+        let mut dict = PdfDictionaryObject::new().typed("Metadata");
+        dict.set("SubType", PdfNameObject::new("XML").boxed());
 
-        let stream = StreamObject::new().with_data(
-            Some(vec![self.xmp_packet.as_bytes().to_vec()]),
-            Some(dict_entries),
+        let stream = PdfStreamObject::uncompressed().with_data(
+            self.xmp_packet.as_bytes().to_vec(),
+            dict,
         );
 
         Ok(stream)
@@ -346,7 +313,7 @@ mod tests {
     #[test]
     fn test_xmp_to_stream() {
         let xmp = XmpMetadata::from_packet("<xml>test</xml>".to_string());
-        let stream = xmp.to_stream().unwrap();
+        let mut stream = xmp.to_stream().unwrap();
 
         // Check that stream was created (extra entries are internal)
         // Full validation would require checking the generated data() output

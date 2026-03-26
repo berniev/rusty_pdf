@@ -3,10 +3,7 @@
 //! ExtGState objects control advanced graphics rendering features like
 //! transparency, blend modes, and rendering intent.
 
-use crate::{
-    BooleanObject, DictionaryObject, NameObject, NumberObject, PdfObject, Resource,
-    ResourceCategory,
-};
+use crate::{NumberType, PdfBooleanObject, PdfDictionaryObject, PdfNameObject, PdfNumberObject, PdfObject, Resource, ResourceCategory};
 use std::any::Any;
 use std::rc::Rc;
 
@@ -152,72 +149,71 @@ impl ExtGState {
         self
     }
 
-    pub fn to_dict(&self) -> DictionaryObject {
-        let mut dict = DictionaryObject::new(None);
-        dict.set("Type", NameObject::make_pdf_obj("ExtGState"));
+    pub fn to_dict(&self) -> PdfDictionaryObject {
+        let mut dict = PdfDictionaryObject::new().typed("ExtGState");
 
         if let Some(lw) = self.line_width {
-            dict.set("LW", NumberObject::make_pdf_obj(lw));
+            dict.set("LW", PdfNumberObject::new(NumberType::from(lw)).boxed());
         }
 
         if let Some(lc) = self.line_cap {
-            dict.set("LC", NumberObject::make_pdf_obj(lc as i64));
+            dict.set("LC", PdfNumberObject::new(NumberType::from(lc as i64)).boxed());
         }
 
         if let Some(lj) = self.line_join {
-            dict.set("LJ", NumberObject::make_pdf_obj(lj as i64));
+            dict.set("LJ", PdfNumberObject::new(NumberType::from(lj as i64)).boxed());
         }
 
         if let Some(ml) = self.miter_limit {
-            dict.set("ML", NumberObject::make_pdf_obj(ml));
+            dict.set("ML", PdfNumberObject::new(NumberType::from(ml)).boxed());
         }
 
         if let Some(ca) = self.stroke_alpha {
-            dict.set("CA", NumberObject::make_pdf_obj(ca));
+            dict.set("CA", PdfNumberObject::new(NumberType::from(ca)).boxed());
         }
 
         if let Some(ca) = self.fill_alpha {
-            dict.set("ca", NumberObject::make_pdf_obj(ca));
+            dict.set("ca", PdfNumberObject::new(NumberType::from(ca)).boxed());
         }
 
         if let Some(bm) = self.blend_mode {
-            dict.set("BM", NameObject::make_pdf_obj(bm.as_str()));
+            dict.set("BM", PdfNameObject::new(bm.as_str()).boxed());
         }
 
         if let Some(ri) = self.rendering_intent {
-            dict.set("RI", NameObject::make_pdf_obj(ri.as_str()));
+            dict.set("RI", PdfNameObject::new(ri.as_str()).boxed());
         }
 
         if let Some(op) = self.overprint_stroke {
-            dict.set("OP", BooleanObject::make_pdf_obj(op));
+            dict.set("OP", PdfBooleanObject::new(op).boxed());
         }
 
         if let Some(op) = self.overprint_fill {
-            dict.set("op", BooleanObject::make_pdf_obj(op));
+            dict.set("op", PdfBooleanObject::new(op).boxed());
         }
 
         if let Some(opm) = self.overprint_mode {
-            dict.set("OPM", NumberObject::make_pdf_obj(opm as i64));
+            dict.set("OPM", PdfNumberObject::new(NumberType::from(opm as i64)).boxed());
         }
 
         if let Some(fl) = self.flatness {
-            dict.set("FL", NumberObject::make_pdf_obj(fl));
+            dict.set("FL", PdfNumberObject::new(NumberType::from(fl)).boxed());
         }
 
         if let Some(sm) = self.smoothness {
-            dict.set("SM", NumberObject::make_pdf_obj(sm));
+            dict.set("SM", PdfNumberObject::new(NumberType::from(sm)).boxed());
         }
 
         if let Some(sa) = self.stroke_adjust {
-            dict.set("SA", BooleanObject::make_pdf_obj(sa));
+            dict.set("SA", PdfBooleanObject::new(sa).boxed());
         }
 
         if let Some(ais) = self.alpha_is_shape {
-            dict.set("AIS", BooleanObject::make_pdf_obj(ais));
+            dict.set("AIS", PdfBooleanObject::new(ais).boxed());
         }
 
         if let Some(tk) = self.text_knockout {
-            dict.set("TK", BooleanObject::make_pdf_obj(tk));
+            dict.set("TK", PdfBooleanObject::new(tk).boxed());
         }
 
         dict
@@ -250,10 +246,6 @@ impl Resource for ExtGState {
 
     fn resource_unique_id(&self) -> String {
         self.generate_unique_id()
-    }
-
-    fn to_pdf_object(&self) -> Rc<dyn PdfObject> {
-        Rc::new(self.to_dict())
     }
 
     fn as_any(&self) -> &dyn Any {

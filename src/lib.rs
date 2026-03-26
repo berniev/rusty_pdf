@@ -23,6 +23,7 @@ pub mod util;
 pub mod writer;
 pub mod fonts;
 pub mod pdf_version;
+pub mod page_size;
 
 // Re-export main types for user API convenience
 pub use action::{
@@ -37,17 +38,17 @@ pub use extended_graphics_state::{BlendMode, ExtGState, RenderingIntent};
 pub use gradient::ColorStop;
 pub use graphics_state::GraphicsStateManager;
 pub use metadata::{DocumentInfo, TrappedState, XmpMetadata};
-pub use objects::array::ArrayObject;
-pub use objects::boolean::BooleanObject;
-pub use objects::dictionary::DictionaryObject;
-pub use objects::indirect::IndirectObject;
+pub use objects::array::PdfArrayObject;
+pub use objects::boolean::PdfBooleanObject;
+pub use objects::dictionary::PdfDictionaryObject;
+pub use objects::indirect::PdfIndirectObject;
 pub use objects::metadata::PdfMetadata;
-pub use objects::name::NameObject;
-pub use objects::number::{NumberObject, NumberType};
+pub use objects::name::PdfNameObject;
+pub use objects::number::{PdfNumberObject, NumberType};
 pub use objects::pdf_object::PdfObject;
-pub use objects::stream::StreamObject as Stream;
-pub use objects::stream::{CompressionMethod, StreamObject};
-pub use objects::string::StringObject;
+pub use objects::stream::PdfStreamObject as Stream;
+pub use objects::stream::{CompressionMethod, PdfStreamObject};
+pub use objects::string::PdfStringObject;
 pub use optional_content::{
     LayerOrder, OptionalContentConfig, OptionalContentGroup, VisibilityInitialState,
 };
@@ -56,6 +57,6 @@ pub use page::{PageObject, PageSize};
 pub use pattern::{AxialShading, PaintType, PatternType, ShadingType, TilingPattern, TilingType};
 pub use pdf::{FileIdentifierMode, PDF};
 pub use resource::{Resource, ResourceCategory, ResourceManager};
-pub use resources::ResourceDictionary;
+pub use resources::ResourceMap;
 pub use text::{StandardFont, WrapMode, wrap_text};
 pub use util::Rect;

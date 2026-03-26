@@ -1,6 +1,3 @@
-use crate::PdfMetadata;
-use crate::PdfObject;
-
 /// Spec:
 /// name object:
 ///     an atomic symbol uniquely defined by a sequence of characters introduced by a SOLIDUS (/),
@@ -9,42 +6,25 @@ use crate::PdfObject;
 /// name tree:
 ///     similar to a dictionary that associates keys and values but the keys in a name tree are
 ///     strings and are ordered
-pub struct NameObject {
-    metadata: PdfMetadata,
-    pub value: Option<String>,
+///
+use crate::PdfObject;
+
+//--------------------------- PdfNameObject----------------------//
+
+pub struct PdfNameObject {
+    pub value: String,
 }
 
-impl NameObject {
-    pub fn new(value: Option<String>) -> Self {
+impl PdfNameObject {
+    pub fn new(value: &str) -> Self {
         Self {
-            metadata: Default::default(),
-            value,
+            value: value.to_string(),
         }
     }
-
-    pub fn set(&mut self, value: String) {
-        self.value = Some(value);
-    }
-
-    pub fn make_pdf_obj(value: impl Into<String>) -> std::rc::Rc<dyn PdfObject> {
-        std::rc::Rc::new(Self::new(Some(value.into())))
-    }
 }
 
-impl PdfObject for NameObject {
-    fn data(&self) -> String {
-        format!("/{}", self.value.clone().unwrap_or("".to_string()))
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
+impl PdfObject for PdfNameObject {
+    fn data(&mut self) -> Vec<u8> {
+        format!("/{}", self.value).into_bytes()
     }
 }

@@ -4,7 +4,7 @@
 //! clicking links, opening documents, or interacting with form fields.
 
 use crate::{
-    ArrayObject, BooleanObject, DictionaryObject, NameObject, PdfResult, StringObject, util::Rect,
+    PdfArrayObject, PdfDictionaryObject, PdfResult, util::Rect,
 };
 
 /// Actions specify responses to various events in PDF documents, such as
@@ -14,7 +14,7 @@ pub trait Action {
     fn action_type(&self) -> &'static str;
 
     /// Convert this action to a PDF dictionary object.
-    fn to_dict(&self) -> PdfResult<DictionaryObject>;
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject>;
 }
 
 pub struct UriAction {
@@ -38,13 +38,13 @@ impl Action for UriAction {
         "URI"
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
-        dict.set("S", NameObject::make_pdf_obj(self.action_type()));
-        dict.set("URI", StringObject::make_pdf_obj(&self.uri));
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new();
+        dict.add_name("S", self.action_type());
+        dict.add_string("URI", self.uri.clone());
 
         if self.is_map {
-            dict.set("IsMap", BooleanObject::make_pdf_obj(true));
+            dict.add_bool("IsMap", true);
         }
 
         Ok(dict)
@@ -66,10 +66,10 @@ impl Action for GoToAction {
         "GoTo"
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
-        dict.set("S", NameObject::make_pdf_obj(self.action_type()));
-        dict.set("D", self.destination.clone().make_pdf_obj());
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new();
+        dict.add_name("S", self.action_type());
+        dict.add_pdf_array("D", self.destination.to_pdf_array());
         Ok(dict)
     }
 }
@@ -89,10 +89,11 @@ impl Action for JavaScriptAction {
         "JavaScript"
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
-        dict.set("S", NameObject::make_pdf_obj(self.action_type()));
-        dict.set("JS", StringObject::make_pdf_obj(self.script.clone()));
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new();
+        dict.add_name("S", self.action_type());
+        dict.add_string("JS", self.script.clone());
+        
         Ok(dict)
     }
 }
@@ -121,17 +122,16 @@ impl Action for LaunchAction {
         "Launch"
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
-        dict.set("S", NameObject::make_pdf_obj(self.action_type()));
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new();
+        dict.add_name("S", self.action_type());
 
-        let mut file_dict = DictionaryObject::new(None);
-        file_dict.set("Type", NameObject::make_pdf_obj("Filespec"));
-        file_dict.set("F", StringObject::make_pdf_obj(self.file.clone()));
-        dict.set("F", DictionaryObject::make_pdf_obj(file_dict.values));
+        let mut file_dict = PdfDictionaryObject::new().typed("Filespec");
+        file_dict.add_string("F", self.file.clone());
+        dict.add_pdf_dict("F", file_dict);
 
         if let Some(new_win) = self.new_window {
-            dict.set("NewWindow", BooleanObject::make_pdf_obj(new_win));
+            dict.add_bool("NewWindow", new_win);
         }
 
         Ok(dict)
@@ -172,10 +172,11 @@ impl Action for NamedAction {
         "Named"
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
-        dict.set("S", NameObject::make_pdf_obj(self.action_type()));
-        dict.set("N", NameObject::make_pdf_obj(self.name.as_str()));
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new();
+        dict.add_name("S", self.action_type());
+        dict.add_name("N", self.name.as_str());
+        
         Ok(dict)
     }
 }
@@ -226,12 +227,8 @@ impl FitDestination {
         Self::Fit { page }
     }
 
-    pub fn make_pdf_obj(self) -> std::rc::Rc<dyn crate::PdfObject> {
-        std::rc::Rc::new(self.to_array())
-    }
-
-    pub fn to_array(&self) -> ArrayObject {
-        let mut arr = ArrayObject::new(None);
+    pub fn to_pdf_array(&self) -> PdfArrayObject {
+        let mut arr = PdfArrayObject::new();
 
         match self {
             FitDestination::XYZ {
@@ -314,14 +311,14 @@ mod tests {
     #[test]
     fn test_destination_xyz() {
         let dest = FitDestination::xyz(0, Some(100.0), Some(200.0), None);
-        let arr = ArrayObject::from_destination(dest);
+        let arr = PdfArrayObject::from_destination(dest);
         assert_eq!(arr.values.len(), 5); // page, /XYZ, left, top, zoom
     }
 
     #[test]
     fn test_destination_fit() {
         let dest = FitDestination::fit(2);
-        let arr = ArrayObject::from_destination(dest);
+        let arr = PdfArrayObject::from_destination(dest);
         assert_eq!(arr.values.len(), 2); // page, /Fit
     }
 }

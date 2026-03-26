@@ -1,4 +1,4 @@
-use crate::{DictionaryObject, IndirectObject, PdfError, PdfResult};
+use crate::{PdfDictionaryObject, PdfIndirectObject, PdfError, PdfResult, PdfObject};
 use std::collections::HashMap;
 
 pub const STANDARD_RESOURCE_CATEGORIES: &[&str] = &[
@@ -13,17 +13,11 @@ pub const STANDARD_RESOURCE_CATEGORIES: &[&str] = &[
 ];
 
 #[derive(Clone)]
-pub struct ResourceDictionary {
+pub struct ResourceMap {
     categories: HashMap<String, HashMap<String, usize>>,
 }
 
-impl Default for ResourceDictionary {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ResourceDictionary {
+impl ResourceMap {
     pub fn new() -> Self {
         Self {
             categories: HashMap::new(),
@@ -58,30 +52,16 @@ impl ResourceDictionary {
             .insert(name.into(), id);
     }
 
-    /// Merges another ResourceDictionary into this one.
-    ///
-    /// Iterates through all categories in the 'other' dictionary. If a category
-    /// exists in both, the resource maps are merged (with the 'other' values
-    /// overwriting duplicates).
-    pub fn merge(&mut self, other: &ResourceDictionary) {
-        for (category, map) in &other.categories {
-            self.categories
-                .entry(category.clone())
-                .or_default()
-                .extend(map.clone());
-        }
-    }
-
     /// Transforms the logical resources into a physical DictionaryObject.
-    pub fn to_dict(&self) -> DictionaryObject {
-        let mut root = DictionaryObject::new(None);
-        for (category, map) in &self.categories {
-            let mut sub_dict = DictionaryObject::new(None);
+    pub fn to_dict(&self) -> PdfDictionaryObject {
+        let mut root = PdfDictionaryObject::new();
+        for (name, map) in &self.categories {
+            let mut sub_dict = PdfDictionaryObject::new();
             for (name, &id) in map {
-                sub_dict.set(name, IndirectObject::make_pdf_obj(id));
+                sub_dict.set(name, PdfIndirectObject::new(id).boxed());
             }
             // Inlines the sub-dictionary directly into the Resources dictionary
-            root.set(category, DictionaryObject::make_pdf_obj(sub_dict.values));
+            root.set(name, sub_dict.boxed());
         }
 
         root
@@ -102,7 +82,7 @@ impl ResourceDictionary {
 
 /// A "Base Structure" that captures context to provide a simple add(name, id) API.
 pub struct CategoryHandle<'a> {
-    dictionary: &'a mut ResourceDictionary,
+    dictionary: &'a mut ResourceMap,
     category: String,
 }
 
@@ -122,14 +102,14 @@ mod tests {
 
     #[test]
     fn test_empty_resources() {
-        let resources = ResourceDictionary::new();
+        let resources = ResourceMap::new();
         assert!(resources.is_empty());
         assert_eq!(resources.to_dict().len(), 0);
     }
 
     #[test]
     fn test_add_resources() {
-        let mut resources = ResourceDictionary::new();
+        let mut resources = ResourceMap::new();
 
         {
             let mut extgstate = resources.implement("ExtGState").unwrap();
@@ -148,26 +128,5 @@ mod tests {
         let dict = resources.to_dict();
         assert!(dict.contains_key("ExtGState"));
         assert!(dict.contains_key("Pattern"));
-    }
-
-    #[test]
-    fn test_merge_resources() {
-        let mut res1 = ResourceDictionary::new();
-        {
-            let mut extgstate = res1.implement("ExtGState").unwrap();
-            extgstate.add("GS0", 5);
-            assert_eq!(extgstate.count(), 1);
-            assert_eq!(res1.category_count("ExtGState"), 1);
-            assert_eq!(res1.category_count("Pattern"), 0);
-        }
-
-        let mut res2 = ResourceDictionary::new();
-        {
-            let mut pattern = res2.implement("Pattern").unwrap();
-            pattern.add("P0", 8);
-            assert_eq!(pattern.count(), 1);
-        }
-
-        res1.merge(&res2);
     }
 }

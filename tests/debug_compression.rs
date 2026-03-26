@@ -1,4 +1,4 @@
-use pydyf::{NameObject, NumberObject, NumberType, PdfObject, StreamObject};
+use pydyf::{PdfNameObject, PdfNumberObject, NumberType, PdfObject, PdfStreamObject};
 use std::rc::Rc;
 
 #[test]
@@ -10,12 +10,12 @@ fn debug_compressed_stream_bytes() {
     let content = format!("{}\n{}\n{}", index_section, obj1_data, obj2_data);
 
     let extra = vec![
-        ("Type".to_string(), Rc::new(NameObject::new(Some("ObjStm".to_string()))) as Rc<dyn PdfObject>),
-        ("N".to_string(), Rc::new(NumberObject::new(NumberType::Integer(2))) as Rc<dyn PdfObject>),
-        ("First".to_string(), Rc::new(NumberObject::new(NumberType::Integer((index_section.len() + 1) as i64))) as Rc<dyn PdfObject>),
+        ("Type".to_string(), Rc::new(PdfNameObject::new(Some("ObjStm".to_string()))) as Rc<dyn PdfObject>),
+        ("N".to_string(), Rc::new(PdfNumberObject::new(NumberType::Integer(2))) as Rc<dyn PdfObject>),
+        ("First".to_string(), Rc::new(PdfNumberObject::new(NumberType::Integer((index_section.len() + 1) as i64))) as Rc<dyn PdfObject>),
     ];
 
-    let obj_stream = StreamObject::compressed().with_data(Some(vec![content.into_bytes()]), Some(extra));
+    let obj_stream = PdfStreamObject::compressed().with_data(Some(vec![content.into_bytes()]), Some(extra));
     let output = obj_stream.data();
 
     println!("\n=== Full output ===\n{}", output);

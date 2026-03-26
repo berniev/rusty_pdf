@@ -2,7 +2,7 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, StreamObject};
+use pydyf::{FileIdentifierMode, PDF, PageObject, PdfStreamObject};
 use std::fs::File;
 use std::io::Write;
 use std::process::Command;
@@ -10,7 +10,7 @@ use std::process::Command;
 #[test]
 fn test_qpdf_validates_compressed_pdf() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     // Add some content
     let color = RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0));
@@ -60,7 +60,7 @@ fn test_qpdf_validates_compressed_pdf() {
 #[test]
 fn test_qpdf_validates_uncompressed_pdf() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     // Add some content
     let color = RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0));

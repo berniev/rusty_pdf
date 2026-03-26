@@ -8,7 +8,7 @@ use std::any::Any;
 use std::rc::Rc;
 
 #[cfg(test)]
-use crate::NameObject;
+use crate::PdfNameObject;
 use crate::{PdfObject, PdfResult};
 use std::collections::HashMap;
 
@@ -43,7 +43,6 @@ impl ResourceCategory {
 pub trait Resource: Any {
     fn category(&self) -> ResourceCategory; // Font, XObject, Pattern, etc.
     fn resource_unique_id(&self) -> String;
-    fn to_pdf_object(&self) -> Rc<dyn PdfObject>;
 
     /// Get the resource name to use in content streams (e.g., "F1", "Im1", "GS1").
     /// If None, the ResourceManager will auto-generate a name.
@@ -197,11 +196,7 @@ mod tests {
         fn resource_unique_id(&self) -> String {
             format!("font:{}", self.name)
         }
-
-        fn to_pdf_object(&self) -> Rc<dyn PdfObject> {
-            NameObject::make_pdf_obj(self.name.clone())
-        }
-
+        
         fn as_any(&self) -> &dyn Any {
             self
         }

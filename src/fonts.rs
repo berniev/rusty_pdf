@@ -1,42 +1,24 @@
-use crate::{DictionaryObject, NameObject};
+use crate::{PdfDictionaryObject, PdfNameObject, PdfObject};
 
 pub(crate) struct Fonts {}
 
 impl Fonts {
-    pub(crate) fn get_standard_fonts_dict() -> DictionaryObject {
-        let mut font_dict = DictionaryObject::new(None);
+    pub(crate) fn get_standard_fonts_dict() -> PdfDictionaryObject {
         let fonts = [
             ("Helvetica", "Type1"),
             ("Helvetica-Bold", "Type1"),
             ("Courier", "Type1"),
         ];
 
+        let mut fonts_dict = PdfDictionaryObject::new();
         for (name, subtype) in fonts {
-            let mut f = DictionaryObject::typed("Font");
-            f.set("Subtype", NameObject::make_pdf_obj(subtype));
-            f.set("BaseFont", NameObject::make_pdf_obj(name));
-            font_dict.set(name, DictionaryObject::make_pdf_obj(f.values));
+            let mut dict = PdfDictionaryObject::new().typed("Font");
+            dict.set("Subtype", Box::new(PdfNameObject::new(subtype)).boxed());
+            dict.set("BaseFont", Box::new(PdfNameObject::new(name)).boxed());
+            
+            fonts_dict.set(name, dict.boxed());
         }
 
-        font_dict
-    }
-
-    #[allow(dead_code)]
-    fn get_standard_fonts() -> String {
-        let fonts = [
-            ("Helvetica", "Type1"),
-            ("Helvetica-Bold", "Type1"),
-            ("Courier", "Type1"),
-        ];
-        format!(
-            "<<{}>>",
-            fonts
-                .into_iter()
-                .map(|(name, subtype)| format!(
-                    " /{name} << /Type /Font /Subtype /{subtype} /BaseFont /{name} >>"
-                ))
-                .collect::<Vec<String>>()
-                .join(" ")
-        )
+        fonts_dict
     }
 }

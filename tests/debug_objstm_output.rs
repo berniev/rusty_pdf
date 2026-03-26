@@ -1,12 +1,12 @@
 /// Debug test to see exactly what our object stream contains
 
-use pydyf::{FileIdentifierMode, PageObject, StreamObject, PDF};
+use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PDF};
 use pydyf::page::PageSize;
 
 #[test]
 fn debug_what_we_produce() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
     stream.rectangle(pydyf::util::Posn { x: 0.0, y: 0.0 }, pydyf::util::Dims { height: 10.0, width: 10.0 });
     let content_id = pdf.add_object(Box::new(stream));
     let mut page = PageObject::new(0usize.into());

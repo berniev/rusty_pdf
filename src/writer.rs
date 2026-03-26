@@ -1,13 +1,13 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
-use std::rc::Rc;
 
 use crate::cross_ref::CrossRefStream;
 use crate::cross_ref::{CrossRefEntry, ObjectStatus};
 use crate::generation::Generation;
 use crate::objects::string::encode_pdf_string;
-use crate::{FileIdentifierMode, PDF, PdfObject};
+use crate::{FileIdentifierMode, PDF, PdfObject, PdfDictionaryObject, PdfStreamObject};
+
 //------------------------------ PdfStream ------------------
 
 pub(crate) struct PdfStream<W: Write> {
@@ -210,6 +210,7 @@ impl WriteStrategy for LegacyStrategy {
         }
 
         stream.write_line(b">>")?;
+
         Ok(())
     }
 }
@@ -217,7 +218,7 @@ impl WriteStrategy for LegacyStrategy {
 //------------------------ Compressed Strategy -----------------
 
 pub(crate) struct CompressedStrategy {
-    compression_map: RefCell<HashMap<usize, (usize, usize)>>, // (objstm_num, index(object_id?))
+    compression_map: RefCell<HashMap<usize, (usize, usize)>>, // (objid, (objstm_num, index))
     objstm_info: RefCell<Option<(usize, usize)>>,             // (objstm_num, offset)
 }
 
@@ -240,7 +241,7 @@ impl CompressedStrategy {
     /// Returns a map of (object_id -> (objstm_number, index_in_stream))
     fn write_body_compressed<W: Write>(
         &self,
-        pdf: &mut PDF,
+        pdf: &mut PDF, // <<=== todo bad!
         stream: &mut PdfStream<W>,
     ) -> std::io::Result<HashMap<usize, (usize, usize)>> {
         // Track which objects are compressed: object_id -> (objstm_num, index)
@@ -254,16 +255,15 @@ impl CompressedStrategy {
         // First pass: write non-compressible objects and collect compressible ones
         for obj in &mut pdf.objects {
             if obj.metadata().status == ObjectStatus::Free {
-                continue;
+                continue; // not compressible
             }
 
             let obj_id = obj.metadata().object_identifier;
             let is_catalog = obj_id == catalog_id;
             let is_object_zero = obj_id == Some(0);
 
-            // Don't compress: object 0 (PDF spec), catalog, streams, or non-compressible objects
             if is_object_zero || is_catalog || !obj.is_compressible() {
-                obj.metadata_mut().offset = stream.pos;
+                obj.metadata_mut().offset = stream.pos; // don't compress
                 stream.write_line_latin1(&obj.indirect())?;
             } else {
                 // Save for compression
@@ -307,27 +307,12 @@ impl CompressedStrategy {
 
         // Create object stream (reuse obj_stream_num allocated above)
 
-        let extra_entries = vec![
-            (
-                "Type".to_string(),
-                Rc::new(crate::NameObject::new(Some("ObjStm".to_string()))) as Rc<dyn PdfObject>,
-            ),
-            (
-                "N".to_string(),
-                Rc::new(crate::NumberObject::new(crate::NumberType::Integer(
-                    compressed_objects.len() as i64,
-                ))) as Rc<dyn PdfObject>,
-            ),
-            (
-                "First".to_string(),
-                Rc::new(crate::NumberObject::new(crate::NumberType::Integer(
-                    first_offset as i64,
-                ))) as Rc<dyn PdfObject>,
-            ),
-        ];
+        let mut dict = PdfDictionaryObject::new().typed("ObjStm");
+        dict.add_inti64("N", compressed_objects.len() as i64);
+        dict.add_inti64("First", first_offset as i64);
 
-        let mut obj_stream = crate::StreamObject::compressed()
-            .with_data(Some(vec![full_content.into_bytes()]), Some(extra_entries));
+        let mut obj_stream = PdfStreamObject::compressed()
+            .with_data(full_content.into_bytes(), dict);
 
         obj_stream.metadata_mut().object_identifier = Some(obj_stream_num);
         let objstm_offset = stream.pos;

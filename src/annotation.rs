@@ -6,7 +6,7 @@
 use crate::color::Color;
 use crate::color::RGB;
 use crate::util::{Posn, Rect};
-use crate::{ArrayObject, DictionaryObject, NameObject, NumberObject, PdfResult, StringObject};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfNameObject, PdfNumberObject, PdfResult, PdfStringObject};
 
 //-------------------AnnotationFlags ----------------------
 
@@ -90,36 +90,36 @@ pub trait Annotation {
         None
     }
 
-    fn add_border_style_to_dict(&self, dict: &mut DictionaryObject) {
+    fn add_border_style_to_dict(&self, dict: &mut PdfDictionaryObject) {
         if let Some(style) = self.border_style() {
-            let mut bs = DictionaryObject::new(None);
-            bs.set("S", NameObject::make_pdf_obj(style.as_str()));
-            dict.set("BS", DictionaryObject::make_pdf_obj(bs.values));
+            let mut bs = PdfDictionaryObject::new();
+            bs.add_name("S", style.as_str());
+            dict.add_pdf_dict("BS", bs);
         }
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new();
 
         // Required entries
-        dict.set("Type", NameObject::make_pdf_obj("Annot"));
-        dict.set("Subtype", NameObject::make_pdf_obj(self.subtype()));
-        dict.set("Rect", self.rect().make_pdf_obj());
+        dict.add_name("Type", "Annot");
+        dict.add_name("Subtype", self.subtype());
+        dict.add_pdf_array("Rect", self.rect().as_pdf_array());
 
         // Optional common entries
         let flags = self.flags();
         if flags.bits() != 0 {
-            dict.set("F", NumberObject::make_pdf_obj(flags.bits() as i64));
+            dict.add_inti64("F", flags.bits() as i64);
         }
 
         self.add_border_style_to_dict(&mut dict);
 
         if let Some(rgb) = self.color() {
-            dict.set("C", rgb.make_pdf_obj());
+            dict.add_pdf_array("C", rgb.as_pdf_array());
         }
 
         if let Some(contents) = self.contents() {
-            dict.set("Contents", StringObject::make_pdf_obj(contents.to_string()));
+            dict.add_string("Contents", contents.to_string());
         }
 
         Ok(dict)
@@ -226,27 +226,18 @@ impl Annotation for TextAnnotation {
         Some(&self.contents)
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
-
-        dict.set("Type", NameObject::make_pdf_obj("Annot"));
-        dict.set("Subtype", NameObject::make_pdf_obj(self.subtype()));
-        dict.set("Rect", self.rect.make_pdf_obj());
-
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new().typed("Annot");
+        dict.add_name("Subtype", self.subtype());
+        dict.add_pdf_array("Rect", self.rect.as_pdf_array());
         if !self.flags.is_empty() {
-            dict.set("F", NumberObject::make_pdf_obj(self.flags.bits() as i64));
+            dict.add_inti64("F", self.flags.bits() as i64);
         }
-
         if let Some(rgb) = self.color {
-            dict.set("C", rgb.make_pdf_obj());
+            dict.add_pdf_array("C", rgb.as_pdf_array());
         }
-
-        dict.set(
-            "Contents",
-            StringObject::make_pdf_obj(self.contents.clone()),
-        );
-
-        dict.set("Name", NameObject::make_pdf_obj(self.icon.as_str()));
+        dict.add_string("Contents",self.contents.clone());
+        dict.add_name("Name", self.icon.as_str());
 
         Ok(dict)
     }
@@ -259,7 +250,7 @@ pub enum LinkAction {
     Uri(String),
     GoTo {
         page: usize,
-        position: Posn<f64>,
+        position: Posn,
         zoom: Option<f64>,
     },
 }
@@ -283,7 +274,7 @@ impl LinkAnnotation {
         }
     }
 
-    pub fn goto(rect: Rect, page: usize, position: Posn<f64>, zoom: Option<f64>) -> Self {
+    pub fn goto(rect: Rect, page: usize, position: Posn, zoom: Option<f64>) -> Self {
         Self {
             rect,
             flags: AnnotationFlags::PRINT,
@@ -319,33 +310,31 @@ impl Annotation for LinkAnnotation {
         self.border_style
     }
 
-    fn to_dict(&self) -> PdfResult<DictionaryObject> {
-        let mut dict = DictionaryObject::new(None);
-
-        dict.set("Type", NameObject::make_pdf_obj("Annot"));
-        dict.set("Subtype", NameObject::make_pdf_obj(self.subtype()));
-        dict.set("Rect", self.rect().make_pdf_obj());
+    fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
+        let mut dict = PdfDictionaryObject::new().typed("Annot");
+        dict.add_name("Subtype", self.subtype());
+        dict.add_pdf_array("Rect", self.rect().as_pdf_array());
 
         let flags = self.flags();
         if flags.bits() != 0 {
-            dict.set("F", NumberObject::make_pdf_obj(flags.bits() as i64));
+            dict.add_inti64("F", flags.bits() as i64);
         }
 
         self.add_border_style_to_dict(&mut dict);
 
         match &self.action {
             LinkAction::Uri(uri) => {
-                let mut action_dict = DictionaryObject::new(None);
-                action_dict.set("S", NameObject::make_pdf_obj("URI"));
-                action_dict.set("URI", StringObject::make_pdf_obj(uri.clone()));
-                dict.set("A", DictionaryObject::make_pdf_obj(action_dict.values));
+                let mut action_dict = PdfDictionaryObject::new();
+                action_dict.add_name("S", "URI");
+                action_dict.add_string("URI", uri.clone());
+                dict.add_pdf_dict("A", action_dict);
             }
             LinkAction::GoTo {
                 page,
                 position,
                 zoom,
             } => {
-                let mut dest = ArrayObject::new(None);
+                let mut dest = PdfArrayObject::new();
                 dest.push_number(*page as i64);
                 dest.push_name("XYZ");
                 dest.push_number(position.x);
@@ -355,7 +344,8 @@ impl Annotation for LinkAnnotation {
                 } else {
                     dest.push_name("null");
                 }
-                dict.set("Dest", ArrayObject::make_pdf_obj(dest.values));
+                
+                dict.add_pdf_array("Dest", dest);
             }
         }
 
@@ -377,7 +367,7 @@ mod tests {
             x2: 100.0,
             y2: 200.0,
         };
-        let arr = ArrayObject::from_rect(rect);
+        let arr = rect.as_pdf_array();
         assert_eq!(arr.values.len(), 4);
     }
 

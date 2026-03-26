@@ -29,7 +29,7 @@ fn test_external_image_from_file() {
     img.save("/tmp/pydyf_test/gradient.png").unwrap();
 
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     stream.push_state();
     stream.set_transformation_matrix(Matrix { a: 200.0, b: 0.0, c: 0.0, d: 200.0, e: 50.0, f: 500.0 });

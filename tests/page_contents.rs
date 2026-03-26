@@ -2,12 +2,12 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{WindingRule, StrokeOrFill};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PageObject, StreamObject, PDF};
+use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PDF};
 
 #[test]
 fn test_page_has_contents_reference() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     // Add a blue rectangle
     let color = RGB::new(
@@ -52,7 +52,7 @@ fn test_page_has_contents_reference() {
 #[test]
 fn test_page_contents_points_to_stream() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     // Add content
     stream.rectangle(
@@ -92,13 +92,13 @@ fn test_multiple_content_streams() {
     let mut pdf = PDF::new();
 
     // Create two content streams
-    let mut stream1 = StreamObject::new();
+    let mut stream1 = PdfStreamObject::uncompressed();
     stream1.rectangle(
         Posn { x: 0.0, y: 0.0 },
         Dims { height: 50.0, width: 50.0 },
     );
 
-    let mut stream2 = StreamObject::new();
+    let mut stream2 = PdfStreamObject::uncompressed();
     stream2.rectangle(
         Posn { x: 100.0, y: 100.0 },
         Dims { height: 50.0, width: 50.0 },

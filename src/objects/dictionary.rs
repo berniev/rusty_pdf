@@ -1,11 +1,3 @@
-use std::default::Default;
-use std::rc::Rc;
-
-use crate::objects::metadata::PdfMetadata;
-use crate::{NameObject, PdfObject};
-
-//--------------------------- DictionaryObject----------------------//
-
 /// Spec:
 /// Dictionary:
 ///     An associative table containing pairs of objects, the first object being a name object
@@ -21,37 +13,74 @@ use crate::{NameObject, PdfObject};
 ///     The value of a Type entry shall be either defined in this standard or a registered name.
 ///         name "Type"    Opt
 ///         name "Subtype" Opt (requires Type)
-#[derive(Clone)]
-pub struct DictionaryObject {
-    pub(crate) metadata: PdfMetadata,
-    pub(crate) values: Vec<(String, Rc<dyn PdfObject>)>,
+///
+///
+use crate::{
+    NumberType, PdfArrayObject, PdfBooleanObject, PdfIndirectObject, PdfNameObject,
+    PdfNumberObject, PdfObject,
+};
+
+//--------------------------- PdfDictionaryObject----------------------//
+
+pub struct PdfDictionaryObject {
+    pub(crate) values: Vec<(PdfNameObject, Box<dyn PdfObject>)>,
 }
 
-impl DictionaryObject {
-    pub fn new(values: Option<Vec<(String, Rc<dyn PdfObject>)>>) -> Self {
-        Self {
-            metadata: Default::default(),
-            values: values.unwrap_or_default(),
-        }
+impl PdfDictionaryObject {
+    pub fn new() -> Self {
+        Self { values: vec![] }
     }
 
-    pub(crate) fn typed(name: &str) -> Self {
-        Self::new(Some(vec![(
-            "Type".to_string(),
-            NameObject::make_pdf_obj(name),
-        )]))
+    pub(crate) fn typed(mut self, name: &str) -> Self {
+        self.set(name, self.make_name(name).boxed());
+
+        self
     }
 
-    pub fn make_pdf_obj(values: Vec<(String, Rc<dyn PdfObject>)>) -> Rc<dyn PdfObject> {
-        Rc::new(Self::new(Some(values)))
+    fn make_name(&self, name: &str) -> PdfNameObject {
+        PdfNameObject::new(name)
     }
 
-    pub fn set(&mut self, key: &str, value: Rc<dyn PdfObject>) {
-        if let Some(pos) = self.values.iter().position(|(k, _)| k == key) {
-            self.values[pos].1 = value;
-        } else {
-            self.values.push((key.to_string(), value));
-        }
+    pub fn set(&mut self, key: &str, object: Box<dyn PdfObject>) {
+        let k_obj = self.make_name(key);
+        self.values.push((k_obj, object));
+    }
+
+    pub fn add_string(&mut self, key: &str, value: String) {
+        self.set(key, self.make_name(&value).boxed());
+    }
+
+    pub fn add_name(&mut self, key: &str, value: &str) {
+        self.set(key, PdfNameObject::new(value).boxed());
+    }
+
+    pub fn add_indirect(&mut self, key: &str, value: usize) {
+        self.set(key, PdfIndirectObject::new(value).boxed());
+    }
+
+    pub fn add_bool(&mut self, key: &str, value: bool) {
+        self.set(key, PdfBooleanObject::new(value).boxed());
+    }
+
+    pub fn add_float64(&mut self, key: &str, value: f64) {
+        self.set(key, PdfNumberObject::new(NumberType::Real(value)).boxed());
+    }
+
+    pub fn add_inti64(&mut self, key: &str, value: i64) {
+        self.set(
+            key,
+            PdfNumberObject::new(NumberType::Integer(value)).boxed(),
+        );
+    }
+
+    /// param: PdfArrayObject
+    pub fn add_pdf_array(&mut self, key: &str, array: PdfArrayObject) {
+        self.set(key, array.boxed());
+    }
+
+    /// param: PdfDictionaryObject
+    pub fn add_pdf_dict(&mut self, key: &str, value: PdfDictionaryObject) {
+        self.set(key, value.boxed());
     }
 
     pub fn len(&self) -> usize {
@@ -63,42 +92,22 @@ impl DictionaryObject {
     }
 
     pub fn contains_key(&self, key: &str) -> bool {
-        self.values.iter().any(|(k, _)| k == key)
-    }
-
-    pub fn get(&self, key: &str) -> Option<&Rc<dyn PdfObject>> {
-        self.values.iter().find(|(k, _)| k == key).map(|(_, v)| v)
+        self.values.iter().any(|(k, _)| k.value == key)
     }
 }
 
-impl PdfObject for DictionaryObject {
-    fn data(&self) -> String {
-        format!(
-            "<<{}>>",
-            self.values
-                .iter()
-                .map(|(k, v)| {
-                    if v.metadata().object_identifier.is_none() {
-                        format!("/{} {}", k, v.data())
-                    } else {
-                        format!("/{} {}", k, v.reference())
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join(" ")
-        )
-    }
+impl PdfObject for PdfDictionaryObject {
+    fn data(&mut self) -> Vec<u8> {
+        let mut arr = vec![];
+        arr.extend(b"<<");
+        for (pdf_name_obj, pdf_object) in &self.values {
+            arr.extend(pdf_name_obj.data());
+            arr.push(b' ');
+            arr.extend(pdf_object.data());
+        }
+        arr.extend(b">>");
 
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
+        arr
     }
 }
 
@@ -108,17 +117,17 @@ mod tests {
 
     #[test]
     fn test_dictionary_methods() {
-        let mut dict = DictionaryObject::new(None);
+        let mut dict = PdfDictionaryObject::new();
         assert!(dict.is_empty());
         assert_eq!(dict.len(), 0);
 
-        dict.set("Key1", NameObject::make_pdf_obj("Value1"));
+        dict.add_name("Key1", "Value1");
         assert!(!dict.is_empty());
         assert_eq!(dict.len(), 1);
         assert!(dict.contains_key("Key1"));
         assert!(!dict.contains_key("Key2"));
 
-        dict.set("Key2", NameObject::make_pdf_obj("Value2"));
+        dict.add_name("Key2", "Value2");
         assert_eq!(dict.len(), 2);
         assert!(dict.contains_key("Key2"));
     }

@@ -2,7 +2,7 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, StreamObject};
+use pydyf::{FileIdentifierMode, PDF, PageObject, PdfStreamObject};
 
 #[test]
 fn test_create_pdf() {
@@ -15,7 +15,7 @@ fn test_create_pdf() {
 #[test]
 fn test_add_page() {
     let mut pdf = PDF::new();
-    let stream = StreamObject::new();
+    let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
     let mut page = PageObject::new(0usize.into());
     page.add_content(content_id);
@@ -30,7 +30,7 @@ fn test_add_page() {
 
 #[test]
 fn test_stream_operations() {
-    let mut stream = StreamObject::compressed();
+    let mut stream = PdfStreamObject::compressed();
 
     let color = RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0));
 
@@ -44,12 +44,12 @@ fn test_stream_operations() {
     );
     stream.fill(WindingRule::EvenOdd);
 
-    assert!(!stream.stream.is_empty());
+    assert!(!stream.content.is_empty());
 }
 
 #[test]
 fn test_compressed_stream() {
-    let stream = StreamObject::compressed();
+    let stream = PdfStreamObject::compressed();
     assert_eq!(stream.compress, pydyf::CompressionMethod::Flate);
 }
 
@@ -67,7 +67,7 @@ fn test_text_operations() {
 #[test]
 fn test_add_page_with_pagesize_adds_mediabox() {
     let mut pdf = PDF::new();
-    let stream = StreamObject::new();
+    let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
 
     let mut page = PageObject::new(0usize.into());
@@ -82,7 +82,7 @@ fn test_add_page_with_pagesize_adds_mediabox() {
 fn test_default_page_size() {
     let mut pdf = PDF::new();
 
-    let stream = StreamObject::new();
+    let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
 
     let mut page = PageObject::new(0usize.into());
@@ -112,7 +112,7 @@ fn test_negative_pagesize_is_zeroed() {
         width: -100.0, // invalid width. should be made zero
         height: 500.0,
     });
-    let dimensions = size.dimensions();
+    let dimensions = size.dims();
     assert_eq!(dimensions.width, 0.0);
     assert_eq!(dimensions.height, 500.0);
 }
@@ -123,7 +123,7 @@ fn test_pagesize_custom_validation() {
         width: 100.0,
         height: 500.0,
     });
-    let dims = size.dimensions();
+    let dims = size.dims();
     assert_eq!(dims.width, 100.0);
     assert_eq!(dims.height, 500.0);
 }
@@ -131,7 +131,7 @@ fn test_pagesize_custom_validation() {
 #[test]
 fn test_compressed_pdf_generation() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     // Add some content to the stream
     let color = RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0));
@@ -166,10 +166,10 @@ fn test_compressed_pdf_generation() {
 
 #[test]
 fn test_array_object_uses_data_not_reference() {
-    use pydyf::{ArrayObject, PdfObject};
+    use pydyf::{PdfArrayObject, PdfObject};
 
     // Create array with numbers
-    let mut array = ArrayObject::new(None);
+    let mut array = PdfArrayObject::new(None);
     array.push_number(1);
     array.push_number(2);
     array.push_number(3);
@@ -186,7 +186,7 @@ fn test_array_object_uses_data_not_reference() {
 
 #[test]
 fn test_object_stream_format() {
-    use pydyf::{NameObject, NumberObject, NumberType, PdfObject, StreamObject};
+    use pydyf::{PdfNameObject, PdfNumberObject, NumberType, PdfObject, PdfStreamObject};
     use std::rc::Rc;
 
     // Create a simple object stream manually to test format
@@ -202,21 +202,21 @@ fn test_object_stream_format() {
     let extra = vec![
         (
             "Type".to_string(),
-            Rc::new(NameObject::new(Some("ObjStm".to_string()))) as Rc<dyn PdfObject>,
+            Rc::new(PdfNameObject::new(Some("ObjStm".to_string()))) as Rc<dyn PdfObject>,
         ),
         (
             "N".to_string(),
-            Rc::new(NumberObject::new(NumberType::Integer(2))) as Rc<dyn PdfObject>,
+            Rc::new(PdfNumberObject::new(NumberType::Integer(2))) as Rc<dyn PdfObject>,
         ),
         (
             "First".to_string(),
-            Rc::new(NumberObject::new(NumberType::Integer(
+            Rc::new(PdfNumberObject::new(NumberType::Integer(
                 (index_section.len() + 1) as i64,
             ))) as Rc<dyn PdfObject>,
         ),
     ];
 
-    let obj_stream = StreamObject::new().with_data(Some(vec![content.into_bytes()]), Some(extra));
+    let obj_stream = PdfStreamObject::uncompressed().with_data(Some(vec![content.into_bytes()]), Some(extra));
 
     let output = obj_stream.data();
 
@@ -231,7 +231,7 @@ fn test_object_stream_format() {
 #[test]
 fn test_compressed_object_stream_is_valid() {
     use flate2::read::ZlibDecoder;
-    use pydyf::{NameObject, NumberObject, NumberType, PdfObject, StreamObject};
+    use pydyf::{PdfNameObject, PdfNumberObject, NumberType, PdfObject, PdfStreamObject};
     use std::io::Read;
     use std::rc::Rc;
 
@@ -245,22 +245,22 @@ fn test_compressed_object_stream_is_valid() {
     let extra = vec![
         (
             "Type".to_string(),
-            Rc::new(NameObject::new(Some("ObjStm".to_string()))) as Rc<dyn PdfObject>,
+            Rc::new(PdfNameObject::new(Some("ObjStm".to_string()))) as Rc<dyn PdfObject>,
         ),
         (
             "N".to_string(),
-            Rc::new(NumberObject::new(NumberType::Integer(2))) as Rc<dyn PdfObject>,
+            Rc::new(PdfNumberObject::new(NumberType::Integer(2))) as Rc<dyn PdfObject>,
         ),
         (
             "First".to_string(),
-            Rc::new(NumberObject::new(NumberType::Integer(
+            Rc::new(PdfNumberObject::new(NumberType::Integer(
                 (index_section.len() + 1) as i64,
             ))) as Rc<dyn PdfObject>,
         ),
     ];
 
     let obj_stream =
-        StreamObject::compressed().with_data(Some(vec![content.into_bytes()]), Some(extra));
+        PdfStreamObject::compressed().with_data(Some(vec![content.into_bytes()]), Some(extra));
 
     let output = obj_stream.data();
 
@@ -301,12 +301,12 @@ fn test_compressed_object_stream_is_valid() {
 
 #[test]
 fn test_stream_object_preserves_binary_data() {
-    use pydyf::{PdfObject, StreamObject};
+    use pydyf::{PdfObject, PdfStreamObject};
 
     // Create stream with known binary data
     let binary_data = vec![0x78, 0x9c, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01]; // Valid zlib header + empty data
 
-    let stream = StreamObject::new().with_data(Some(vec![binary_data.clone()]), None);
+    let stream = PdfStreamObject::uncompressed().with_data(Some(vec![binary_data.clone()]), None);
     let output = stream.data();
 
     // Extract stream content

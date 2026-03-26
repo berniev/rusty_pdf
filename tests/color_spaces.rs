@@ -13,7 +13,7 @@ fn create_page_with_content(content_index: usize) -> PageObject {
 #[test]
 fn test_cmyk_colors() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     stream.set_color_cmyk(
         CMYK::new(
@@ -148,7 +148,7 @@ fn test_cmyk_colors() {
 #[test]
 fn test_grayscale_colors() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     let _ = stream.set_color_grayscale(Color::new(0.0), StrokeOrFill::Fill);
     stream.rectangle(
@@ -247,7 +247,7 @@ fn test_grayscale_colors() {
 #[test]
 fn test_mixed_color_spaces() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(

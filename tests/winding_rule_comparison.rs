@@ -57,7 +57,7 @@ fn draw_concentric_circles(
 #[test]
 fn test_winding_rule_even_odd() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     // Set blue fill color
     stream.set_color_rgb(
@@ -111,7 +111,7 @@ fn test_winding_rule_even_odd() {
 #[test]
 fn test_winding_rule_nonzero() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     // Set red fill color
     stream.set_color_rgb(
@@ -165,7 +165,7 @@ fn test_winding_rule_nonzero() {
 #[test]
 fn test_winding_rule_side_by_side() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     // Left circles - Even-Odd (blue) - creates donut
     stream.set_color_rgb(

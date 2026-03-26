@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use crate::encoding::f_to_pdf_num;
 use crate::util::ToPdf;
-use crate::{ArrayObject, PdfError, PdfObject, PdfResult};
+use crate::{PdfArrayObject, PdfError, PdfObject, PdfResult};
 
 //------------------------ ColorSpace -------------------------------
 
@@ -132,8 +132,13 @@ impl RGB {
         Self { red, green, blue }
     }
 
-    pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
-        Rc::new(ArrayObject::from_rgb(self))
+    pub(crate) fn as_pdf_array(&self) -> PdfArrayObject {
+       let mut arr = PdfArrayObject::new();
+        arr.push_real(self.red.to_f64());
+        arr.push_real(self.green.to_f64());
+        arr.push_real(self.blue.to_f64());
+        
+        arr
     }
     pub fn as_vec(&self) -> [Color; 3] {
         [self.red, self.green, self.blue]
@@ -172,10 +177,6 @@ impl RGBA {
             blue,
             alpha,
         }
-    }
-
-    pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
-        Rc::new(ArrayObject::from_rgba(self))
     }
 
     pub fn as_vec(&self) -> [Color; 4] {
@@ -236,10 +237,6 @@ impl CMYK {
 
     pub fn as_vec(&self) -> [Color; 4] {
         [self.cyan, self.magenta, self.yellow, self.black]
-    }
-
-    pub fn make_pdf_obj(self) -> Rc<dyn PdfObject> {
-        Rc::new(ArrayObject::from_cmyk(self))
     }
 
     pub fn c(&self) -> Color {

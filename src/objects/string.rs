@@ -1,50 +1,35 @@
-use crate::{PdfMetadata, PdfObject};
-
-/// Spec:
 /// String Object:
 ///     Consists of a series of bytes (unsigned integer values in the range 0 to 255) and the bytes
 ///     are not integer objects, but are stored in a more compact form
-pub struct StringObject {
-    value: Option<String>,
-    metadata: PdfMetadata,
+/// 
+use crate::{PdfObject};
+
+//--------------------------- PdfStringObject----------------------//
+
+pub struct PdfStringObject {
+    value: String,
 }
 
-impl StringObject {
-    pub fn new(value: Option<String>) -> Self {
+impl PdfStringObject {
+    pub fn new(value: String) -> Self {
         Self {
             value,
-            metadata: Default::default(),
         }
-    }
-
-    pub fn make_pdf_obj(value: impl Into<String>) -> std::rc::Rc<dyn PdfObject> {
-        std::rc::Rc::new(Self::new(Some(value.into())))
     }
 }
 
-impl PdfObject for StringObject {
-    fn data(&self) -> String {
-        encode_pdf_string(&self.value.clone().unwrap_or("".to_string()))
+impl PdfObject for PdfStringObject {
+    fn data(&mut self)->Vec<u8>{
+        self.value.as_bytes().to_vec()
     }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
-    }
+    
 }
 
 pub fn encode_pdf_string(string: &str) -> String {
     if string.is_ascii() {
         encode_ascii(string)
     } else {
-        encode_non_ascii(string) //
+        encode_non_ascii(string)
     }
 }
 
@@ -59,6 +44,7 @@ pub fn encode_ascii(string: &str) -> String {
         result.push(ch);
     }
     result.push(')');
+    
     result
 }
 

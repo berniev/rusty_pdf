@@ -3,7 +3,7 @@
 //! Optional Content Groups (OCGs) allow parts of a PDF to be selectively
 //! visible or hidden, commonly used for layers in technical drawings.
 
-use crate::{ArrayObject, DictionaryObject, NameObject, StringObject};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfNameObject, PdfObject, PdfStringObject};
 
 //------------------ VisibilityInitialState -----------------------
 
@@ -13,6 +13,14 @@ pub enum VisibilityInitialState {
     Off,
 }
 
+impl VisibilityInitialState {
+    pub fn to_string(&self) -> String {
+        match self {
+            VisibilityInitialState::On => "ON".to_string(),
+            VisibilityInitialState::Off => "OFF".to_string(),
+        }
+    }
+}
 //------------------ UsageDict ---------------------
 
 #[derive(Clone, Default)]
@@ -73,64 +81,62 @@ impl OptionalContentGroup {
         self
     }
 
-    pub fn to_dict(&self) -> DictionaryObject {
-        let mut dict = DictionaryObject::new(None);
-
-        dict.set("Type", NameObject::make_pdf_obj("OCG"));
-        dict.set("Name", StringObject::make_pdf_obj(self.name.clone()));
+    pub fn to_dict(&self) -> PdfDictionaryObject {
+        let mut dict = PdfDictionaryObject::new().typed("OCG");
+        dict.add_string("Name", self.name.clone());
+        //dict.set("Name", PdfStringObject::new(self.name.clone()).boxed());
 
         if let Some(ref intent) = self.intent {
             if intent.len() == 1 {
-                dict.set("Intent", NameObject::make_pdf_obj(&intent[0]));
+                dict.set("Intent", PdfNameObject::new(&intent[0]).boxed());
             } else {
-                let mut arr = ArrayObject::new(None);
+                let mut arr = PdfArrayObject::new();
                 for i in intent {
                     arr.push_name(i);
                 }
-                dict.set("Intent", ArrayObject::make_pdf_obj(arr.values));
+                dict.set("Intent", arr.boxed());
             }
         }
 
         if let Some(ref usage) = self.usage {
-            let mut usage_dict = DictionaryObject::new(None);
+            let mut usage_dict = PdfDictionaryObject::new();
 
             if let Some(ref print) = usage.print {
-                let mut print_dict = DictionaryObject::new(None);
+                let mut print_dict = PdfDictionaryObject::new();
                 print_dict.set(
                     "PrintState",
-                    NameObject::make_pdf_obj(match print.state {
+                    PdfNameObject::new(match print.state {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
-                    }),
+                    })
+                    .boxed(),
                 );
-                usage_dict.set("Print", DictionaryObject::make_pdf_obj(print_dict.values));
+                usage_dict.set("Print", print_dict.boxed());
             }
 
             if let Some(ref view) = usage.view {
-                let mut view_dict = DictionaryObject::new(None);
+                let mut view_dict = PdfDictionaryObject::new();
                 view_dict.set(
                     "ViewState",
-                    NameObject::make_pdf_obj(match view.state {
-                        VisibilityInitialState::On => "ON",
-                        VisibilityInitialState::Off => "OFF",
-                    }),
+                    PdfNameObject::new(&*view.state.to_string()).boxed(),
                 );
-                usage_dict.set("View", DictionaryObject::make_pdf_obj(view_dict.values));
+                usage_dict.set("View", view_dict.boxed());
             }
 
             if let Some(ref export) = usage.export {
-                let mut export_dict = DictionaryObject::new(None);
+                let mut export_dict = PdfDictionaryObject::new();
                 export_dict.set(
                     "ExportState",
-                    NameObject::make_pdf_obj(match export.state {
+                    PdfNameObject::new(match export.state {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
-                    }),
+                    })
+                    .boxed(),
                 );
-                usage_dict.set("Export", DictionaryObject::make_pdf_obj(export_dict.values));
+                usage_dict.set("Export", export_dict.boxed());
             }
 
-            dict.set("Usage", DictionaryObject::make_pdf_obj(usage_dict.values));
+            dict.set("Usage", usage_dict.boxed());
         }
 
         dict
@@ -192,50 +198,50 @@ impl OptionalContentConfig {
         self
     }
 
-    pub fn to_dict(&self) -> DictionaryObject {
-        let mut dict = DictionaryObject::new(None);
+    pub fn to_dict(&self) -> PdfDictionaryObject {
+        let mut dict = PdfDictionaryObject::new();
 
-        dict.set("Name", StringObject::make_pdf_obj(self.name.clone()));
+        dict.set("Name", PdfStringObject::new(self.name.clone()).boxed());
 
         if let Some(ref creator) = self.creator {
-            dict.set("Creator", StringObject::make_pdf_obj(creator.clone()));
+            dict.set("Creator", PdfStringObject::new(creator.clone()).boxed());
         }
 
         dict.set(
             "BaseState",
-            NameObject::make_pdf_obj(match self.base_state {
+            PdfNameObject::new(match self.base_state {
                 VisibilityInitialState::On => "ON",
                 VisibilityInitialState::Off => "OFF",
-            }),
+            })
+            .boxed(),
         );
 
         if !self.on_list.is_empty() {
-            let mut arr = ArrayObject::new(None);
+            let mut arr = PdfArrayObject::new();
             for &id in &self.on_list {
                 arr.push_indirect(id);
             }
-            dict.set("ON", ArrayObject::make_pdf_obj(arr.values));
+            dict.set("ON", arr.boxed());
         }
 
         if !self.off_list.is_empty() {
-            let mut arr = ArrayObject::new(None);
+            let mut arr = PdfArrayObject::new();
             for &id in &self.off_list {
                 arr.push_indirect(id);
             }
-            dict.set("OFF", ArrayObject::make_pdf_obj(arr.values));
+            dict.set("OFF", arr.boxed());
         }
 
         // Order array (simplified - full implementation would handle nested groups)
         if !self.order.is_empty() {
-            let order_arr = self.build_order_array(&self.order);
-            dict.set("Order", ArrayObject::make_pdf_obj(order_arr.values));
+            dict.add_pdf_array("Order", self.build_order_array(&self.order));
         }
 
         dict
     }
 
-    fn build_order_array(&self, orders: &[LayerOrder]) -> ArrayObject {
-        let mut arr = ArrayObject::new(None);
+    fn build_order_array(&self, orders: &[LayerOrder]) -> PdfArrayObject {
+        let mut arr = PdfArrayObject::new();
 
         for order in orders {
             match order {
@@ -244,8 +250,7 @@ impl OptionalContentConfig {
                 }
                 LayerOrder::Group { label, children } => {
                     arr.push_string(label.clone());
-                    let child_arr = self.build_order_array(children);
-                    arr.push_array(child_arr);
+                    arr.push_pdf_array(self.build_order_array(children));
                 }
             }
         }

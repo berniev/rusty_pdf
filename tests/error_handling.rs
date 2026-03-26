@@ -1,5 +1,5 @@
 use pydyf::color::{Color, ColorSpace};
-use pydyf::StreamObject;
+use pydyf::PdfStreamObject;
 
 #[test]
 #[should_panic(expected = "color must be in range 0.0..=1.0")]
@@ -15,7 +15,7 @@ fn test_color_too_low() {
 
 #[test]
 fn test_invalid_color_space() {
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
     let data = vec![255, 0, 0];
 
     // Note: ColorSpace is now an enum, so we can't test "INVALID" directly

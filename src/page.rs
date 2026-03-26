@@ -1,89 +1,3 @@
-use std::fmt;
-use std::iter::Sum;
-
-use crate::util::Dims;
-use crate::{PdfMetadata, ResourceDictionary};
-
-//--------------------------- Offset ---------------------------//
-
-#[derive(Clone, Debug, Default)]
-pub struct ObjectId(u64);
-
-impl From<u64> for ObjectId {
-    fn from(value: u64) -> Self {
-        ObjectId(value)
-    }
-}
-
-impl From<usize> for ObjectId {
-    fn from(value: usize) -> Self {
-        ObjectId(value as u64)
-    }
-}
-
-impl From<ObjectId> for u64 {
-    fn from(object_num: ObjectId) -> u64 {
-        object_num.0
-    }
-}
-
-impl Sum for ObjectId {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        ObjectId(iter.map(|id| id.0).sum())
-    }
-}
-
-impl fmt::Display for ObjectId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-//--------------------------- Page Size ---------------------------//
-
-pub const DEFAULT_PAGE_SIZE: PageSize = PageSize::A4;
-
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub enum PageSize {
-    #[default]
-    A4,
-    Letter,
-    Legal,
-    A3,
-    Custom(Dims), // width, height in points
-}
-
-impl PageSize {
-    /// Returns the Dims in PDF points (1 PDF point = 1/72 inch).
-    /// Returns 0.0 for negative custom dimensions.
-    pub fn dimensions(&self) -> Dims {
-        match self {
-            PageSize::A4 => Dims {
-                width: 595.0,
-                height: 842.0,
-            },
-            PageSize::Letter => Dims {
-                width: 612.0,
-                height: 792.0,
-            },
-            PageSize::Legal => Dims {
-                width: 612.0,
-                height: 1008.0,
-            },
-            PageSize::A3 => Dims {
-                width: 842.0,
-                height: 1191.0,
-            },
-            PageSize::Custom(dims) => Dims {
-                width: dims.width.max(0.0),
-                height: dims.height.max(0.0),
-            },
-        }
-    }
-}
-
-//--------------------------- Page ---------------------------//
-
 /// Page:
 /// A dictionary specifying the attributes of a single page of the document, organized into
 /// various categories (e.g., Font, ColorSpace, Pattern)
@@ -131,11 +45,64 @@ impl PageSize {
 /// UserUnit              1.6  Opt        number
 /// VP                    1.6  Opt        dictionary
 
+/// PageTree Nodes:
+/// 
+/// ======  ==========  =====  =================================================================
+/// Name    PdfObjType  Reqd   Value
+/// ======  ==========  =====  =================================================================
+/// Type    Name        Reqd   "Pages" 
+/// Parent  Indirect    Reqd*  Parent PageTree. * Not allowed in root node.
+/// Kids    Array       Reqd   Indirect references to descendant leaf nodes (pages)
+/// Count   Integer     Reqd   Number of descendant leaf nodes (pages)
+///
+use std::fmt;
+use std::iter::Sum;
+
+use crate::{PdfMetadata, PdfObject, ResourceMap};
+pub use crate::page_size::PageSize;
+//--------------------------- ObjectId ---------------------------//
+
+#[derive(Clone, Debug, Default)]
+pub struct ObjectId(u64);
+
+impl From<u64> for ObjectId {
+    fn from(value: u64) -> Self {
+        ObjectId(value)
+    }
+}
+
+impl From<usize> for ObjectId {
+    fn from(value: usize) -> Self {
+        ObjectId(value as u64)
+    }
+}
+
+impl From<ObjectId> for u64 {
+    fn from(object_num: ObjectId) -> u64 {
+        object_num.0
+    }
+}
+
+impl Sum for ObjectId {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        ObjectId(iter.map(|id| id.0).sum())
+    }
+}
+
+impl fmt::Display for ObjectId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+//--------------------------- Page ---------------------------//
+
+
 #[derive(Clone)]
 pub struct PageObject {
     pub(crate) id: ObjectId,
     pub(crate) parent: ObjectId,
-    pub(crate) resources: Option<ResourceDictionary>,
+    pub(crate) resources: Option<ResourceMap>,
     pub(crate) resources_id: Option<usize>,
     pub media_box: Option<PageSize>,
     pub(crate) contents: Vec<usize>, // Content stream object IDs
@@ -163,7 +130,7 @@ impl PageObject {
         self.media_box = Some(size);
     }
 
-    pub fn set_resources(&mut self, resources: ResourceDictionary) {
+    pub fn set_resources(&mut self, resources: ResourceMap) {
         self.resources = Some(resources);
     }
 
@@ -176,8 +143,8 @@ impl PageObject {
     }
 }
 
-impl crate::PdfObject for PageObject {
-    fn data(&self) -> String {
+impl PdfObject for PageObject {
+    fn data(&mut self) -> Vec<u8> {
         let mut entries = vec!["/Type /Page".to_string()];
 
         entries.push(format!("/Parent {} 0 R", u64::from(self.parent.clone())));
@@ -193,7 +160,7 @@ impl crate::PdfObject for PageObject {
 
         // MediaBox (optional if parent provides - inheritance)
         if let Some(size) = &self.media_box {
-            let dims = size.dimensions();
+            let dims = size.dims();
             entries.push(format!("/MediaBox [0 0 {} {}]", dims.width, dims.height));
         }
 
@@ -202,9 +169,9 @@ impl crate::PdfObject for PageObject {
             entries.push(format!("/Resources {} 0 R", resources_id));
         }
 
-        format!("<< {} >>", entries.join(" "))
+        format!("<< {} >>", entries.join(" ")).into_bytes()
     }
-
+/*
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
@@ -215,21 +182,10 @@ impl crate::PdfObject for PageObject {
 
     fn metadata_mut(&mut self) -> &mut PdfMetadata {
         &mut self.metadata
-    }
+    }*/
 }
 
 //--------------------------- Page Tree -------------------------
-
-/// PageTree Nodes:
-/// 
-/// ======  ==========  =====  =================================================================
-/// Name    PdfObjType  Reqd   Value
-/// ======  ==========  =====  =================================================================
-/// Type    Name        Reqd   "Pages" 
-/// Parent  Indirect    Reqd*  Parent PageTree. * Not allowed in root node.
-/// Kids    Array       Reqd   Indirect references to descendant leaf nodes (pages)
-/// Count   Integer     Reqd   Number of descendant leaf nodes (pages)
-///
 #[derive(Clone)]
 pub enum PageTreeItemType {
     Page(PageObject),
@@ -255,7 +211,7 @@ pub struct PageTree {
     pub(crate) parent_id: Option<ObjectId>, // root is None
     pub(crate) kids: Vec<PageTreeItemType>,
     pub(crate) media_box: Option<PageSize>, // Shared dimensions
-    pub(crate) resources: Option<ResourceDictionary>, // Shared fonts, etc.
+    pub(crate) resources: Option<ResourceMap>, // Shared fonts, etc.
     pub metadata: PdfMetadata,
 }
 
@@ -308,7 +264,7 @@ impl PageTree {
         self.media_box = Some(size);
     }
 
-    pub fn set_resources(&mut self, resources: ResourceDictionary) {
+    pub fn set_resources(&mut self, resources: ResourceMap) {
         self.resources = Some(resources);
     }
 
@@ -317,8 +273,8 @@ impl PageTree {
     }
 }
 
-impl crate::PdfObject for PageTree {
-    fn data(&self) -> String {
+impl PdfObject for PageTree {
+    fn data(&mut self) -> Vec<u8> {
         let mut entries = vec!["/Type /Pages".to_string()];
 
         entries.push(format!("/Kids {}", &self.kids_array()));
@@ -327,7 +283,7 @@ impl crate::PdfObject for PageTree {
 
         // MediaBox (optional, inherited)
         if let Some(size) = &self.media_box {
-            let dims = size.dimensions();
+            let dims = size.dims();
             entries.push(format!("/MediaBox [0 0 {} {}]", dims.width, dims.height));
         }
 
@@ -336,9 +292,9 @@ impl crate::PdfObject for PageTree {
             // TODO: Serialize resources
         }
 
-        format!("<< {} >>", entries.join(" "))
+        format!("<< {} >>", entries.join(" ")).into_bytes()
     }
-
+/*
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
@@ -349,5 +305,5 @@ impl crate::PdfObject for PageTree {
 
     fn metadata_mut(&mut self) -> &mut PdfMetadata {
         &mut self.metadata
-    }
+    }*/
 }

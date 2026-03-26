@@ -1,13 +1,3 @@
-use once_cell::sync::Lazy;
-use std::any::Any;
-use std::collections::HashMap;
-
-use crate::page::PageTree;
-use crate::{ArrayObject, BooleanObject, IndirectObject, NameObject};
-use crate::{DictionaryObject, PdfMetadata, PdfObject};
-
-//--------------------------- Catalog -------------------------
-
 /**
  * Spec:
  * Document Catalog:
@@ -77,6 +67,13 @@ use crate::{DictionaryObject, PdfMetadata, PdfObject};
  *     Collection          dictionary     Opt    1.7
  *     NeedsRendering      boolean        Opt    1.7
  */
+
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
+
+use crate::page::PageTree;
+use crate::{PdfArrayObject, PdfBooleanObject, PdfIndirectObject, PdfNameObject};
+use crate::{PdfDictionaryObject, PdfMetadata, PdfObject};
 
 //--------------------------- CatalogError -------------------------
 
@@ -169,31 +166,13 @@ impl Catalog {
         let info = self.lookup_catalog_entry(name)?;
 
         let res: Box<dyn PdfObject> = match info.ent_type {
-            Type::Dictionary => Box::new(DictionaryObject::typed(name)),
-            Type::Array => Box::new(ArrayObject::new(None)),
-            Type::Boolean => Box::new(BooleanObject::new(None)),
-            Type::Name => Box::new(NameObject::new(None)),
-            Type::IndirectRef => Box::new(IndirectObject::new(None)),
+            Type::Dictionary => PdfDictionaryObject::new().typed(name).boxed(),
+            Type::Array => PdfArrayObject::new().boxed(),
+            Type::Boolean => PdfBooleanObject::new().boxed(),
+            Type::Name => PdfNameObject::new().boxed(),
+            Type::IndirectRef => PdfIndirectObject::new().boxed(),
         };
 
         Ok(res)
-    }
-}
-
-impl PdfObject for Catalog {
-    fn data(&self) -> String {
-        todo!()
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        todo!()
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
     }
 }

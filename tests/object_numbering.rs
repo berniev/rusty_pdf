@@ -24,14 +24,14 @@ fn test_next_object_number_is_single_source_of_truth() {
 
 #[test]
 fn test_add_object_assigns_sequential_ids() {
-    use pydyf::{PDF, StreamObject};
+    use pydyf::{PDF, PdfStreamObject};
 
     let mut pdf = PDF::new();
 
     // Add objects one by one and verify IDs are sequential starting from 1
-    let id1 = pdf.add_object(Box::new(StreamObject::new()));
-    let id2 = pdf.add_object(Box::new(StreamObject::new()));
-    let id3 = pdf.add_object(Box::new(StreamObject::new()));
+    let id1 = pdf.add_object(Box::new(PdfStreamObject::uncompressed()));
+    let id2 = pdf.add_object(Box::new(PdfStreamObject::uncompressed()));
+    let id3 = pdf.add_object(Box::new(PdfStreamObject::uncompressed()));
 
     println!("Added object IDs: {}, {}, {}", id1, id2, id3);
 
@@ -50,13 +50,13 @@ fn test_all_object_assignments_use_consistent_numbering() {
     // This test verifies that ALL objects get sequential IDs with no duplicates
     // Whether assigned via add_object, initialize_catalog, etc.
 
-    use pydyf::{PDF, StreamObject};
+    use pydyf::{PDF, PdfStreamObject};
     use std::collections::HashSet;
 
     let mut pdf = PDF::new();
 
     // Add a page
-    pdf.add_object(Box::new(StreamObject::new()));
+    pdf.add_object(Box::new(PdfStreamObject::uncompressed()));
 
     // Initialize everything
     let resources_id = pdf.add_font_resources();
@@ -95,11 +95,11 @@ fn test_compressed_write_assigns_unique_objstm_number() {
     // Verify that when creating object streams during compressed write,
     // the ObjStm gets a unique object number that doesn't collide
 
-    use pydyf::{FileIdentifierMode, PDF, StreamObject};
+    use pydyf::{FileIdentifierMode, PDF, PdfStreamObject};
     use std::collections::HashMap;
 
     let mut pdf = PDF::new();
-    pdf.add_object(Box::new(StreamObject::new()));
+    pdf.add_object(Box::new(PdfStreamObject::uncompressed()));
 
     let mut output = Vec::new();
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();
@@ -138,10 +138,10 @@ fn test_objstm_number_calculation() {
     // Test the specific calculation used for ObjStm numbering
     // It should be: max(all existing object IDs) + 1
 
-    use pydyf::{FileIdentifierMode, PDF, StreamObject};
+    use pydyf::{FileIdentifierMode, PDF, PdfStreamObject};
 
     let mut pdf = PDF::new();
-    pdf.add_object(Box::new(StreamObject::new()));
+    pdf.add_object(Box::new(PdfStreamObject::uncompressed()));
 
     // Before write_compressed, find max object ID
     let max_id_before = pdf.objects.iter()

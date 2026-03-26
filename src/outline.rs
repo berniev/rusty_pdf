@@ -3,10 +3,7 @@
 //! The outline provides a hierarchical table of contents that allows users
 //! to navigate through the document.
 
-use crate::{
-    DictionaryObject, IndirectObject, NameObject, NumberObject, PdfResult, StringObject,
-    action::FitDestination, color::RGB,
-};
+use crate::{PdfDictionaryObject, PdfIndirectObject, PdfNameObject, PdfNumberObject, PdfObject, PdfResult, PdfStringObject, action::FitDestination, color::RGB, NumberType, PdfArrayObject};
 
 //------------------ OutlineItemFlags -----------------------
 
@@ -149,19 +146,18 @@ impl DocumentOutline {
             )?;
         }
 
-        let mut outline_dict = DictionaryObject::new(None);
-        outline_dict.set("Type", NameObject::make_pdf_obj("Outlines"));
+        let mut outline_dict = PdfDictionaryObject::new().typed("Outlines");
 
         if !self.items.is_empty() {
-            outline_dict.set("First", IndirectObject::make_pdf_obj(item_ids[0]));
+            outline_dict.set("First", PdfIndirectObject::new(item_ids[0]).boxed());
             outline_dict.set(
                 "Last",
-                IndirectObject::make_pdf_obj(item_ids[self.items.len() - 1]),
+                PdfIndirectObject::new(item_ids[self.items.len() - 1]).boxed(),
             );
 
             outline_dict.set(
                 "Count",
-                NumberObject::make_pdf_obj(self.total_count() as i64),
+                PdfNumberObject::new(NumberType::from(self.total_count() as i64)).boxed(),
             );
         }
 
@@ -188,7 +184,7 @@ impl DocumentOutline {
     fn build_item_dict(
         &self,
         item: &OutlineItem,
-        dicts: &mut Vec<(usize, DictionaryObject)>,
+        dicts: &mut Vec<(usize, PdfDictionaryObject)>,
         all_ids: &[usize],
         idx: &mut usize,
         parent_id: usize,
@@ -198,21 +194,19 @@ impl DocumentOutline {
         let current_id = all_ids[*idx];
         *idx += 1;
 
-        let mut dict = DictionaryObject::new(None);
+        let mut dict = PdfDictionaryObject::new().typed(&*item.title);
 
-        dict.set("Title", StringObject::make_pdf_obj(item.title.clone()));
-
-        dict.set("Parent", IndirectObject::make_pdf_obj(parent_id));
+        dict.add_indirect("Parent", parent_id);
 
         if let Some(prev) = prev_id {
-            dict.set("Prev", IndirectObject::make_pdf_obj(prev));
+            dict.add_indirect("Prev", prev);
         }
         if let Some(next) = next_id {
-            dict.set("Next", IndirectObject::make_pdf_obj(next));
+            dict.add_indirect("Next", next);
         }
 
         if let Some(dest) = item.destination.clone() {
-            dict.set("Dest", dest.make_pdf_obj());
+            dict.add_pdf_array("Dest", dest.to_pdf_array());
         }
 
         if !item.children.is_empty() {
@@ -236,24 +230,24 @@ impl DocumentOutline {
                 )?;
             }
 
-            dict.set("First", IndirectObject::make_pdf_obj(first_child_id));
+            dict.set("First", PdfIndirectObject::new(first_child_id).boxed());
             dict.set(
                 "Last",
-                IndirectObject::make_pdf_obj(all_ids[first_child_idx + item.children.len() - 1]),
+                PdfIndirectObject::new(all_ids[first_child_idx + item.children.len() - 1]).boxed(),
             );
 
             // Count: positive if open, negative if closed
             let count = item.count_descendants();
             let count_val = if item.is_open { count } else { -count };
-            dict.set("Count", NumberObject::make_pdf_obj(count_val as i64));
+            dict.set("Count", PdfNumberObject::new(NumberType::from(count_val as i64)).boxed());
         }
 
         if let Some(rgb) = item.color {
-            dict.set("C", rgb.make_pdf_obj());
+            dict.add_pdf_array("C", rgb.as_pdf_array());
         }
 
         if item.flags.bits() != 0 {
-            dict.set("F", NumberObject::make_pdf_obj(item.flags.bits() as i64));
+            dict.set("F", PdfNumberObject::new(NumberType::from(item.flags.bits() as i64)).boxed());
         }
 
         dicts.push((current_id, dict));
@@ -264,8 +258,8 @@ impl DocumentOutline {
 //------------------ OutlineDictionaries -----------------------
 
 pub struct OutlineDictionaries {
-    pub outline_dict: Option<(usize, DictionaryObject)>,
-    pub item_dicts: Vec<(usize, DictionaryObject)>,
+    pub outline_dict: Option<(usize, PdfDictionaryObject)>,
+    pub item_dicts: Vec<(usize, PdfDictionaryObject)>,
 }
 
 //------------------ test -----------------------

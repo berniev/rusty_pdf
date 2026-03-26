@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use pydyf::StreamObject;
+use pydyf::PdfStreamObject;
 use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
@@ -17,7 +17,7 @@ fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageOb
 #[test]
 fn test_empty_page() {
     let mut pdf = PDF::new();
-    let stream = StreamObject::new();
+    let stream = PdfStreamObject::uncompressed();
 
     let content_id = pdf.add_object(Box::new(stream));
 
@@ -36,7 +36,7 @@ fn test_massive_page_count() {
     let mut pdf = PDF::new();
 
     for _ in 0..500 {
-        let mut stream = StreamObject::new();
+        let mut stream = PdfStreamObject::uncompressed();
         stream.set_color_rgb(
             RGB::new(Color::new(0.5), Color::new(0.5), Color::new(0.5)),
             StrokeOrFill::Fill,
@@ -63,7 +63,7 @@ fn test_massive_page_count() {
 #[test]
 fn test_extreme_coordinates() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
@@ -135,7 +135,7 @@ fn test_extreme_coordinates() {
 #[test]
 fn test_very_long_text() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(0.0), Color::new(0.0)),
@@ -170,7 +170,7 @@ fn test_very_long_text() {
 #[test]
 fn test_special_characters_text() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(0.0), Color::new(0.0)),
@@ -233,7 +233,7 @@ fn test_special_characters_text() {
 #[test]
 fn test_huge_rectangle() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
@@ -260,7 +260,7 @@ fn test_huge_rectangle() {
 #[test]
 fn test_compressed_empty() {
     let mut pdf = PDF::new();
-    let stream = StreamObject::compressed();
+    let stream = PdfStreamObject::compressed();
 
     let content_index = pdf.add_object(Box::new(stream));
     let page = create_page_with_content(PageSize::A4, content_index);
@@ -274,7 +274,7 @@ fn test_compressed_empty() {
 #[test]
 fn test_extreme_font_sizes() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(0.0), Color::new(0.0)),
@@ -329,7 +329,7 @@ fn test_extreme_font_sizes() {
 #[test]
 fn test_overlapping_operations() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
 
     stream.begin_text();
     stream.set_color_rgb(

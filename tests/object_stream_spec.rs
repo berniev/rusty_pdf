@@ -34,7 +34,7 @@
 /// 3. Test offset calculations match spec
 /// 4. Test exclusions (streams cannot be compressed)
 
-use pydyf::{FileIdentifierMode, PageObject, StreamObject, PDF};
+use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PDF};
 use pydyf::page::PageSize;
 use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{WindingRule, StrokeOrFill};
@@ -44,7 +44,7 @@ use pydyf::util::{Dims, Posn};
 #[test]
 fn spec_objstm_must_have_type() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
     stream.rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
     pdf.add_object(Box::new(stream));
 
@@ -59,7 +59,7 @@ fn spec_objstm_must_have_type() {
 #[test]
 fn spec_objstm_must_have_n() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
     stream.rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
     pdf.add_object(Box::new(stream));
 
@@ -81,7 +81,7 @@ fn spec_objstm_must_have_n() {
 #[test]
 fn spec_objstm_must_have_first() {
     let mut pdf = PDF::new();
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
     stream.rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
     pdf.add_object(Box::new(stream));
 
@@ -105,7 +105,7 @@ fn spec_stream_objects_not_compressible() {
     let mut pdf = PDF::new();
 
     // Add a stream object (with actual stream data)
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
     let color = RGB::new( Color::new(1.0),Color::new(0.0), Color::new(0.0) );
     stream.set_color_rgb(color, StrokeOrFill::Fill);
     stream.rectangle(Posn { x: 10.0, y: 10.0 }, Dims { height: 20.0, width: 20.0 });

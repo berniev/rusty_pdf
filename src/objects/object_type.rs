@@ -8,7 +8,7 @@
 ///
 /// Object stream:
 ///     a stream that contains a sequence of PDF objects
-/// 
+///
 /*
 Direct Objects
 ==============
@@ -58,7 +58,6 @@ or an indirect object might reference another indirect object.
     Indirect Example: 5 0 obj << /Type /Font ... >> endobj (The dictionary is an indirect font
     object).
 */
-
 use crate::cross_ref::{Generation, ObjectStatus};
 use crate::{
     ArrayObject, BooleanObject, DictionaryObject, NameObject, NumberObject, PdfObject, StreamObject,
@@ -68,24 +67,34 @@ enum PdfObjectType {
     Array(ArrayObject),
     Boolean(BooleanObject),
     Dictionary(DictionaryObject),
-    Name(NameObject),
+    Name(NameObject), // ascii
     NameTree(),
-    Number(NumberObject),
+    Number(NumberObject), // integer and real
     Stream(StreamObject),
-    String(StreamObject),
+    String(StingObject), // may need encoding
 }
 
-// The PDF spec identity of an __ indirect __ object (§7.3.10)
-#[derive(Debug, Clone, PartialEq)]
-pub struct ObjectId {
-    pub number: usize,
-    pub generation: Generation,
+//--------------------- Document ----------------------
+
+pub struct PDF {
+    pub objects: Vec<IndirectObject>,  // no metadata on inner objects
+    pub cross_ref: Vec<CrossRefEntry>, // populated during write
 }
+
+//--------------------- Objects ----------------------
+
+struct NullObject {}
+
+struct BooleanObject {}
 
 // __ Direct __ objects carry NO metadata at all
 pub struct NameObject {
     pub value: Option<String>,
 }
+
+struct StringObject {}
+
+struct NumberObject {}
 
 // Tracks where an object ended up after serialisation — not intrinsic to the object itself
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -94,20 +103,33 @@ pub struct SerialLocation {
     pub status: ObjectStatus, // free or inuse
 }
 
+// The PDF spec identity of an __ indirect __ object (§7.3.10)
+#[derive(Debug, Clone, PartialEq)]
+pub struct ObjectId {
+    pub number: usize,          // 0 is root. 1 is first object
+    pub generation: Generation, // for obj#0 is 65535, else is 0 for new objects
+}
+
 // Indirect is a wrapper, not a peer variant
+// Example: {id} {locn} obj << /Type /Font ... >> endobj
 struct IndirectObject {
     pub id: ObjectId,
     pub location: Option<SerialLocation>,
     pub inner: PdfObjectType, // owns the direct object
 }
 
-// The offset/status truly belong only in the cross-reference table, not on the objects themselves
+// The offset/status belong only in the cross-reference table, not on the objects themselves
 pub struct CrossRefEntry {
     pub id: ObjectId,
     pub location: SerialLocation,
 }
 
-pub struct PDF {
-    pub objects: Vec<IndirectObject>,  // no metadata on inner objects
-    pub cross_ref: Vec<CrossRefEntry>, // populated during write
-}
+//--------------------- Containers ----------------------
+
+struct ArrayObject {}
+
+struct DictionaryObject {}
+
+//--------------------- Streams ----------------------
+
+struct STream {}

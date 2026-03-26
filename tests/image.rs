@@ -17,7 +17,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
 #[test]
 fn test_inline_image() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     let image_data = vec![255, 0, 0, 255, 0, 0, 0, 0, 255, 0, 0, 255];
 

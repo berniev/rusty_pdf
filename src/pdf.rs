@@ -1,12 +1,21 @@
-use crate::page::{ObjectId, PageObject, PageTreeItemType, PageTree};
+use crate::page::{ObjectId, PageObject, PageTree, PageTreeItemType};
 use std::io::Write;
 
 use crate::cross_ref::CrossRefTable;
 use crate::fonts::Fonts;
-use crate::writer::{CompressedStrategy, LegacyStrategy, PdfWriter};
-use crate::{DictionaryObject, IndirectObject, PdfObject};
 use crate::pdf_version::PdfVersion;
+use crate::writer::{CompressedStrategy, LegacyStrategy, PdfWriter};
+use crate::{PdfDictionaryObject, PdfIndirectObject, PdfObject};
 
+/// File Structure
+///
+/// =====================  =====================================================================
+/// Header                 One line identifying pdf version
+/// Body                   The objects that make up the document
+/// Cross-Reference Table  Information about the __indirect__ objects in the file
+/// Trailer                Location of the xreft and of certain special objects in the file body
+/// ============================================================================================
+///
 
 //----------------------- Identifier -----------------------
 
@@ -19,25 +28,16 @@ pub enum FileIdentifierMode {
 
 //--------------------------- PDF -------------------------
 
-/// File Structure
-///
-/// =====================  =====================================================================
-/// Header                 One line identifying pdf version
-/// Body                   The objects that make up the document
-/// Cross-Reference Table  Information about the __indirect__ objects in the file
-/// Trailer                Location of the xreft and of certain special objects in the file body
-/// ============================================================================================
-///
 pub struct PDF {
     pub version: PdfVersion,
     pub objects: Vec<Box<dyn PdfObject>>,
-    pub catalog: DictionaryObject,
+    pub catalog: PdfDictionaryObject,
     pub page_tree: PageTree,
     pub cross_ref_table: CrossRefTable,
-    pub info: DictionaryObject,
+    pub info: PdfDictionaryObject,
     pub xref_position: Option<usize>,
     next_object_id: usize, // Single source of truth for object ID allocation.
-    last_num: usize, // todo: then what's this one for??
+    last_num: usize,       // todo: what's this one for??
 }
 
 impl Default for PDF {
@@ -50,11 +50,11 @@ impl PDF {
     pub fn new() -> Self {
         PDF {
             version: PdfVersion::Auto,
-            objects: Vec::new(),
-            catalog: DictionaryObject::typed("Catalog"),
+            objects: vec![],
+            catalog: PdfDictionaryObject::new().typed("Catalog"),
             page_tree: PageTree::new(None),
             cross_ref_table: CrossRefTable::new(),
-            info: DictionaryObject::new(None),
+            info: PdfDictionaryObject::new(),
             xref_position: None,
             next_object_id: 1, // Start at 1 (0 is reserved)
             last_num: 0,
@@ -122,12 +122,14 @@ impl PDF {
     }
 
     pub fn add_font_resources(&mut self) -> usize {
-        let font_dict = Fonts::get_standard_fonts_dict();
+        let mut resources = PdfDictionaryObject::new();
+        resources.set("Font", Fonts::get_standard_fonts_dict().boxed());
+        
+        self.objects.push(resources.boxed());
+
         let resources_number = self.allocate_object_id();
-        let mut resources = DictionaryObject::new(None);
         resources.metadata.object_identifier = Some(resources_number);
-        resources.set("Font", DictionaryObject::make_pdf_obj(font_dict.values));
-        self.objects.push(Box::new(resources));
+
         resources_number
     }
 
@@ -137,7 +139,7 @@ impl PDF {
         }
 
         // Ensure page tree has a MediaBox if no pages have one
-        // This is required by PDF spec - every page must have MediaBox (direct or inherited)
+        // every page must have MediaBox (direct or inherited)
         if self.page_tree.media_box.is_none() {
             let has_page_with_mediabox = self.page_tree.kids.iter().any(|kid| {
                 if let PageTreeItemType::Page(page) = kid {
@@ -207,7 +209,7 @@ impl PDF {
         // Add reference to page tree
         let pages_id = self.page_tree.metadata.object_identifier.unwrap();
         self.catalog
-            .set("Pages", IndirectObject::make_pdf_obj(pages_id));
+            .set("Pages", PdfIndirectObject::new(pages_id));
 
         let catalog_copy = self.catalog.clone();
         self.objects.push(Box::new(catalog_copy));

@@ -2,11 +2,11 @@
 
 #[test]
 fn trace_both_object_4s() {
-    use pydyf::{FileIdentifierMode, PageObject, StreamObject, PDF};
+    use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PDF};
     use pydyf::page::PageSize;
 
     let mut pdf = PDF::new();
-    let stream = StreamObject::new();
+    let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
     let mut page = PageObject::new(0usize.into());
     page.add_content(content_id);

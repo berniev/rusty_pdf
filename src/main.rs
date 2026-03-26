@@ -5,7 +5,7 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, StreamObject};
+use pydyf::{FileIdentifierMode, PDF, PageObject, PdfStreamObject};
 use std::fs::File;
 use std::io::Write;
 
@@ -15,7 +15,7 @@ fn main() {
 
     let mut pdf = PDF::new();
 
-    let mut stream = StreamObject::new();
+    let mut stream = PdfStreamObject::uncompressed();
     let color = RGB::new(Color::new(0.0), Color::new(0.5), Color::new(1.0));
     stream.set_color_rgb(color, StrokeOrFill::Fill);
     stream.rectangle(

@@ -18,7 +18,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
 #[test]
 fn test_generate_simple_uncompressed_pdf() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
@@ -89,7 +89,7 @@ fn test_generate_simple_uncompressed_pdf() {
 #[test]
 fn test_generate_circle_over_rectangle() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0)),
@@ -189,7 +189,7 @@ fn test_generate_circle_over_rectangle() {
 fn test_multipage_pdf() {
     let mut pdf = PDF::new();
 
-    let mut stream1 = Stream::new();
+    let mut stream1 = Stream::uncompressed();
     stream1.set_color_rgb(
         RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
         StrokeOrFill::Fill,
@@ -234,7 +234,7 @@ fn test_multipage_pdf() {
     let page1 = create_page_with_content(content_ref1);
     pdf.add_page(page1);
 
-    let mut stream2 = Stream::new();
+    let mut stream2 = Stream::uncompressed();
     stream2.set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(1.0), Color::new(0.0)),
         StrokeOrFill::Fill,
@@ -279,7 +279,7 @@ fn test_multipage_pdf() {
     let page2 = create_page_with_content(content_ref2);
     pdf.add_page(page2);
 
-    let mut stream3 = Stream::new();
+    let mut stream3 = Stream::uncompressed();
     stream3.set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0)),
         StrokeOrFill::Fill,
@@ -334,7 +334,7 @@ fn test_multipage_pdf() {
 #[test]
 fn test_graphics_operations() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
@@ -495,7 +495,7 @@ fn test_graphics_operations() {
 #[test]
 fn test_comparison_uncompressed() {
     let mut pdf = PDF::new();
-    let mut stream = Stream::new();
+    let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
         RGB::new(Color::new(0.9), Color::new(0.9), Color::new(0.9)),

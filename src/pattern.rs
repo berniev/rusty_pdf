@@ -4,16 +4,19 @@
 //! or smooth color transitions (shading).
 
 use std::any::Any;
-use std::rc::Rc;
 
 #[cfg(test)]
 use crate::color::Color;
 use crate::color::RGB;
-use crate::util::{Matrix, Posn, Rect, ToPdf};
+use crate::util::{Line, Matrix, Rect, ToPdf};
 use crate::{
-    ArrayObject, DictionaryObject, NameObject, NumberObject, PdfObject, Resource, ResourceCategory,
+    PdfArrayObject, PdfDictionaryObject, PdfObject,
+    PdfStreamObject, Resource, ResourceCategory,
 };
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
+//--------------------------- Axial Shading ----------------------//
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PatternType {
     Tiling = 1,
@@ -72,43 +75,33 @@ impl TilingPattern {
         self
     }
 
-    pub fn to_stream(&self) -> crate::StreamObject {
-        let mut extra_entries = Vec::new();
+    pub fn to_stream(&self) -> PdfStreamObject {
+        let mut stream = PdfStreamObject::uncompressed();
 
-        extra_entries.push(("Type".to_string(), NameObject::make_pdf_obj("Pattern")));
+        stream.add_to_content(self.content.clone());
 
-        extra_entries.push((
-            "PatternType".to_string(),
-            NumberObject::make_pdf_obj(PatternType::Tiling as i64),
-        ));
-
-        extra_entries.push((
-            "PaintType".to_string(),
-            NumberObject::make_pdf_obj(self.paint_type as i64),
-        ));
-
-        extra_entries.push((
-            "TilingType".to_string(),
-            NumberObject::make_pdf_obj(self.tiling_type as i64),
-        ));
-
-        extra_entries.push(("BBox".to_string(), self.bounding_box.make_pdf_obj()));
-
-        extra_entries.push(("XStep".to_string(), NumberObject::make_pdf_obj(self.x_step)));
-
-        extra_entries.push(("YStep".to_string(), NumberObject::make_pdf_obj(self.y_step)));
+        stream.dict.add_name("Type", "Pattern");
+        stream
+            .dict
+            .add_inti64("PatternType", PatternType::Tiling as i64);
+        stream.dict.add_inti64("PaintType", self.paint_type as i64);
+        stream
+            .dict
+            .add_inti64("TilingType", self.tiling_type as i64);
+        stream
+            .dict
+            .add_pdf_array("BBox", self.bounding_box.as_pdf_array());
+        stream.dict.add_float64("XStep", self.x_step);
+        stream.dict.add_float64("YStep", self.y_step);
 
         if let Some(matrix) = self.matrix {
-            extra_entries.push(("Matrix".to_string(), matrix.make_pdf_obj()));
+            stream.dict.add_pdf_array("Matrix", matrix.as_pdf_array());
         }
 
-        crate::StreamObject::new().with_data(Some(vec![self.content.clone()]), Some(extra_entries))
+        stream
     }
 
     fn generate_id(&self) -> String {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
         let mut hasher = DefaultHasher::new();
         self.content.hash(&mut hasher);
         format!(
@@ -130,10 +123,6 @@ impl Resource for TilingPattern {
         self.generate_id()
     }
 
-    fn to_pdf_object(&self) -> Rc<dyn PdfObject> {
-        Rc::new(self.to_stream())
-    }
-
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -153,8 +142,7 @@ pub enum ShadingType {
 /// Defines a smooth transition between colors along a line.
 #[derive(Clone)]
 pub struct AxialShading {
-    pub start: Posn<f64>,
-    pub end: Posn<f64>,
+    pub line: Line,
     pub start_color: RGB,
     pub end_color: RGB,
     pub extend_start: bool,
@@ -162,10 +150,9 @@ pub struct AxialShading {
 }
 
 impl AxialShading {
-    pub fn new(start: Posn<f64>, end: Posn<f64>, start_color: RGB, end_color: RGB) -> Self {
+    pub fn new(line: Line, start_color: RGB, end_color: RGB) -> Self {
         Self {
-            start,
-            end,
+            line,
             start_color,
             end_color,
             extend_start: false,
@@ -179,25 +166,21 @@ impl AxialShading {
         self
     }
 
-    pub fn to_dict(&self) -> DictionaryObject {
-        let mut dict = DictionaryObject::new(None);
+    pub fn to_dict(&self) -> PdfDictionaryObject {
+        let mut dict = PdfDictionaryObject::new();
 
-        dict.set(
-            "ShadingType",
-            NumberObject::make_pdf_obj(ShadingType::Axial as i64),
-        );
-        dict.set("ColorSpace", NameObject::make_pdf_obj("DeviceRGB"));
-        let coords_array = ArrayObject::from_points(self.start, self.end);
-        dict.set("Coords", ArrayObject::make_pdf_obj(coords_array.values));
+        dict.add_inti64("ShadingType", ShadingType::Axial as i64);
+        dict.add_name("ColorSpace", "DeviceRGB");
+        dict.add_pdf_array("Coords", self.line.as_pdf_array());
 
         // Function (simplified: direct color interpolation)
         // In a full implementation, this would be a proper PDF function object
-        // For now, we use a simplified representation
+        // todo: For now, we use a simplified representation
 
-        let mut extend = ArrayObject::new(None);
+        let mut extend = PdfArrayObject::new();
         extend.push_bool(self.extend_start);
         extend.push_bool(self.extend_end);
-        dict.set("Extend", ArrayObject::make_pdf_obj(extend.values));
+        dict.set("Extend", extend.boxed());
 
         dict
     }
@@ -205,8 +188,8 @@ impl AxialShading {
     fn generate_id(&self) -> String {
         format!(
             "axial:{}->{}: {}->{} ",
-            self.start.as_string(),
-            self.end.as_string(),
+            self.line.start.as_string(),
+            self.line.end.as_string(),
             self.start_color.as_string(),
             self.end_color.as_string()
         )
@@ -222,10 +205,6 @@ impl Resource for AxialShading {
         self.generate_id()
     }
 
-    fn to_pdf_object(&self) -> Rc<dyn PdfObject> {
-        Rc::new(self.to_dict())
-    }
-
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -233,6 +212,7 @@ impl Resource for AxialShading {
 
 #[cfg(test)]
 mod tests {
+    use crate::util::Posn;
     use super::*;
 
     #[test]
@@ -283,21 +263,25 @@ mod tests {
     #[test]
     fn test_axial_shading_creation() {
         let shading = AxialShading::new(
-            Posn { x: 0.0, y: 0.0 },
-            Posn { x: 100.0, y: 0.0 },
+            Line {
+                start: Posn { x: 0.0, y: 0.0 },
+                end: Posn { x: 100.0, y: 0.0 },
+            },
             RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)), // Red
             RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0)), // Blue
         );
 
-        assert_eq!(shading.start, Posn { x: 0.0, y: 0.0 });
-        assert_eq!(shading.end, Posn { x: 100.0, y: 0.0 });
+        assert_eq!(shading.line.start, Posn { x: 0.0, y: 0.0 });
+        assert_eq!(shading.line.end, Posn { x: 100.0, y: 0.0 });
     }
 
     #[test]
     fn test_axial_shading_to_dict() {
         let shading = AxialShading::new(
-            Posn { x: 0.0, y: 0.0 },
-            Posn { x: 100.0, y: 100.0 },
+            Line {
+                start: Posn { x: 0.0, y: 0.0 },
+                end: Posn { x: 100.0, y: 100.0 },
+            },
             RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
             RGB::new(Color::new(0.0), Color::new(1.0), Color::new(0.0)),
         );
@@ -311,8 +295,10 @@ mod tests {
     #[test]
     fn test_axial_shading_resource_trait() {
         let shading = AxialShading::new(
-            Posn { x: 0.0, y: 0.0 },
-            Posn { x: 100.0, y: 0.0 },
+            Line {
+                start: Posn { x: 0.0, y: 0.0 },
+                end: Posn { x: 100.0, y: 0.0 },
+            },
             RGB::new(Color::new(0.0), Color::new(0.0), Color::new(0.0)),
             RGB::new(Color::new(1.0), Color::new(1.0), Color::new(1.0)),
         );

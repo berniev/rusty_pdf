@@ -1,42 +1,3 @@
-use std::io::Write as IoWrite;
-use std::rc::Rc;
-
-use flate2::Compression;
-use flate2::write::ZlibEncoder;
-
-use crate::color::{CMYK, Color, ColorSpace, RGB};
-use crate::encoding::{ascii85_encode, f_to_pdf_num};
-use crate::error::{PdfError, PdfResult};
-use crate::objects::string::encode_pdf_string;
-use crate::util::{Dims, Matrix, Posn, ToPdf};
-use crate::{DictionaryObject, NumberObject, PdfMetadata, PdfObject};
-
-//------------------------ EvenOdd -------------------------------
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum WindingRule {
-    NonZero,
-    EvenOdd,
-}
-
-//------------------- CompressionMethod ----------------------------
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum CompressionMethod {
-    None,
-    Flate,
-}
-
-//--------------------- StrokeOrFill -----------------------------
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum StrokeOrFill {
-    Stroke,
-    Fill,
-}
-
-//------------------------ Stream Object -----------------------
-
 /// PDF content stream.
 ///
 /// Content streams define page content, eg:
@@ -46,18 +7,17 @@ pub enum StrokeOrFill {
 /// - Images: inline images
 /// - Transformations: matrices, state management
 ///
-///   Spec:
-///
-///   Stream Object:
-///
 ///   A stream object, like a string object, is a sequence of bytes. Furthermore, a stream may be
 ///   of unlimited length, whereas a string shall be subject to an implementation limit. For this
 ///   reason, objects with potentially large amounts of data, such as images and page
 ///   descriptions, shall be represented as streams.
+///
 ///   A stream shall consist of a dictionary followed by zero or more bytes bracketed between the
 ///   keywords'stream' and 'endstream'.
+///
 ///   All streams shall be indirect objects (see 7.3.10, "Indirect Objects") and the stream
 ///   dictionary shall be a direct object.
+///
 ///   Beginning with PDF 1.5, indirect objects may reside in object streams (see 7.5.7, "Object
 ///   Streams"). They are referred to in the same way; however, their definition shall not
 ///   include the keywords obj and endobj, and their generation number shall be zero.
@@ -93,58 +53,78 @@ pub enum StrokeOrFill {
 ///   DCTDecode        yes       image           Discrete Cosine Transform technique based on JPEG
 ///   JPXDecode        no   1.5  image           Wwavelet-based JPEG2000 standard
 ///   Crypt            yes  1.5  data            Data encrypted by a security handler
-pub struct StreamObject {
-    pub stream: Vec<Vec<u8>>,
-    pub extra: Vec<(String, Rc<dyn PdfObject>)>,
+///
+use std::io::Write as IoWrite;
+
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
+
+use crate::color::{CMYK, Color, ColorSpace, RGB};
+use crate::encoding::{ascii85_encode, f_to_pdf_num};
+use crate::error::{PdfError, PdfResult};
+use crate::objects::string::encode_pdf_string;
+pub use crate::util::{CompressionMethod, Dims, Matrix, Posn, StrokeOrFill, ToPdf, WindingRule};
+use crate::{PdfDictionaryObject, PdfNameObject, PdfNumberObject, PdfObject};
+
+//------------------------ PdfStreamObject -----------------------
+
+pub struct PdfStreamObject {
+    pub dict: PdfDictionaryObject,
+    pub content: Vec<u8>,
+
     pub compress: CompressionMethod,
-    metadata: PdfMetadata,
 }
 
-impl Default for StreamObject {
+impl Default for PdfStreamObject {
     fn default() -> Self {
-        Self::new()
+        Self {
+            dict: PdfDictionaryObject::new(),
+            content: Vec::new(),
+
+            compress: CompressionMethod::None,
+        }
     }
 }
 
-impl StreamObject {
-    pub fn new() -> Self {
-        StreamObject {
-            stream: Vec::new(),
-            extra: Vec::new(),
+impl PdfStreamObject {
+    pub fn uncompressed() -> Self {
+        Self {
             compress: CompressionMethod::None,
-            metadata: PdfMetadata::default(),
+            ..Default::default()
         }
     }
 
     pub fn compressed() -> Self {
-        let mut s = Self::new();
-        s.compress = CompressionMethod::Flate;
-        s
+        Self {
+            compress: CompressionMethod::Flate,
+            ..Default::default()
+        }
     }
 
-    pub fn with_data(
-        mut self,
-        stream: Option<Vec<Vec<u8>>>,
-        extra: Option<Vec<(String, Rc<dyn PdfObject>)>>,
-    ) -> Self {
-        if let Some(s) = stream {
-            self.stream = s;
-        }
-        if let Some(e) = extra {
-            self.extra = e;
-        }
+    pub fn with_data(mut self, stream: Vec<u8>, dict: PdfDictionaryObject) -> Self {
+        self.content = stream;
+        self.dict = dict;
+
         self
+    }
+
+    pub fn add_to_content(&mut self, bytes: Vec<u8>) {
+        self.content.extend(bytes);
+    }
+
+    pub fn add_to_dict(&mut self, key: &str, object: Box<dyn PdfObject>) {
+        self.dict.set(key, object);
     }
 
     fn push_op(&mut self, operands: &[&dyn ToPdf], operator: &str) {
         let mut cmd_parts: Vec<String> = operands.iter().map(|n| n.to_pdf()).collect();
 
         cmd_parts.push(operator.to_string());
-        self.stream.push(cmd_parts.join(" ").into_bytes());
+        self.add_to_content(cmd_parts.join(" ").into_bytes());
     }
 
     fn cmd(&mut self, cmd: char) {
-        self.stream.push(vec![cmd as u8]);
+        self.content.push(cmd as u8);
     }
 
     fn windable_cmd(&mut self, cmd: char, even_odd: WindingRule) {
@@ -153,12 +133,11 @@ impl StreamObject {
             WindingRule::EvenOdd => op_bytes.push(b'*'),
             WindingRule::NonZero => op_bytes.push(b' '),
         }
-        self.stream.push(op_bytes);
+        self.add_to_content(op_bytes);
     }
 
     fn float_cmd(&mut self, string: &str, value: f64) {
-        self.stream
-            .push(format!("{} {}", f_to_pdf_num(value), string).into_bytes());
+        self.add_to_content(format!("{} {}", f_to_pdf_num(value), string).into_bytes());
     }
 
     fn int_cmd(&mut self, string: &str, value: i32) {
@@ -168,20 +147,20 @@ impl StreamObject {
     pub fn begin_marked_content(&mut self, tag: &str, property_list: Option<Vec<u8>>) {
         match property_list {
             None => {
-                self.stream.push(format!("/{tag} BMC").into_bytes());
+                self.add_to_content(format!("/{tag} BMC").into_bytes());
             }
 
             Some(props) => {
                 let mut cmd = format!("/{tag} ").into_bytes();
                 cmd.extend(props);
                 cmd.extend(b" BDC");
-                self.stream.push(cmd);
+                self.add_to_content(cmd);
             }
         }
     }
 
     pub fn begin_text(&mut self) {
-        self.stream.push(b"BT".to_vec());
+        self.add_to_content(b"BT".to_vec());
     }
 
     /// Modify current clipping path by intersecting it with current path.
@@ -202,39 +181,39 @@ impl StreamObject {
     /// Add cubic Bézier curve to current path.
     ///
     /// extend curve from `pos3` using `pos1` and `pos2` as Bézier control points.
-    pub fn curve_to(&mut self, pos1: Posn<f64>, pos2: Posn<f64>, pos3: Posn<f64>) {
+    pub fn curve_to(&mut self, pos1: Posn, pos2: Posn, pos3: Posn) {
         self.push_op(&[&pos1, &pos2, &pos3], "c");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
     /// Extend curve to `pos3` using current point, and `pos2` as Bézier control points.
-    pub fn curve_start_to(&mut self, pos2: Posn<f64>, pos3: Posn<f64>) {
+    pub fn curve_start_to(&mut self, pos2: Posn, pos3: Posn) {
         self.push_op(&[&pos2, &pos3], "v");
     }
 
     /// Add cubic Bézier curve to current path.
     ///
     /// extend curve to `pos3` using `pos1`, and `pos3` as Bézier control points.
-    pub fn curve_end_to(&mut self, pos1: Posn<f64>, pos3: Posn<f64>) {
+    pub fn curve_end_to(&mut self, pos1: Posn, pos3: Posn) {
         self.push_op(&[&pos1, &pos3], "y");
     }
 
     pub fn draw_x_object(&mut self, reference: &str) {
-        self.stream.push(format!("/{} Do", reference).into_bytes());
+        self.add_to_content(format!("/{} Do", reference).into_bytes());
     }
 
     /// End path without filling or stroking.
     pub fn end(&mut self) {
-        self.stream.push(b"n".to_vec());
+        self.add_to_content(b"n".to_vec());
     }
 
     pub fn end_marked_content(&mut self) {
-        self.stream.push(b"EMC".to_vec());
+        self.add_to_content(b"EMC".to_vec());
     }
 
     pub fn end_text(&mut self) {
-        self.stream.push(b"ET".to_vec());
+        self.add_to_content(b"ET".to_vec());
     }
 
     pub fn fill(&mut self, even_odd: WindingRule) {
@@ -302,7 +281,7 @@ impl StreamObject {
         final_command_bytes.extend(encoded_data); // image data
         final_command_bytes.extend(b" EI"); // End Image marker
 
-        self.stream.push(final_command_bytes);
+        self.add_to_content(final_command_bytes);
 
         Ok(())
     }
@@ -328,15 +307,15 @@ impl StreamObject {
         )
     }
 
-    pub fn line_to_x_y(&mut self, posn: Posn<f64>) {
+    pub fn line_to_x_y(&mut self, posn: Posn) {
         self.push_op(&[&posn], "l");
     }
 
-    pub fn move_to_x_y(&mut self, posn: Posn<f64>) {
+    pub fn move_to_x_y(&mut self, posn: Posn) {
         self.push_op(&[&posn], "m");
     }
 
-    pub fn move_text_to_next_line_at(&mut self, posn: Posn<f64>) {
+    pub fn move_text_to_next_line_at(&mut self, posn: Posn) {
         self.push_op(&[&posn], "T*");
     }
 
@@ -344,21 +323,21 @@ impl StreamObject {
         let mut cmd = b"/".to_vec();
         cmd.extend(name.as_bytes());
         cmd.extend(b" sh");
-        self.stream.push(cmd);
+        self.add_to_content(cmd);
     }
 
     pub fn pop_state(&mut self) {
-        self.stream.push(b"Q".to_vec());
+        self.add_to_content(b"Q".to_vec());
     }
 
     pub fn push_state(&mut self) {
-        self.stream.push(b"q".to_vec());
+        self.add_to_content(b"q".to_vec());
     }
 
     /// Add rectangle to current path as complete subpath.
     ///
     /// `posn` is the lower-left corner and `size` the dimensions.
-    pub fn rectangle(&mut self, posn: Posn<f64>, size: Dims) {
+    pub fn rectangle(&mut self, posn: Posn, size: Dims) {
         self.push_op(&[&posn, &size], "re");
     }
 
@@ -395,8 +374,7 @@ impl StreamObject {
             StrokeOrFill::Stroke => "CS",
             StrokeOrFill::Fill => "cs",
         };
-        self.stream
-            .push(format!("/ {space} {operator}").into_bytes());
+        self.add_to_content(format!("/ {space} {operator}").into_bytes());
     }
 
     /// Set special color. For non-stroking operations unless `stroke`=`true` (stroking operation)
@@ -417,7 +395,7 @@ impl StreamObject {
             })
             .to_string(),
         );
-        self.stream.push(cmd_parts.join(" ").into_bytes());
+        self.add_to_content(cmd_parts.join(" ").into_bytes());
     }
 
     pub fn set_dash_line_pattern(&mut self, dash_array: &[f64], dash_phase: i32) {
@@ -427,12 +405,11 @@ impl StreamObject {
         // Build the entire command in one single allocation
         let cmd = format!("[{}] {} d", array_str.join(" "), dash_phase).into_bytes();
 
-        self.stream.push(cmd);
+        self.add_to_content(cmd);
     }
 
     pub fn set_font_name_and_size(&mut self, font: &str, size: f64) {
-        self.stream
-            .push(format!("/{} {} Tf", font, f_to_pdf_num(size)).into_bytes());
+        self.add_to_content(format!("/{} {} Tf", font, f_to_pdf_num(size)).into_bytes());
     }
 
     pub fn set_text_rendering_mode(&mut self, mode: i32) {
@@ -465,7 +442,7 @@ impl StreamObject {
 
     /// Set specified parameters in graphic state.
     pub fn set_state(&mut self, state_name: &str) {
-        self.stream.push(format!("/{state_name} gs").into_bytes());
+        self.add_to_content(format!("/{state_name} gs").into_bytes());
     }
     /// Set current text and text line transformation matrix.
     pub fn set_text_matrix(&mut self, matrix: Matrix) {
@@ -475,7 +452,7 @@ impl StreamObject {
     /// Set text position without scaling, rotation, or skewing.
     ///
     /// Convenience method equivalent to calling `set_text_matrix` with an identity matrix.
-    pub fn set_text_position(&mut self, posn: Posn<f64>) {
+    pub fn set_text_position(&mut self, posn: Posn) {
         self.set_text_matrix(Matrix {
             a: 1.0,
             b: 0.0,
@@ -487,26 +464,26 @@ impl StreamObject {
     }
 
     pub fn show_text_strings(&mut self, text: &str) {
-        self.stream.push(format!("[{text}] TJ").into_bytes());
+        self.add_to_content(format!("[{text}] TJ").into_bytes());
     }
 
     pub fn show_single_text_string(&mut self, text: &str) {
         let mut cmd = encode_pdf_string(text);
         cmd.push_str(" Tj");
-        self.stream.push(Vec::from(cmd));
+        self.add_to_content(Vec::from(cmd));
     }
 
     pub fn stroke_path(&mut self) {
-        self.stream.push(b"S".to_vec());
+        self.add_to_content(b"S".to_vec());
     }
 
     pub fn stroke_and_close_path(&mut self) {
-        self.stream.push(b"s".to_vec());
+        self.add_to_content(b"s".to_vec());
     }
 
     pub fn rounded_rectangle(
         &mut self,
-        posn: Posn<f64>,
+        posn: Posn,
         size: Dims,
         radius_top_left: f64,
         radius_top_right: f64,
@@ -518,7 +495,7 @@ impl StreamObject {
         let Posn { x, y } = posn;
         let Dims { width, height } = size;
 
-        let draw_corner = |s: &mut StreamObject, radius: f64, rel_corner_pos: Posn<f64>| {
+        let draw_corner = |s: &mut PdfStreamObject, radius: f64, rel_corner_pos: Posn| {
             if radius < 0.0001 {
                 return;
             }
@@ -594,57 +571,29 @@ impl StreamObject {
     }
 }
 
-impl PdfObject for StreamObject {
-    fn data(&self) -> String {
-        let stream_bytes = match self.compress {
-            CompressionMethod::None => self.stream.join(&b'\n'),
+impl PdfObject for PdfStreamObject {
+    fn data(&mut self) -> Vec<u8> {
+        let stream_bytes: Vec<u8> = match self.compress {
+            CompressionMethod::None => self.content.clone(),
             CompressionMethod::Flate => {
                 let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
-                encoder.write_all(&self.stream.join(&b'\n')).unwrap();
+                encoder.write_all(&self.content).unwrap();
                 encoder.finish().unwrap()
             }
         };
 
-        let mut dict_values = self.extra.clone();
-        dict_values.push((
-            "Length".to_string(),
-            Rc::new(NumberObject::from(stream_bytes.len() as f64)),
-        ));
-
-        // Add /Filter entry if stream is compressed
+        let dict = &mut self.dict;
+        dict.add_float64("Length", stream_bytes.len() as f64);
         if self.compress == CompressionMethod::Flate {
-            dict_values.push((
-                "Filter".to_string(),
-                Rc::new(crate::NameObject::new(Some("FlateDecode".to_string()))),
-            ));
+            dict.add_name("Filter", "FlateDecode");
         }
 
-        let dict = DictionaryObject::new(Some(dict_values));
+        let mut vec = dict.data();
+        vec.push(b'\n');
+        vec.extend(b"stream\n");
+        vec.extend(&stream_bytes);
+        vec.extend(b"endstream\n");
 
-        if stream_bytes.is_empty() {
-            format!("{}\nstream\nendstream", dict.data())
-        } else {
-            // For binary streams (compressed or with binary data), we must preserve exact bytes.
-            // PDF spec allows binary data in streams. We use Latin-1 encoding (ISO-8859-1)
-            // which provides 1-to-1 mapping for all byte values 0-255.
-            let stream_str: String = stream_bytes.iter().map(|&b| b as char).collect();
-            format!("{}\nstream\n{}\nendstream", dict.data(), stream_str)
-        }
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
-    }
-
-    fn is_compressible(&self) -> bool {
-        false
+        vec
     }
 }
