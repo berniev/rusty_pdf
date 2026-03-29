@@ -1,3 +1,5 @@
+use std::ops::Deref;
+use crate::objects::pdf_object::Pdf;
 /// Spec:
 /// Dictionary:
 ///     An associative table containing pairs of objects, the first object being a name object
@@ -16,12 +18,9 @@
 ///         name "Subtype" Opt (requires Type)
 ///
 ///
-use crate::{
-    NumberType, PdfArrayObject, PdfBooleanObject, PdfIndirectObject, PdfNameObject,
-    PdfNumberObject, PdfObject,
-};
+use crate::{PdfNameObject, PdfObject};
 
-//--------------------------- PdfDictionaryObject----------------------//
+//--------------------------- PdfDictionaryObject ----------------------//
 
 pub struct PdfDictionaryObject {
     pub(crate) values: Vec<(PdfNameObject, Box<dyn PdfObject>)>,
@@ -33,7 +32,7 @@ impl PdfDictionaryObject {
     }
 
     pub(crate) fn typed(mut self, name: &str) -> Self {
-        self.set(name, self.make_name(name).boxed());
+        self.add("Type", Pdf::name(name));
 
         self
     }
@@ -50,63 +49,9 @@ impl PdfDictionaryObject {
         self.values.iter().any(|(k, _)| k.value == key)
     }
 
-    fn make_name(&self, name: &str) -> PdfNameObject {
-        PdfNameObject::new(name)
-    }
-
-    fn set(&mut self, key: &str, object: Box<dyn PdfObject>) {
-        // todo: duplicates not allowed
-        let k_obj = self.make_name(key);
-        self.values.push((k_obj, object));
-    }
-
-    //--------------------------- Add Methods -----------------------//
-
-    pub fn add_string(&mut self, key: &str, value: String) {
-        self.set(key, self.make_name(&value).boxed());
-    }
-
-    pub fn add_name(&mut self, key: &str, value: &str) {
-        self.set(key, PdfNameObject::new(value).boxed());
-    }
-
-    pub fn add_indirect_norm(&mut self, key: &str, value: usize, obj: Box<dyn PdfObject>) {
-        self.set(key, PdfIndirectObject::new_standard(value, obj).boxed());
-    }
-
-     pub fn add_indirect_in_stream(
-        &mut self,
-        key: &str,
-        value: usize,
-        obj: Box<dyn PdfObject>,
-        num: usize,
-    ) {
-        self.set(
-            key,
-            PdfIndirectObject::new_in_obj_stream(value, obj, num).boxed(),
-        );
-    }
-
-    pub fn add_bool(&mut self, key: &str, value: bool) {
-        self.set(key, PdfBooleanObject::new(value).boxed());
-    }
-
-    pub fn add_number(&mut self, key: &str, value: impl Into<NumberType>) {
-        self.set(key, PdfNumberObject::new(value.into()).boxed());
-    }
-
-    pub fn add_indirect_ref(&mut self, key: &str, value: PdfIndirectReference) {
-        self.set(key, value.boxed());
-    }
-
-    /// param: PdfArrayObject
-    pub fn add_pdf_array(&mut self, key: &str, array: PdfArrayObject) {
-        self.set(key, array.boxed());
-    }
-
-    /// param: PdfDictionaryObject
-    pub fn add_pdf_dict(&mut self, key: &str, value: PdfDictionaryObject) {
-        self.set(key, value.boxed());
+    pub fn add(&mut self, key: &str, object: Box<dyn PdfObject>) {
+        // todo: check key is not duplicate
+        self.values.push((PdfNameObject::new(key), object));
     }
 }
 
@@ -128,6 +73,7 @@ impl PdfObject for PdfDictionaryObject {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::objects::pdf_object::Pdf;
 
     #[test]
     fn test_dictionary_methods() {
@@ -135,13 +81,13 @@ mod tests {
         assert!(dict.is_empty());
         assert_eq!(dict.len(), 0);
 
-        dict.add_name("Key1", "Value1");
+        dict.add("Key1", Pdf::name("Value1"));
         assert!(!dict.is_empty());
         assert_eq!(dict.len(), 1);
         assert!(dict.contains_key("Key1"));
         assert!(!dict.contains_key("Key2"));
 
-        dict.add_name("Key2", "Value2");
+        dict.add("Key2", Pdf::name("Value2"));
         assert_eq!(dict.len(), 2);
         assert!(dict.contains_key("Key2"));
     }

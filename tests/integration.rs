@@ -2,11 +2,11 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, PdfStreamObject};
+use pydyf::{FileIdentifierMode, PdfFile, PageObject, PdfStreamObject};
 
 #[test]
 fn test_create_pdf() {
-    let pdf = PDF::new();
+    let pdf = PdfFile::new();
     // After refactoring, PDF::new() creates an empty objects list
     // Objects are added during write() or when explicitly added
     assert_eq!(pdf.objects.len(), 0);
@@ -14,7 +14,7 @@ fn test_create_pdf() {
 
 #[test]
 fn test_add_page() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
     let mut page = PageObject::new(0usize.into());
@@ -66,7 +66,7 @@ fn test_text_operations() {
 
 #[test]
 fn test_add_page_with_pagesize_adds_mediabox() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
 
@@ -80,7 +80,7 @@ fn test_add_page_with_pagesize_adds_mediabox() {
 
 #[test]
 fn test_default_page_size() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
@@ -130,7 +130,7 @@ fn test_pagesize_custom_validation() {
 
 #[test]
 fn test_compressed_pdf_generation() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     // Add some content to the stream

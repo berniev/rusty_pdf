@@ -34,7 +34,7 @@
 /// 3. Test offset calculations match spec
 /// 4. Test exclusions (streams cannot be compressed)
 
-use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PDF};
+use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PdfFile};
 use pydyf::page::PageSize;
 use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{WindingRule, StrokeOrFill};
@@ -43,7 +43,7 @@ use pydyf::util::{Dims, Posn};
 /// SPEC TEST 1: /Type must be /ObjStm
 #[test]
 fn spec_objstm_must_have_type() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
     stream.add_rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
     pdf.add_object(Box::new(stream));
@@ -58,7 +58,7 @@ fn spec_objstm_must_have_type() {
 /// SPEC TEST 2: /N must be present and be an integer
 #[test]
 fn spec_objstm_must_have_n() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
     stream.add_rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
     pdf.add_object(Box::new(stream));
@@ -80,7 +80,7 @@ fn spec_objstm_must_have_n() {
 /// SPEC TEST 3: /First must be present and be an integer
 #[test]
 fn spec_objstm_must_have_first() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
     stream.add_rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
     pdf.add_object(Box::new(stream));
@@ -102,7 +102,7 @@ fn spec_objstm_must_have_first() {
 /// SPEC TEST 4: Stream objects cannot be compressed
 #[test]
 fn spec_stream_objects_not_compressible() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     // Add a stream object (with actual stream data)
     let mut stream = PdfStreamObject::uncompressed();

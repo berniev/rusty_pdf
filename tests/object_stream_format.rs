@@ -7,12 +7,12 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, PdfStreamObject};
+use pydyf::{FileIdentifierMode, PdfFile, PageObject, PdfStreamObject};
 
 /// Test: Object stream dictionary must have /Type /ObjStm
 #[test]
 fn test_objstm_has_type() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
     let color = RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0));
     stream.set_color_rgb(color, StrokeOrFill::Fill);
@@ -45,7 +45,7 @@ fn test_objstm_has_type() {
 /// Test: Object stream dictionary must have /N entry (integer)
 #[test]
 fn test_objstm_has_n() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
     stream.add_rectangle(
         Posn { x: 0.0, y: 0.0 },
@@ -83,7 +83,7 @@ fn test_objstm_has_n() {
 /// Test: Object stream dictionary must have /First entry (integer)
 #[test]
 fn test_objstm_has_first() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
     stream.add_rectangle(
         Posn { x: 0.0, y: 0.0 },
@@ -124,7 +124,7 @@ fn test_objstm_has_first() {
 /// Test: Object stream must have /Filter /FlateDecode
 #[test]
 fn test_objstm_has_filter() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
     stream.add_rectangle(
         Posn { x: 0.0, y: 0.0 },
@@ -164,7 +164,7 @@ fn test_objstm_has_filter() {
 /// Test: Content streams should NOT be in object stream (they have stream data)
 #[test]
 fn test_content_streams_not_compressed() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     // Add a content stream
     let mut stream = PdfStreamObject::uncompressed();

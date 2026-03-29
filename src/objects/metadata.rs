@@ -1,5 +1,6 @@
 use std::fmt;
 use crate::generation::Generation;
+
 //---------------- ObjectStatus -----------------
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

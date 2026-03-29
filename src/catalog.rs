@@ -1,5 +1,4 @@
-/**
- * Spec:
+/*
  * Document Catalog:
  *     The primary dictionary object containing references directly or indirectly to all other
  *     objects in the document with the exception that there may be objects in the trailer that
@@ -24,6 +23,7 @@
  *                           Thread
  *          Named Destinations
  *          Interactive form
+ *
  * Entries:
  *     Type               name           Reqd          "Catalog"
  *     Version            name           Opt     1.4
@@ -68,111 +68,69 @@
  *     NeedsRendering      boolean        Opt    1.7
  */
 
-use once_cell::sync::Lazy;
-use std::collections::HashMap;
+/*
+The Catalog is itself an indirect object in the body — the trailer points to it by object number.
+It's a dictionary containing a mix of:
+- **Direct values** — simple like `/Type /Catalog`, `/PageLayout /SinglePage`, `/Lang (en-GB)`
+- **Indirect references** — pointers to other indirect objects in the body, written as `N 0 R`
 
-use crate::page::PageTree;
-use crate::{PdfArrayObject, PdfBooleanObject, PdfIndirectObject, PdfNameObject};
-use crate::{PdfDictionaryObject, PdfMetadata, PdfObject};
+So a minimal real catalog in the file looks like:
+1 0 obj
+<<
+  /Type /Catalog
+  /Pages 2 0 R        ← indirect ref — Pages tree is its own body object
+  /PageLayout /SinglePage  ← direct name, lives right here
+>>
+endobj
 
-//--------------------------- CatalogError -------------------------
+certain entries must be indirect references:
+/Pages — the page tree root must be indirect
+/Outlines — must be indirect
+/Metadata — must be indirect (it's a stream, streams are always indirect)
+Others may be either — small dictionaries like /ViewerPreferences can be direct (embedded inline)
+or indirect (separate body object). The spec leaves it to the writer.
+So the catalog dictionary itself is direct content inside its own indirect object wrapper — and
+everything it points to with N 0 R are separate indirect objects in the body, each with their own
+XRef entry.
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CatalogError {
-    UnsupportedEntry(String),
-    UnsupportedVersion { entry: String },
-}
+The catalog dictionary contains only:
+    Direct objects — names, booleans, strings, and small dictionaries/arrays embedded inline
+    Indirect references (N 0 R) — pointers to indirect objects defined elsewhere in the body
+The actual obj...endobj definitions are never inside the catalog — they're always elsewhere in the
+body. The catalog just holds the references to find them.
 
-//--------------------------- Catalog Entry Metadata -------------------------
+So the catalog is essentially a directory — it tells you where to find things, it doesn't contain
+the things themselves (beyond trivial values).
+*/
 
-#[derive(Debug, Clone, Copy)]
-pub struct Info {
-    pub pdf_ver: f32,
-    pub ent_type: Type,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Type {
-    Dictionary,
-    Array,
-    Name,
-    Boolean,
-    IndirectRef,
-}
-
-#[allow(dead_code)]
-#[rustfmt::skip]
-static SUPPORTED_CATALOG_ENTRIES: Lazy<HashMap<&'static str, Info>> = Lazy::new(|| {
-    HashMap::from([
-        ("Type",              Info {  pdf_ver: 1.0, ent_type: Type::Name }),
-        ("Version",           Info {  pdf_ver: 1.4, ent_type: Type::Name }),
-        ("Extensions",        Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
-        ("Pages",             Info {  pdf_ver: 1.0, ent_type: Type::IndirectRef }),
-        ("PageLabels",        Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
-        ("Names",             Info {  pdf_ver: 1.2, ent_type: Type::Dictionary }),
-        ("Dests",             Info {  pdf_ver: 1.1, ent_type: Type::Dictionary }),
-        ("ViewerPreferences", Info {  pdf_ver: 1.2, ent_type: Type::Dictionary }),
-        ("PageLayout",        Info {  pdf_ver: 1.0, ent_type: Type::Name }),
-        ("PageMode",          Info {  pdf_ver: 1.0, ent_type: Type::Name }),
-        ("Outlines",          Info {  pdf_ver: 1.1, ent_type: Type::IndirectRef }),
-        ("Threads",           Info {  pdf_ver: 1.1, ent_type: Type::Array }),
-        ("OpenAction",        Info {  pdf_ver: 1.1, ent_type: Type::Array }),
-        ("AA",                Info {  pdf_ver: 1.4, ent_type: Type::Dictionary }),
-        ("URI",               Info {  pdf_ver: 1.1, ent_type: Type::Dictionary }),
-        ("AcroForm",          Info {  pdf_ver: 1.2, ent_type: Type::Dictionary }),
-        ("Metadata",          Info {  pdf_ver: 1.4, ent_type: Type::IndirectRef }),
-        ("StructTreeRoot",    Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
-        ("MarkInfo",          Info {  pdf_ver: 1.4, ent_type: Type::Dictionary }),
-        ("Lang",              Info {  pdf_ver: 1.4, ent_type: Type::Name }),
-        ("SpiderInfo",        Info {  pdf_ver: 1.3, ent_type: Type::Dictionary }),
-        ("OutputIntents",     Info {  pdf_ver: 1.4, ent_type: Type::Array }),
-        ("PieceInfo",         Info {  pdf_ver: 1.4, ent_type: Type::Dictionary }),
-        ("OCProperties",      Info {  pdf_ver: 1.5, ent_type: Type::Dictionary }),
-        ("Perms",             Info {  pdf_ver: 1.5, ent_type: Type::Dictionary }),
-        ("Legal",             Info {  pdf_ver: 1.5, ent_type: Type::Dictionary }),
-        ("Requirements",      Info {  pdf_ver: 1.7, ent_type: Type::Array }),
-        ("Collection",        Info {  pdf_ver: 1.7, ent_type: Type::Dictionary }),
-        ("NeedsRendering",    Info {  pdf_ver: 1.7, ent_type: Type::Boolean }),
-    ])
-});
-
-//--------------------------- Catalog -------------------------
-
-#[allow(dead_code)]
-struct Catalog {
-    metadata: PdfMetadata,
-    pages: Option<PageTree>,
-}
-
-#[allow(dead_code)]
-impl Catalog {
-    pub fn new(pages: Option<PageTree>) -> Self {
-        Self {
-            metadata: Default::default(),
-            pages,
-        }
-    }
-
-    /// Validate the catalog entry name is supported
-    pub fn lookup_catalog_entry(&self, name: &str) -> Result<&Info, CatalogError> {
-        let info = SUPPORTED_CATALOG_ENTRIES
-            .get(name)
-            .ok_or_else(|| CatalogError::UnsupportedEntry(name.to_string()))?;
-
-        Ok(info)
-    }
-
-    pub fn make_catalog_item(&self, name: &str) -> Result<Box<dyn PdfObject>, CatalogError> {
-        let info = self.lookup_catalog_entry(name)?;
-
-        let res: Box<dyn PdfObject> = match info.ent_type {
-            Type::Dictionary => PdfDictionaryObject::new().typed(name).boxed(),
-            Type::Array => PdfArrayObject::new().boxed(),
-            Type::Boolean => PdfBooleanObject::new().boxed(),
-            Type::Name => PdfNameObject::new().boxed(),
-            Type::IndirectRef => PdfIndirectObject::new().boxed(),
-        };
-
-        Ok(res)
-    }
-}
+/*        
+"AA",                1.4
+"AcroForm",          1.2
+"Collection",        1.7
+"Dests",             1.1
+"Extensions",        1.3
+"Lang",              1.4
+"Legal",             1.5
+"MarkInfo",          1.4
+"Metadata",          1.4
+"Names",             1.2
+"NeedsRendering",    1.7
+"OCProperties",      1.5
+"OpenAction",        1.1
+"Outlines",          1.1
+"OutputIntents",     1.4
+"PageLabels",        1.3
+"PageLayout",        1.0
+"Pages",             1.0
+"PageMode",          1.0
+"Perms",             1.5
+"PieceInfo",         1.4
+"Requirements",      1.7
+"SpiderInfo",        1.3
+"StructTreeRoot",    1.3
+"Threads",           1.1
+"Type",              1.0
+"URI",               1.1
+"Version",           1.4
+"ViewerPreferences", 1.2
+*/

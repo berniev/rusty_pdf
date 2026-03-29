@@ -1,6 +1,6 @@
 use image::{Rgb, RgbImage};
 use pydyf::util::{Matrix, Posn};
-use pydyf::{PDF, PageObject, Stream};
+use pydyf::{PdfFile, PageObject, Stream};
 use std::fs::File;
 
 fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
@@ -28,7 +28,7 @@ fn test_external_image_from_file() {
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     img.save("/tmp/pydyf_test/gradient.png").unwrap();
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     stream.push_state();

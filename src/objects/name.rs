@@ -9,7 +9,7 @@
 ///
 use crate::PdfObject;
 
-//--------------------------- PdfNameObject----------------------//
+//--------------------------- PdfNameObject ----------------------//
 
 pub struct PdfNameObject {
     pub value: String,

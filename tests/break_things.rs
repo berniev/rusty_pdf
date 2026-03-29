@@ -5,7 +5,7 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Matrix, Posn};
-use pydyf::{PDF, PageObject};
+use pydyf::{PdfFile, PageObject};
 
 fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageObject {
     let mut page = PageObject::new(0usize.into());
@@ -16,7 +16,7 @@ fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageOb
 
 #[test]
 fn test_empty_page() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::uncompressed();
 
     let content_id = pdf.add_object(Box::new(stream));
@@ -33,7 +33,7 @@ fn test_empty_page() {
 
 #[test]
 fn test_massive_page_count() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     for _ in 0..500 {
         let mut stream = PdfStreamObject::uncompressed();
@@ -62,7 +62,7 @@ fn test_massive_page_count() {
 
 #[test]
 fn test_extreme_coordinates() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
@@ -134,7 +134,7 @@ fn test_extreme_coordinates() {
 
 #[test]
 fn test_very_long_text() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
@@ -169,7 +169,7 @@ fn test_very_long_text() {
 
 #[test]
 fn test_special_characters_text() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
@@ -232,7 +232,7 @@ fn test_special_characters_text() {
 
 #[test]
 fn test_huge_rectangle() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
@@ -259,7 +259,7 @@ fn test_huge_rectangle() {
 
 #[test]
 fn test_compressed_empty() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::compressed();
 
     let content_index = pdf.add_object(Box::new(stream));
@@ -273,7 +273,7 @@ fn test_compressed_empty() {
 
 #[test]
 fn test_extreme_font_sizes() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     stream.set_color_rgb(
@@ -328,7 +328,7 @@ fn test_extreme_font_sizes() {
 
 #[test]
 fn test_overlapping_operations() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     stream.begin_text();
@@ -357,7 +357,7 @@ fn test_overlapping_operations() {
 
 #[test]
 fn test_no_pages() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_no_pages.pdf").unwrap();

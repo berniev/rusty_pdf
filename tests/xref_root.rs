@@ -2,9 +2,9 @@
 
 #[test]
 fn test_xref_root_points_to_catalog() {
-    use pydyf::{FileIdentifierMode, PDF};
+    use pydyf::{FileIdentifierMode, PdfFile};
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut output = Vec::new();
 
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();
@@ -60,9 +60,9 @@ fn test_xref_root_points_to_catalog() {
 fn test_objects_match_their_declarations() {
     // Verify that when we write "N 0 obj", the metadata.object_identifier matches N
 
-    use pydyf::{FileIdentifierMode, PDF};
+    use pydyf::{FileIdentifierMode, PdfFile};
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut output = Vec::new();
 
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();
@@ -103,9 +103,9 @@ fn test_all_object_numbers_are_sequential() {
     // Per PDF spec, objects should be numbered starting from 1 (0 is free)
     // and should be sequential (or have gaps marked as free in xref)
 
-    use pydyf::{FileIdentifierMode, PDF};
+    use pydyf::{FileIdentifierMode, PdfFile};
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut output = Vec::new();
 
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();

@@ -5,7 +5,7 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, PdfStreamObject};
+use pydyf::{FileIdentifierMode, PdfFile, PageObject, PdfStreamObject};
 use std::fs::File;
 use std::io::Write;
 
@@ -13,7 +13,7 @@ fn main() {
     println!("PyDyf - PDF library for Rust");
     println!("Ported from Python pydyf library\n");
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     let mut stream = PdfStreamObject::uncompressed();
     stream.set_color_rgb(

@@ -3,6 +3,7 @@
 //! Provides structures for embedding metadata in PDF documents, including
 //! both the legacy Info dictionary and modern XMP metadata streams.
 
+use crate::objects::pdf_object::Pdf;
 /// Document information dictionary (legacy PDF metadata).
 ///
 /// This is the traditional way of storing document metadata in PDF,
@@ -11,7 +12,6 @@
 use crate::{
     PdfDictionaryObject, PdfNameObject, PdfObject, PdfResult, PdfStreamObject, PdfStringObject,
 };
-
 //--------------------------TrappedState-------------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -112,40 +112,39 @@ impl DocumentInfo {
         let mut dict = PdfDictionaryObject::new();
 
         if let Some(ref title) = self.title {
-            dict.add_string("Title", title.clone());
+            dict.add("Title", Pdf::string(title.as_str()));
         }
 
         if let Some(ref author) = self.author {
-            dict.add_string("Author", author.clone());
+            dict.add("Author", Pdf::string(author.as_str()));
         }
 
         if let Some(ref subject) = self.subject {
-            dict.add_string("Subject", subject.clone());
+            dict.add("Subject", Pdf::string(subject.as_str()));
         }
 
         if let Some(ref keywords) = self.keywords {
-            dict.add_string("Keywords", keywords.clone());
+            dict.add("Keywords", Pdf::string(keywords.as_str()));
         }
 
         if let Some(ref creator) = self.creator {
-            dict.add_string("Creator", creator.clone());
+            dict.add("Creator", Pdf::string(creator.as_str()));
         }
 
         if let Some(ref producer) = self.producer {
-            dict.add_string("Producer", producer.clone());
+            dict.add("Producer", Pdf::string(producer.as_str()));
         }
 
         if let Some(ref creation_date) = self.creation_date {
-            dict.add_string(
-                "CreationDate", creation_date.clone());
+            dict.add("CreationDate", Pdf::string(creation_date.as_str()));
         }
 
         if let Some(ref mod_date) = self.mod_date {
-            dict.add_string("ModDate", mod_date.clone());
+            dict.add("ModDate", Pdf::string(mod_date.as_str()));
         }
 
         if let Some(trapped) = self.trapped {
-            dict.add_string("Trapped", trapped.as_name().to_string());
+            dict.add("Trapped", Pdf::string(trapped.as_name()));
         }
 
         dict
@@ -227,12 +226,10 @@ impl XmpMetadata {
 
     pub fn to_stream(&self) -> PdfResult<PdfStreamObject> {
         let mut dict = PdfDictionaryObject::new().typed("Metadata");
-        dict.add_name("SubType", "XML");
+        dict.add("SubType", Pdf::name("XML"));
 
-        let stream = PdfStreamObject::uncompressed().with_data(
-            self.xmp_packet.as_bytes().to_vec(),
-            dict,
-        );
+        let stream =
+            PdfStreamObject::uncompressed().with_data(self.xmp_packet.as_bytes().to_vec(), dict);
 
         Ok(stream)
     }

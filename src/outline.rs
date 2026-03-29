@@ -3,11 +3,11 @@
 //! The outline provides a hierarchical table of contents that allows users
 //! to navigate through the document.
 
+use crate::objects::pdf_object::Pdf;
 use crate::{
-    NumberType, PdfDictionaryObject, PdfNumberObject, PdfObject, PdfResult, action::FitDestination,
-    color::RGB,
+    action::FitDestination, color::RGB, PdfDictionaryObject,
+    PdfResult,
 };
-
 //------------------ OutlineItemFlags -----------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -152,9 +152,9 @@ impl DocumentOutline {
         let mut outline_dict = PdfDictionaryObject::new().typed("Outlines");
 
         if !self.items.is_empty() {
-            outline_dict.add_indirect_norm("First", item_ids[0]);
-            outline_dict.add_indirect_norm("Last", item_ids[self.items.len() - 1]);
-            outline_dict.add_number("Count", self.total_count() as i64);
+            outline_dict.add("First", Pdf::indirect(item_ids[0]));
+            outline_dict.add("Last", Pdf::indirect(item_ids[self.items.len() - 1]));
+            outline_dict.add("Count", Pdf::num(self.total_count() as i64));
         }
 
         Ok(OutlineDictionaries {
@@ -192,17 +192,17 @@ impl DocumentOutline {
 
         let mut dict = PdfDictionaryObject::new().typed(&*item.title);
 
-        dict.add_indirect_norm("Parent", parent_id);
+        dict.add("Parent", Pdf::indirect(parent_id));
 
         if let Some(prev) = prev_id {
-            dict.add_indirect_norm("Prev", prev);
+            dict.add("Prev", Pdf::indirect(prev));
         }
         if let Some(next) = next_id {
-            dict.add_indirect_norm("Next", next);
+            dict.add("Next", Pdf::indirect(next));
         }
 
         if let Some(dest) = item.destination.clone() {
-            dict.add_pdf_array("Dest", dest.to_pdf_array());
+            dict.add("Dest", Pdf::array(dest.to_pdf_array()));
         }
 
         if !item.children.is_empty() {
@@ -226,21 +226,21 @@ impl DocumentOutline {
                 )?;
             }
 
-            dict.add_indirect_norm("First", first_child_id);
-            dict.add_indirect_norm("Last", all_ids[first_child_idx + item.children.len() - 1]);
+            dict.add("First", Pdf::indirect(first_child_id));
+            dict.add("Last", Pdf::indirect(all_ids[first_child_idx + item.children.len() - 1]));
 
             // Count: positive if open, negative if closed
             let count = item.count_descendants();
             let count_val = if item.is_open { count } else { -count };
-            dict.add_number("Count", count_val as i64);
+            dict.add("Count", Pdf::num(count_val as i64));
         }
 
         if let Some(rgb) = item.color {
-            dict.add_pdf_array("C", rgb.as_pdf_array());
+            dict.add("C", Pdf::array(rgb.as_pdf_array()));
         }
 
         if item.flags.bits() != 0 {
-            dict.add_number("F", item.flags.bits() as i64);
+            dict.add("F", Pdf::num(item.flags.bits() as i64));
         }
 
         dicts.push((current_id, dict));

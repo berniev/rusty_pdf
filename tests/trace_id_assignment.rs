@@ -2,9 +2,9 @@
 
 #[test]
 fn trace_id_assignments_during_write_compressed() {
-    use pydyf::{FileIdentifierMode, PDF, PdfStreamObject};
+    use pydyf::{FileIdentifierMode, PdfFile, PdfStreamObject};
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     // Add a stream object (like the test does)
     let stream = Box::new(PdfStreamObject::uncompressed());
@@ -68,9 +68,9 @@ fn trace_next_object_number_helper() {
     // Test what next_object_number() returns at each stage
     // Note: it's private, so we infer it from add_object()
 
-    use pydyf::{PDF, PdfStreamObject};
+    use pydyf::{PdfFile, PdfStreamObject};
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     println!("Initial: pdf.objects.len() = {}", pdf.objects.len());
 
@@ -98,9 +98,9 @@ fn trace_next_object_number_helper() {
 fn trace_page_tree_id_calculation() {
     // The page tree ID calculation is complex - let's trace it
 
-    use pydyf::{PDF, PdfStreamObject};
+    use pydyf::{PdfFile, PdfStreamObject};
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     // Add one object
     pdf.add_object(Box::new(PdfStreamObject::uncompressed()));

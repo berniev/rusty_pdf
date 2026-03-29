@@ -1,7 +1,7 @@
 use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::util::{Dims, Matrix, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, Stream};
+use pydyf::{FileIdentifierMode, PdfFile, PageObject, Stream};
 use std::fs::File;
 
 fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
@@ -17,7 +17,7 @@ fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
 
 #[test]
 fn test_generate_simple_uncompressed_pdf() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
@@ -88,7 +88,7 @@ fn test_generate_simple_uncompressed_pdf() {
 
 #[test]
 fn test_generate_circle_over_rectangle() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
@@ -187,7 +187,7 @@ fn test_generate_circle_over_rectangle() {
 
 #[test]
 fn test_multipage_pdf() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
 
     let mut stream1 = Stream::uncompressed();
     stream1.set_color_rgb(
@@ -333,7 +333,7 @@ fn test_multipage_pdf() {
 
 #[test]
 fn test_graphics_operations() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
@@ -494,7 +494,7 @@ fn test_graphics_operations() {
 
 #[test]
 fn test_comparison_uncompressed() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     stream.set_color_rgb(
@@ -545,7 +545,7 @@ fn test_comparison_uncompressed() {
 
 #[test]
 fn test_comparison_compressed() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::compressed();
 
     stream.set_color_rgb(

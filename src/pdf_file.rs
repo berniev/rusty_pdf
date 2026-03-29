@@ -1,11 +1,16 @@
-use crate::page::{ObjectId, PageObject, PageTree, PageTreeItemType};
+use crate::page::{ObjectId, PageObject, PageTree, PageTreeItem};
 use std::io::Write;
 
+use crate::body::Body;
 use crate::cross_ref::CrossRefTable;
 use crate::fonts::Fonts;
+use crate::header::Header;
 use crate::pdf_version::PdfVersion;
+use crate::trailer::Trailer;
 use crate::writer::{CompressedStrategy, LegacyStrategy, PdfWriter};
-use crate::{PdfDictionaryObject, PdfIndirectObject, PdfObject, PdfStreamObject};
+use crate::{PdfDictionaryObject, PdfObject, PdfStreamObject};
+use crate::file_identifier::FileIdentifierMode;
+use crate::objects::pdf_object::Pdf;
 
 /// File Structure
 ///
@@ -17,71 +22,70 @@ use crate::{PdfDictionaryObject, PdfIndirectObject, PdfObject, PdfStreamObject};
 /// ============================================================================================
 ///
 
-//----------------------- Identifier -----------------------
+/**
+space lines are optional
+```
+%PDF-1.4                    ← header
+%âãÏÓ                       ← comment in the body, not required nowadays but spec does say 'shall'
+1 0 obj                     ← first actual body object
+...
+endobj
+...
 
-/// for trailer
-pub enum FileIdentifierMode {
-    None,
-    AutoMD5,
-    Custom(Vec<u8>),
-}
+xref                        ← cross-reference table
+0 9
+0000000000 65535 f\r\n
+...
+
+trailer                     ← trailer
+<<
+  /Size 9
+  /Root 1 0 R
+>>
+startxref
+1234                        ← byte offset of xref
+%%EOF
+```
+*/
 
 //--------------------------- PDF -------------------------
 
-pub struct PDF {
-    pub version: PdfVersion,
-    pub objects: Vec<Box<dyn PdfObject>>,
-    pub catalog: PdfDictionaryObject,
-    pub page_tree: PageTree,
-    pub cross_ref_table: CrossRefTable,
-    pub info: PdfDictionaryObject,
-    pub xref_position: Option<usize>,
-    next_object_id: usize, // Single source of truth for object ID allocation.
-    last_num: usize,       // todo: what's this one for??
+pub struct PdfFile {
+    header: Header,
+    body: Body,
+    xref: CrossRefTable,
+    trailer: Trailer,
+
+    xref_position: Option<usize>,
+
+
+    root_page_tree: PageTree, // catalog /Pages entry must point to this
 }
 
-impl PDF {
+impl PdfFile {
     pub fn new() -> Self {
-        PDF {
-            version: PdfVersion::Auto,
-            objects: vec![],
-            catalog: PdfDictionaryObject::new().typed("Catalog"),
-            page_tree: PageTree::new(None),
-            cross_ref_table: CrossRefTable::new(),
-            info: PdfDictionaryObject::new(),
+        PdfFile {
+            header: Header::new(),
+            body: Body::new(),
+            xref: CrossRefTable::new(),
+            trailer: Trailer::new(),
+            
             xref_position: None,
-            next_object_id: 1, // Start at 1 (0 is reserved)
-            last_num: 0,
+            root_page_tree: PageTree::new(None),
         }
     }
 
     pub fn with_version(mut self, version: PdfVersion) -> Self {
-        self.version = version;
+        self.header.set_version(version);
 
         self
-    }
-
-    fn next_page_num(&mut self) -> usize {
-        self.last_num += 1;
-
-        self.last_num
-    }
-
-    pub(crate) fn allocate_object_id(&mut self) -> usize {
-        let id = self.next_object_id;
-        self.next_object_id += 1;
-        id
-    }
-
-    pub(crate) fn object_count(&self) -> usize {
-        self.next_object_id
     }
 
     // todo: is this creating a direct or indirect object?
     pub fn add_object(&mut self, mut object: Box<dyn PdfObject>) -> usize {
         let number = self.allocate_object_id();
         object.metadata_mut().object_identifier = Some(number);
-        self.objects.push(object);
+        self.indirect_pdf_objects.push(object);
 
         number
     }
@@ -90,21 +94,20 @@ impl PDF {
         // is a stream an indirect object ie needs wrapping in PdfIndirectObject ?
         let number = self.allocate_object_id();
         object.metadata_mut().object_identifier = Some(number);
-        self.objects.push(object);
+        self.indirect_pdf_objects.push(object);
 
         number
     }
 
     pub fn add_page(&mut self, mut page: PageObject) {
         page.set_id((self.next_page_num() as u64).into());
-        self.page_tree.add_page(page);
+        self.root_page_tree.add_page(page);
     }
 
     fn write_common(&mut self) {
         let resources_number = self.add_font_resources();
         self.initialize_page_tree(resources_number);
         self.initialize_catalog();
-        self.initialize_info();
     }
 
     pub fn write_legacy<W: Write>(
@@ -127,9 +130,9 @@ impl PDF {
 
     pub fn add_font_resources(&mut self) -> usize {
         let mut resources_dict = PdfDictionaryObject::new();
-        resources_dict.add_pdf_dict("Font", Fonts::get_standard_fonts_dict());
-        
-        self.objects.push(resources_dict.boxed());
+        resources_dict.add("Font", Pdf::dict(Fonts::get_standard_fonts_dict()));
+
+        self.indirect_pdf_objects.push(resources_dict.boxed());
 
         let resources_number = self.allocate_object_id();
         resources_dict.metadata.object_identifier = Some(resources_number);
@@ -138,15 +141,15 @@ impl PDF {
     }
 
     pub fn initialize_page_tree(&mut self, resources_number: usize) {
-        if self.page_tree.metadata.object_identifier.is_some() {
+        if self.root_page_tree.metadata.object_identifier.is_some() {
             return;
         }
 
         // Ensure page tree has a MediaBox if no pages have one
         // every page must have MediaBox (direct or inherited)
-        if self.page_tree.media_box.is_none() {
-            let has_page_with_mediabox = self.page_tree.kids.iter().any(|kid| {
-                if let PageTreeItemType::Page(page) = kid {
+        if self.root_page_tree.media_box.is_none() {
+            let has_page_with_mediabox = self.root_page_tree.kids.iter().any(|kid| {
+                if let PageTreeItem::Page(page) = kid {
                     page.media_box.is_some()
                 } else {
                     false
@@ -154,12 +157,12 @@ impl PDF {
             });
             if !has_page_with_mediabox {
                 // Set default A4 size
-                self.page_tree.media_box = Some(crate::page::PageSize::A4);
+                self.root_page_tree.media_box = Some(crate::page::PageSize::A4);
             }
         }
 
         // Count pages and allocate IDs
-        let num_pages = self.page_tree.kids.len();
+        let num_pages = self.root_page_tree.kids.len();
         let mut page_ids = Vec::new();
         for _ in 0..num_pages {
             page_ids.push(self.allocate_object_id());
@@ -167,13 +170,13 @@ impl PDF {
 
         // Allocate ID for page tree itself (after all pages)
         let pages_number = self.allocate_object_id();
-        self.page_tree.metadata.object_identifier = Some(pages_number);
+        self.root_page_tree.metadata.object_identifier = Some(pages_number);
 
         // Now assign IDs and clone pages
         let mut page_objects = Vec::new();
         let mut page_idx = 0;
-        for kid in &mut self.page_tree.kids {
-            if let PageTreeItemType::Page(page) = kid {
+        for kid in &mut self.root_page_tree.kids {
+            if let PageTreeItem::Page(page) = kid {
                 let page_id = page_ids[page_idx];
                 page_idx += 1;
                 page.metadata.object_identifier = Some(page_id);
@@ -186,20 +189,19 @@ impl PDF {
             page.parent = ObjectId::from(pages_number);
             page.resources_id = Some(resources_number);
             page.metadata.object_identifier = Some(page_id);
-            self.objects.push(Box::new(page));
+            self.indirect_pdf_objects.push(Box::new(page));
         }
 
         // Now add the page tree itself
         // Clone the page tree to add it to objects
         let page_tree_clone = PageTree {
-            id: self.page_tree.id.clone(),
-            parent_id: self.page_tree.parent_id.clone(),
-            kids: self.page_tree.kids.clone(),
-            media_box: self.page_tree.media_box,
-            resources: self.page_tree.resources.clone(),
-            metadata: self.page_tree.metadata.clone(),
+            id: self.root_page_tree.id.clone(),
+            parent_id: self.root_page_tree.parent_id.clone(),
+            kids: self.root_page_tree.kids.clone(),
+            media_box: self.root_page_tree.media_box,
+            resources: self.root_page_tree.resources.clone(),
         };
-        self.objects.push(Box::new(page_tree_clone));
+        self.indirect_pdf_objects.push(Box::new(page_tree_clone));
     }
 
     pub fn initialize_catalog(&mut self) {
@@ -207,23 +209,13 @@ impl PDF {
             return;
         }
 
-        let catalog_number = self.allocate_object_id();
-        self.catalog.metadata.object_identifier = Some(catalog_number);
+        self.catalog.metadata.object_identifier = Some(self.allocate_object_id());
 
         // Add reference to page tree
-        let pages_id = self.page_tree.metadata.object_identifier.unwrap();
-        self.catalog
-            .add_indirect_norm("Pages", pages_id);
+        let pages_id = self.root_page_tree.metadata.object_identifier.unwrap();
+        self.catalog.add_indirect_norm("Pages", pages_id);
 
         let catalog_copy = self.catalog.clone();
-        self.objects.push(Box::new(catalog_copy));
-    }
-
-    pub fn initialize_info(&mut self) {
-        if !self.info.values.is_empty() && self.info.metadata.object_identifier.is_none() {
-            self.info.metadata.object_identifier = Some(self.allocate_object_id());
-            let info_copy = self.info.clone();
-            self.objects.push(Box::new(info_copy));
-        }
+        self.indirect_pdf_objects.push(Box::new(catalog_copy));
     }
 }

@@ -1,7 +1,7 @@
 use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::util::Posn;
-use pydyf::{FileIdentifierMode, PDF, PageObject, Stream};
+use pydyf::{FileIdentifierMode, PdfFile, PageObject, Stream};
 use std::fs::File;
 
 fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
@@ -56,7 +56,7 @@ fn draw_concentric_circles(
 
 #[test]
 fn test_winding_rule_even_odd() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     // Set blue fill color
@@ -110,7 +110,7 @@ fn test_winding_rule_even_odd() {
 
 #[test]
 fn test_winding_rule_nonzero() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     // Set red fill color
@@ -164,7 +164,7 @@ fn test_winding_rule_nonzero() {
 
 #[test]
 fn test_winding_rule_side_by_side() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = Stream::uncompressed();
 
     // Left circles - Even-Odd (blue) - creates donut

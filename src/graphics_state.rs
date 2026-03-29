@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
+use crate::objects::pdf_object::Pdf;
 use crate::objects::stream::PdfStreamObject;
-use crate::pdf::PDF;
-use crate::{NumberType, PdfDictionaryObject, PdfNumberObject, PdfObject};
+use crate::pdf_file::PdfFile;
+use crate::PdfDictionaryObject;
 
 pub struct GraphicsStateManager {
     opacity_states: HashMap<u32, usize>, // opacity values (scaled to u32) to object numbers
@@ -25,7 +26,7 @@ impl GraphicsStateManager {
         }
     }
 
-    pub fn get_or_create_opacity_state(&mut self, pdf: &mut PDF, alpha: f32) -> String {
+    pub fn get_or_create_opacity_state(&mut self, pdf: &mut PdfFile, alpha: f32) -> String {
         let opacity_key = (alpha * 1000.0) as u32; // by 1000 to avoid float precision issues
         if let Some(&obj_num) = self.opacity_states.get(&opacity_key) {
             // use existing resource name. Find the index of this object num to reconstruct the name
@@ -41,17 +42,16 @@ impl GraphicsStateManager {
         self.resource_counter += 1;
 
         let mut gs_dict = PdfDictionaryObject::new().typed("/ExtGState");
-        gs_dict.add_number("CA", alpha as f64); // Stroke alpha
-        gs_dict.add_number("ca", alpha as f64); // Fill alpha
-        let obj_num = pdf.objects.len();
-        pdf.add_object(Box::new(gs_dict));
+        gs_dict.add("CA", Pdf::num(alpha as f64)); // Stroke alpha
+        gs_dict.add("ca", Pdf::num(alpha as f64)); // Fill alpha
+        let obj_num = pdf.add_object(Box::new(gs_dict));
 
         self.opacity_states.insert(opacity_key, obj_num);
 
         resource_name
     }
 
-    pub fn apply_opacity(&mut self, stream: &mut PdfStreamObject, pdf: &mut PDF, alpha: f32) {
+    pub fn apply_opacity(&mut self, stream: &mut PdfStreamObject, pdf: &mut PdfFile, alpha: f32) {
         let resource_name = self.get_or_create_opacity_state(pdf, alpha);
         stream.set_state(&resource_name);
     }
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_opacity_state_creation() {
-        let mut pdf = PDF::new();
+        let mut pdf = PdfFile::new();
         let mut gs_manager = GraphicsStateManager::new();
 
         let name1 = gs_manager.get_or_create_opacity_state(&mut pdf, 0.5);
@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     fn test_extgstate_dict() {
-        let mut pdf = PDF::new();
+        let mut pdf = PdfFile::new();
         let mut gs_manager = GraphicsStateManager::new();
 
         gs_manager.get_or_create_opacity_state(&mut pdf, 0.5);

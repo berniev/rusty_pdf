@@ -52,7 +52,6 @@ impl PdfIndirectObject {
 
     pub fn new_in_obj_stream(
         obj_num: usize,
-        object: Box<dyn PdfObject>,
         stream_obj_num: usize,
     ) -> Self {
         Self {

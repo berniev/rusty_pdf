@@ -1,4 +1,4 @@
-/// Page:
+/// Page (pdf dictionary):
 /// A dictionary specifying the attributes of a single page of the document, organized into
 /// various categories (e.g., Font, ColorSpace, Pattern)
 /// A page object can not have children.
@@ -45,7 +45,11 @@
 /// UserUnit              1.6  Opt        number
 /// VP                    1.6  Opt        dictionary
 
-/// PageTree Nodes:
+//==============================================================================================
+///
+/// PageTree: (pdf dictionary) 
+/// 
+/// Nodes:
 /// 
 /// ======  ==========  =====  =================================================================
 /// Name    PdfObjType  Reqd   Value
@@ -60,6 +64,7 @@ use std::iter::Sum;
 
 use crate::{PdfMetadata, PdfObject, ResourceMap};
 pub use crate::page_size::PageSize;
+
 //--------------------------- ObjectId ---------------------------//
 
 #[derive(Clone, Debug, Default)]
@@ -171,48 +176,38 @@ impl PdfObject for PageObject {
 
         format!("<< {} >>", entries.join(" ")).into_bytes()
     }
-/*
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
-    }*/
 }
 
-//--------------------------- Page Tree -------------------------
+//--------------------------- PageTreeItemType -------------------------//
+
 #[derive(Clone)]
-pub enum PageTreeItemType {
+pub enum PageTreeItem {
     Page(PageObject),
     Node(PageTree),
 }
 
-impl PageTreeItemType {
+impl PageTreeItem {
     pub fn id(&self) -> ObjectId {
         match self {
-            PageTreeItemType::Page(page) => {
+            PageTreeItem::Page(page) => {
                 ObjectId::from(page.metadata.object_identifier.unwrap_or(0))
             }
-            PageTreeItemType::Node(node) => {
+            PageTreeItem::Node(node) => {
                 ObjectId::from(node.metadata.object_identifier.unwrap_or(0))
             }
         }
     }
 }
 
+//--------------------------- PageTree -------------------------//
+
 #[derive(Clone)]
 pub struct PageTree {
     pub(crate) id: ObjectId,
     pub(crate) parent_id: Option<ObjectId>, // root is None
-    pub(crate) kids: Vec<PageTreeItemType>,
+    pub(crate) kids: Vec<PageTreeItem>,
     pub(crate) media_box: Option<PageSize>, // Shared dimensions
     pub(crate) resources: Option<ResourceMap>, // Shared fonts, etc.
-    pub metadata: PdfMetadata,
 }
 
 impl PageTree {
@@ -223,7 +218,6 @@ impl PageTree {
             kids: Vec::new(),
             media_box: None,
             resources: None,
-            metadata: PdfMetadata::default(),
         }
     }
 
@@ -235,18 +229,18 @@ impl PageTree {
         self.kids
             .iter()
             .map(|kid| match kid {
-                PageTreeItemType::Page(_) => ObjectId(1),
-                PageTreeItemType::Node(node) => node.count(),
+                PageTreeItem::Page(_) => ObjectId(1),
+                PageTreeItem::Node(node) => node.count(),
             })
             .sum()
     }
 
     pub fn add_page(&mut self, page: PageObject) {
-        self.kids.push(PageTreeItemType::Page(page));
+        self.kids.push(PageTreeItem::Page(page));
     }
 
     pub fn add_node(&mut self, page_tree_node: PageTree) {
-        self.kids.push(PageTreeItemType::Node(page_tree_node));
+        self.kids.push(PageTreeItem::Node(page_tree_node));
     }
 
     pub fn kids_array(&self) -> String {
@@ -294,16 +288,4 @@ impl PdfObject for PageTree {
 
         format!("<< {} >>", entries.join(" ")).into_bytes()
     }
-/*
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
-    fn metadata(&self) -> &PdfMetadata {
-        &self.metadata
-    }
-
-    fn metadata_mut(&mut self) -> &mut PdfMetadata {
-        &mut self.metadata
-    }*/
 }

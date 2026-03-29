@@ -2,18 +2,15 @@
 //!
 //! Actions define behaviors that can be triggered by user interactions, such as
 //! clicking links, opening documents, or interacting with form fields.
-
-use crate::{
-    PdfArrayObject, PdfDictionaryObject, PdfResult, util::Rect,
-};
-
+use crate::objects::pdf_object::Pdf;
 /// Actions specify responses to various events in PDF documents, such as
 /// user interactions with annotations or form fields.
-pub trait Action {
-    /// Get the action type (URI, GoTo, JavaScript, etc.)
-    fn action_type(&self) -> &'static str;
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfResult, util::Rect};
 
-    /// Convert this action to a PDF dictionary object.
+//------------------------ Action -------------------------------//
+
+pub trait Action {
+    fn action_type(&self) -> &'static str; // URI, GoTo, JavaScript, etc.
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject>;
 }
 
@@ -40,11 +37,11 @@ impl Action for UriAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add_name("S", self.action_type());
-        dict.add_string("URI", self.uri.clone());
+        dict.add("S", Pdf::name(self.action_type()));
+        dict.add("URI", Pdf::string(self.uri.as_str()));
 
         if self.is_map {
-            dict.add_bool("IsMap", true);
+            dict.add("IsMap", Pdf::bool(true));
         }
 
         Ok(dict)
@@ -68,8 +65,8 @@ impl Action for GoToAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add_name("S", self.action_type());
-        dict.add_pdf_array("D", self.destination.to_pdf_array());
+        dict.add("S", Pdf::name(self.action_type()));
+        dict.add("D", Pdf::array(self.destination.to_pdf_array()));
         Ok(dict)
     }
 }
@@ -91,9 +88,9 @@ impl Action for JavaScriptAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add_name("S", self.action_type());
-        dict.add_string("JS", self.script.clone());
-        
+        dict.add("S", Pdf::name(self.action_type()));
+        dict.add("JS", Pdf::string(self.script.as_str()));
+
         Ok(dict)
     }
 }
@@ -124,14 +121,14 @@ impl Action for LaunchAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add_name("S", self.action_type());
+        dict.add("S", Pdf::name(self.action_type()));
 
         let mut file_dict = PdfDictionaryObject::new().typed("Filespec");
-        file_dict.add_string("F", self.file.clone());
-        dict.add_pdf_dict("F", file_dict);
+        file_dict.add("F", Pdf::string(self.file.as_str()));
+        dict.add("F", Pdf::dict(file_dict));
 
         if let Some(new_win) = self.new_window {
-            dict.add_bool("NewWindow", new_win);
+            dict.add("NewWindow", Pdf::bool(new_win));
         }
 
         Ok(dict)
@@ -174,9 +171,9 @@ impl Action for NamedAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add_name("S", self.action_type());
-        dict.add_name("N", self.name.as_str());
-        
+        dict.add("S", Pdf::name(self.action_type()));
+        dict.add("N", Pdf::name(self.name.as_str()));
+
         Ok(dict)
     }
 }
@@ -237,33 +234,37 @@ impl FitDestination {
                 top,
                 zoom,
             } => {
-                arr.push_number(*page as i64);
-                arr.push_name("XYZ");
-                arr.push_optional_real(*left);
-                arr.push_optional_real(*top);
-                arr.push_optional_real(*zoom);
+                arr.push(Pdf::num(*page));
+                arr.push(Pdf::name("XYZ"));
+                arr.push(Pdf::num_or_null(*left));
+                arr.push(Pdf::num_or_null(*top));
+                arr.push(Pdf::num_or_null(*zoom));
             }
+
             FitDestination::Fit { page } => {
-                arr.push_number(*page as i64);
-                arr.push_name("Fit");
+                arr.push(Pdf::num(*page));
+                arr.push(Pdf::name("Fit"));
             }
+
             FitDestination::FitH { page, top } => {
-                arr.push_number(*page as i64);
-                arr.push_name("FitH");
-                arr.push_optional_real(*top);
+                arr.push(Pdf::num(*page));
+                arr.push(Pdf::name("FitH"));
+                arr.push(Pdf::num_or_null(*top));
             }
+
             FitDestination::FitV { page, left } => {
-                arr.push_number(*page as i64);
-                arr.push_name("FitV");
-                arr.push_optional_real(*left);
+                arr.push(Pdf::num(*page));
+                arr.push(Pdf::name("FitV"));
+                arr.push(Pdf::num_or_null(*left));
             }
+
             FitDestination::FitR { page, rect } => {
-                arr.push_number(*page as i64);
-                arr.push_name("FitR");
-                arr.push_real(rect.x1);
-                arr.push_real(rect.y1);
-                arr.push_real(rect.x2);
-                arr.push_real(rect.y2);
+                arr.push(Pdf::num(*page));
+                arr.push(Pdf::name("FitR"));
+                arr.push(Pdf::num(rect.x1));
+                arr.push(Pdf::num(rect.y1));
+                arr.push(Pdf::num(rect.x2));
+                arr.push(Pdf::num(rect.y2));
             }
         }
 

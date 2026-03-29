@@ -2,14 +2,14 @@ use pydyf::color::{Color, RGB};
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::page::PageSize;
 use pydyf::util::{Dims, Posn};
-use pydyf::{FileIdentifierMode, PDF, PageObject, PdfStreamObject};
+use pydyf::{FileIdentifierMode, PdfFile, PageObject, PdfStreamObject};
 use std::fs::File;
 use std::io::Write as IoWrite;
 
 #[test]
 #[ignore]
 fn debug_xref_structure() {
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let mut stream = PdfStreamObject::uncompressed();
 
     let color = RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0));

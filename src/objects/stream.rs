@@ -65,6 +65,7 @@ use crate::error::{PdfError, PdfResult};
 use crate::objects::string::encode_pdf_string;
 pub use crate::util::{CompressionMethod, Dims, Matrix, Posn, StrokeOrFill, ToPdf, WindingRule};
 use crate::{PdfDictionaryObject, PdfObject};
+use crate::objects::pdf_object::Pdf;
 
 //------------------------ PdfStreamObject -----------------------
 
@@ -573,9 +574,9 @@ impl PdfObject for PdfStreamObject {
         };
 
         let dict = &mut self.dict;
-        dict.add_number("Length", stream_bytes.len() as f64);
+        dict.add("Length", Pdf::num(stream_bytes.len() as f64));
         if self.compression_method == CompressionMethod::Flate {
-            dict.add_name("Filter", "FlateDecode");
+            dict.add("Filter", Pdf::name("FlateDecode"));
         }
 
         let mut vec = dict.serialise();

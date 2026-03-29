@@ -2,10 +2,10 @@
 
 #[test]
 fn trace_qpdf_test_sequence() {
-    use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PDF};
+    use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PdfFile};
     use pydyf::page::PageSize;
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::uncompressed();
 
     // Add stream

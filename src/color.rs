@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
 use std::fmt::{self, Display};
-use std::rc::Rc;
 
 use crate::encoding::f_to_pdf_num;
 use crate::util::ToPdf;
-use crate::{PdfArrayObject, PdfError, PdfObject, PdfResult};
+use crate::{PdfArrayObject, PdfError, PdfResult};
+use crate::objects::pdf_object::Pdf;
 
 //------------------------ ColorSpace -------------------------------
 
@@ -134,9 +134,9 @@ impl RGB {
 
     pub(crate) fn as_pdf_array(&self) -> PdfArrayObject {
        let mut arr = PdfArrayObject::new();
-        arr.push_real(self.red.to_f64());
-        arr.push_real(self.green.to_f64());
-        arr.push_real(self.blue.to_f64());
+        arr.push(Pdf::num(self.red.to_f64()));
+        arr.push(Pdf::num(self.green.to_f64()));
+        arr.push(Pdf::num(self.blue.to_f64()));
         
         arr
     }

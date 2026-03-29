@@ -1,5 +1,6 @@
 use crate::PdfArrayObject;
 use crate::encoding::f_to_pdf_num;
+use crate::objects::pdf_object::Pdf;
 
 //------------------------- ToPdf -----------------------------
 
@@ -28,8 +29,8 @@ pub struct Posn {
 impl Posn {
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push_number(self.x);
-        arr.push_number(self.y);
+        arr.push(Pdf::num(self.x));
+        arr.push(Pdf::num(self.y));
 
         arr
     }
@@ -60,8 +61,8 @@ pub struct Line {
 impl Line {
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push_pdf_array(self.start.as_pdf_array());
-        arr.push_pdf_array(self.end.as_pdf_array());
+        arr.push(Pdf::array(self.start.as_pdf_array()));
+        arr.push(Pdf::array(self.end.as_pdf_array()));
 
         arr
     }
@@ -76,11 +77,11 @@ pub struct Dims {
 
 impl ToPdf for Dims {
     fn to_pdf(&self) -> String {
-        format!("{} {}", f_to_pdf_num(self.width), f_to_pdf_num(self.height), )
+        format!("{} {}", f_to_pdf_num(self.width), f_to_pdf_num(self.height),)
     }
 
     fn as_string(&self) -> String {
-        format!("w:{} x h:{}", self.width, self.height, )
+        format!("w:{} x h:{}", self.width, self.height,)
     }
 }
 
@@ -101,10 +102,10 @@ impl Rect {
 
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push_number(self.x1);
-        arr.push_number(self.y1);
-        arr.push_number(self.x2);
-        arr.push_number(self.y2);
+        arr.push(Pdf::num(self.x1));
+        arr.push(Pdf::num(self.y1));
+        arr.push(Pdf::num(self.x2));
+        arr.push(Pdf::num(self.y2));
 
         arr
     }
@@ -148,12 +149,12 @@ impl Matrix {
 
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push_real(self.a);
-        arr.push_real(self.b);
-        arr.push_real(self.c);
-        arr.push_real(self.d);
-        arr.push_real(self.e);
-        arr.push_real(self.f);
+        arr.push(Pdf::num(self.a));
+        arr.push(Pdf::num(self.b));
+        arr.push(Pdf::num(self.c));
+        arr.push(Pdf::num(self.d));
+        arr.push(Pdf::num(self.e));
+        arr.push(Pdf::num(self.f));
 
         arr
     }
@@ -198,7 +199,7 @@ pub enum CompressionMethod {
 
 impl CompressionMethod {
     pub fn to_string(&self) -> String {
-        match self{
+        match self {
             CompressionMethod::Flate => "/A85 /Fl".to_string(),
             CompressionMethod::None => "/A85".to_string(),
         }

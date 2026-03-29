@@ -4,17 +4,18 @@
 //! or smooth color transitions (shading).
 
 use std::any::Any;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 #[cfg(test)]
 use crate::color::Color;
 use crate::color::RGB;
+use crate::objects::pdf_object::Pdf;
 use crate::util::{Line, Matrix, Rect, ToPdf};
 use crate::{
-    PdfArrayObject, PdfDictionaryObject, PdfObject,
-    PdfStreamObject, Resource, ResourceCategory,
+    PdfArrayObject, PdfDictionaryObject, PdfStreamObject, Resource,
+    ResourceCategory,
 };
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
 //--------------------------- Axial Shading ----------------------//
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -80,22 +81,16 @@ impl TilingPattern {
 
         stream.add_to_content(self.content.clone());
 
-        stream.dict.add_name("Type", "Pattern");
-        stream
-            .dict
-            .add_number("PatternType", PatternType::Tiling as i64);
-        stream.dict.add_number("PaintType", self.paint_type as i64);
-        stream
-            .dict
-            .add_number("TilingType", self.tiling_type as i64);
-        stream
-            .dict
-            .add_pdf_array("BBox", self.bounding_box.as_pdf_array());
-        stream.dict.add_number("XStep", self.x_step);
-        stream.dict.add_number("YStep", self.y_step);
+        stream.dict.add("Type", Pdf::name("Pattern"));
+        stream.dict.add("PatternType", Pdf::num(PatternType::Tiling as i64));
+        stream.dict.add("PaintType", Pdf::num(self.paint_type as i64));
+        stream.dict.add("TilingType", Pdf::num(self.tiling_type as i64));
+        stream.dict.add("BBox", Pdf::array(self.bounding_box.as_pdf_array()));
+        stream.dict.add("XStep", Pdf::num(self.x_step));
+        stream.dict.add("YStep", Pdf::num(self.y_step));
 
         if let Some(matrix) = self.matrix {
-            stream.dict.add_pdf_array("Matrix", matrix.as_pdf_array());
+            stream.dict.add("Matrix", Pdf::array(matrix.as_pdf_array()));
         }
 
         stream
@@ -169,18 +164,18 @@ impl AxialShading {
     pub fn to_dict(&self) -> PdfDictionaryObject {
         let mut dict = PdfDictionaryObject::new();
 
-        dict.add_number("ShadingType", ShadingType::Axial as i64);
-        dict.add_name("ColorSpace", "DeviceRGB");
-        dict.add_pdf_array("Coords", self.line.as_pdf_array());
+        dict.add("ShadingType", Pdf::num(ShadingType::Axial as i64));
+        dict.add("ColorSpace", Pdf::name("DeviceRGB"));
+        dict.add("Coords", Pdf::array(self.line.as_pdf_array()));
 
         // Function (simplified: direct color interpolation)
         // In a full implementation, this would be a proper PDF function object
         // todo: For now, we use a simplified representation
 
         let mut extend_arr = PdfArrayObject::new();
-        extend_arr.push_bool(self.extend_start);
-        extend_arr.push_bool(self.extend_end);
-        dict.add_pdf_array("Extend", extend_arr);
+        extend_arr.push(Pdf::bool(self.extend_start));
+        extend_arr.push(Pdf::bool(self.extend_end));
+        dict.add("Extend", Pdf::array(extend_arr));
 
         dict
     }
@@ -212,8 +207,8 @@ impl Resource for AxialShading {
 
 #[cfg(test)]
 mod tests {
-    use crate::util::Posn;
     use super::*;
+    use crate::util::Posn;
 
     #[test]
     fn test_tiling_pattern_creation() {

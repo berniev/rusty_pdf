@@ -1,3 +1,6 @@
+use crate::cross_ref::ObjectStatus;
+use crate::generation::Generation;
+
 /// Object:
 ///     a basic data structure from which PDF files are constructed and includes these types:
 ///     array, boolean, dictionary, integer, name, null, real, stream and string
@@ -58,21 +61,6 @@ or an indirect object might reference another indirect object.
     Indirect Example: 5 0 obj << /Type /Font ... >> endobj (The dictionary is an indirect font
     object).
 */
-use crate::cross_ref::{Generation, ObjectStatus};
-use crate::{
-    ArrayObject, BooleanObject, DictionaryObject, NameObject, NumberObject, PdfObject, StreamObject,
-};
-
-enum PdfObjectType {
-    Array(ArrayObject),
-    Boolean(BooleanObject),
-    Dictionary(DictionaryObject),
-    Name(NameObject), // ascii
-    NameTree(),
-    Number(NumberObject), // integer and real
-    Stream(StreamObject),
-    String(StingObject), // may need encoding
-}
 
 //--------------------- Document ----------------------
 
@@ -115,7 +103,7 @@ pub struct ObjectId {
 struct IndirectObject {
     pub id: ObjectId,
     pub location: Option<SerialLocation>,
-    pub inner: PdfObjectType, // owns the direct object
+    //pub inner: PdfObjectType, // owns the direct object
 }
 
 // The offset/status belong only in the cross-reference table, not on the objects themselves

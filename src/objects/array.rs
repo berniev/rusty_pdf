@@ -8,12 +8,9 @@
 ///     An array shall be written as a sequence of objects enclosed in SQUARE BRACKETS.
 ///     EXAMPLE [ 549 3.14 false ( Ralph ) /SomeName ]
 ///
-use crate::{
-    NumberType, PdfBooleanObject, PdfDictionaryObject, PdfIndirectObject, PdfNameObject,
-    PdfNumberObject, PdfObject, PdfStringObject, action::FitDestination,
-};
+use crate::PdfObject;
 
-//-------------------PdfArrayObject ----------------------
+//--------------------------- PdfArrayObject --------------------------//
 
 pub struct PdfArrayObject {
     pub values: Vec<Box<dyn PdfObject>>,
@@ -24,54 +21,12 @@ impl PdfArrayObject {
         Self { values: vec![] }
     }
 
-    //--------------------------- Push Methods -----------------------//
-
-    pub fn push_object(&mut self, value: Box<dyn PdfObject>) {
+    pub fn push(&mut self, value: Box<dyn PdfObject>) {
         self.values.push(value);
     }
 
-    pub fn push_real(&mut self, value: f64) {
-        self.push_number(NumberType::Real(value));
-    }
-
-    pub fn push_optional_real(&mut self, value: Option<f64>) {
-        if let Some(v) = value {
-            self.push_real(v);
-        } else {
-            self.push_name("null");
-        }
-    }
-
-    pub fn push_bool(&mut self, value: bool) {
-        self.push_object(PdfBooleanObject::new(value).boxed());
-    }
-
-    pub fn push_indirect_norm(&mut self, id: usize, obj: Box<dyn PdfObject>) {
-        self.push_object(PdfIndirectObject::new_standard(id, obj).boxed());
-    }
-
-    pub fn push_indirect_in_stream(&mut self, id: usize, obj: Box<dyn PdfObject>, num: usize) {
-        self.push_object(PdfIndirectObject::new_in_obj_stream(id, obj, num).boxed());
-    }
-
-    pub fn push_name(&mut self, name: &str) {
-        self.push_object(PdfNameObject::new(name).boxed());
-    }
-
-    pub fn push_number(&mut self, value: impl Into<NumberType>) {
-        self.push_object(PdfNumberObject::new(value.into()).boxed());
-    }
-
-    pub fn push_string(&mut self, value: String) {
-        self.push_object(PdfStringObject::new(value).boxed());
-    }
-
-    pub fn push_pdf_dict(&mut self, dict: PdfDictionaryObject) {
-        self.push_object(dict.boxed());
-    }
-
-    pub fn push_pdf_array(&mut self, array: PdfArrayObject) {
-        self.push_object(array.boxed());
+    pub fn push_vec(&mut self, vect: Vec<Box<dyn PdfObject>>) {
+        self.values.extend(vect);
     }
 }
 

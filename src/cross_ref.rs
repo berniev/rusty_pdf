@@ -1,12 +1,3 @@
-pub use crate::generation::Generation;
-pub use crate::objects::metadata::ObjectStatus;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CrossRefError {
-    EmptyTable,
-    InvalidRootEntry,
-}
-
 /// 7.5.4 Cross-Reference Table
 /// The cross-reference table contains information that permits random access to indirect objects
 /// within the file so that the entire file need not be read to locate any particular object. The
@@ -25,6 +16,20 @@ pub enum CrossRefError {
 /// only one subsection, whose object numbering begins at 0.
 ///
 /// We are not designing for modification.
+/// 
+pub use crate::generation::Generation;
+pub use crate::objects::metadata::ObjectStatus;
+
+//--------------------------- CrossRefError -------------------------//
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CrossRefError {
+    EmptyTable,
+    InvalidRootEntry,
+}
+
+//--------------------------- Entry -------------------------//
+
 pub struct Entry {
     object_number: u32,
     object_status: ObjectStatus, // determines treatment of offset
@@ -55,6 +60,8 @@ impl Entry {
         )
     }
 }
+
+//--------------------------- CrossRefTable -------------------------//
 
 pub struct CrossRefTable {
     entries: Vec<Entry>, // contiguous, order by object number
@@ -123,6 +130,8 @@ impl CrossRefTable {
 ///  Uncompressed          1  byte offset    generation
 ///  Compressed in objstm  2  objstm number  index within objstm
 ///
+
+//--------------------------- CrossRefEntry -------------------------//
 
 #[derive(Clone)]
 pub enum CrossRefEntry {
@@ -222,6 +231,8 @@ impl CrossRefEntry {
         }
     }
 }
+
+//--------------------------- CrossRefStream -------------------------//
 
 pub(crate) struct CrossRefStream {
     entries: Vec<CrossRefEntry>,

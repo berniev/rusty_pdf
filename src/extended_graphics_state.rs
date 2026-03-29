@@ -3,9 +3,12 @@
 //! ExtGState objects control advanced graphics rendering features like
 //! transparency, blend modes, and rendering intent.
 
-use crate::{NumberType, PdfBooleanObject, PdfDictionaryObject, PdfNameObject, PdfNumberObject, PdfObject, Resource, ResourceCategory};
+use crate::objects::pdf_object::Pdf;
+use crate::{
+    PdfDictionaryObject,
+    Resource, ResourceCategory,
+};
 use std::any::Any;
-use std::rc::Rc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BlendMode {
@@ -153,67 +156,67 @@ impl ExtGState {
         let mut dict = PdfDictionaryObject::new().typed("ExtGState");
 
         if let Some(lw) = self.line_width {
-            dict.add_number("LW", lw);
+            dict.add("LW", Pdf::num(lw));
         }
 
         if let Some(lc) = self.line_cap {
-            dict.add_number("LC", lc as i64);
+            dict.add("LC", Pdf::num(lc));
         }
 
         if let Some(lj) = self.line_join {
-            dict.add_number("LJ", lj as i64);
+            dict.add("LJ", Pdf::num(lj as i64));
         }
 
         if let Some(ml) = self.miter_limit {
-            dict.add_number("ML", ml);
+            dict.add("ML", Pdf::num(ml));
         }
 
         if let Some(ca) = self.stroke_alpha {
-            dict.add_number("CA", ca);
+            dict.add("CA", Pdf::num(ca));
         }
 
         if let Some(ca) = self.fill_alpha {
-            dict.add_number("ca", ca);
+            dict.add("ca", Pdf::num(ca));
         }
 
         if let Some(bm) = self.blend_mode {
-            dict.add_name("BM", bm.as_str());
+            dict.add("BM", Pdf::name(bm.as_str()));
         }
 
         if let Some(ri) = self.rendering_intent {
-            dict.add_name("RI", ri.as_str());
+            dict.add("RI", Pdf::name(ri.as_str()))   ;
         }
 
         if let Some(op) = self.overprint_stroke {
-            dict.add_bool("OP", op);
+            dict.add("OP", Pdf::bool(op));
         }
 
         if let Some(op) = self.overprint_fill {
-            dict.add_bool("op", op);
+            dict.add("op", Pdf::bool(op));
         }
 
         if let Some(opm) = self.overprint_mode {
-            dict.add_number("OPM", opm as i64);
+            dict.add("OPM", Pdf::num(opm));
         }
 
         if let Some(fl) = self.flatness {
-            dict.add_number("FL", fl);
+            dict.add("FL", Pdf::num(fl));
         }
 
         if let Some(sm) = self.smoothness {
-            dict.add_number("SM", sm);
+            dict.add("SM", Pdf::num(sm));
         }
 
         if let Some(sa) = self.stroke_adjust {
-            dict.add_bool("SA", sa);
+            dict.add("SA", Pdf::bool(sa));
         }
 
         if let Some(ais) = self.alpha_is_shape {
-            dict.add_bool("AIS", ais);
+            dict.add("AIS", Pdf::bool(ais));
         }
 
         if let Some(tk) = self.text_knockout {
-            dict.add_bool("TK", tk);
+            dict.add("TK", Pdf::bool(tk));
         }
 
         dict

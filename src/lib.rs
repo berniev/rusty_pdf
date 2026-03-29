@@ -15,7 +15,7 @@ pub mod optional_content;
 pub mod outline;
 pub mod page;
 pub mod pattern;
-pub mod pdf;
+pub mod pdf_file;
 pub mod resource;
 pub mod resources;
 pub mod text;
@@ -24,6 +24,10 @@ pub mod writer;
 pub mod fonts;
 pub mod pdf_version;
 pub mod page_size;
+pub mod body;
+pub mod header;
+pub mod trailer;
+pub mod file_identifier;
 
 // Re-export main types for user API convenience
 pub use action::{
@@ -44,6 +48,7 @@ pub use objects::dictionary::PdfDictionaryObject;
 pub use objects::indirect::PdfIndirectObject;
 pub use objects::metadata::PdfMetadata;
 pub use objects::name::PdfNameObject;
+pub use objects::null::PdfNullObject;
 pub use objects::number::{PdfNumberObject, NumberType};
 pub use objects::pdf_object::PdfObject;
 pub use objects::stream::PdfStreamObject as Stream;
@@ -55,7 +60,7 @@ pub use optional_content::{
 pub use outline::{DocumentOutline, OutlineItem, OutlineItemFlags};
 pub use page::{PageObject, PageSize};
 pub use pattern::{AxialShading, PaintType, PatternType, ShadingType, TilingPattern, TilingType};
-pub use pdf::{FileIdentifierMode, PDF};
+pub use pdf_file::{PdfFile};
 pub use resource::{Resource, ResourceCategory, ResourceManager};
 pub use resources::ResourceMap;
 pub use text::{StandardFont, WrapMode, wrap_text};

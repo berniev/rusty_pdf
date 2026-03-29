@@ -2,10 +2,10 @@
 
 #[test]
 fn find_both_object_5_assignments() {
-    use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PDF};
+    use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PdfFile};
     use pydyf::page::PageSize;
 
-    let mut pdf = PDF::new();
+    let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::uncompressed();
     let content_id = pdf.add_object(Box::new(stream));
     let mut page = PageObject::new(0usize.into());

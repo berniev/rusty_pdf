@@ -11,9 +11,9 @@ pub struct PdfStringObject {
 }
 
 impl PdfStringObject {
-    pub fn new(value: String) -> Self {
+    pub fn new(value: &str) -> Self {
         Self {
-            value,
+            value:value.to_string(),
         }
     }
 }
