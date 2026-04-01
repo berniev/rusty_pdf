@@ -1,9 +1,3 @@
-use std::rc::Rc;
-use crate::color::RGBA;
-use crate::objects::pdf_object::Pdf;
-use crate::util::{Dims, Posn};
-use crate::{PdfArrayObject, PdfDictionaryObject, PdfFile};
-
 //--------------------------- PDF Function ---------------------------//
 
 /// Type 0: Sampled. Maps input to output via lookup table
@@ -30,6 +24,13 @@ use crate::{PdfArrayObject, PdfDictionaryObject, PdfFile};
 /// `encoding_ranges` How the input domain maps into each sub-function.
 ///
 /// Type 4: PostScript. Calculated using a subset of the PostScript language.
+
+use std::rc::Rc;
+use crate::color::RGBA;
+use crate::objects::pdf_object::Pdf;
+use crate::util::{Dims, Posn};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfFile};
+
 pub enum PdfFunctionType {
     Sampled {
         sample_data: Vec<u8>,

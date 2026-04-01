@@ -1,5 +1,5 @@
-use crate::{NumberType, PdfArrayObject, PdfBooleanObject, PdfDictionaryObject, PdfError, PdfNameObject, PdfNullObject, PdfNumberObject, PdfStreamObject, PdfStringObject};
-
+use crate::{NumberType, PdfArrayObject, PdfBooleanObject, PdfDictionaryObject, PdfError, PdfNameObject, PdfNullObject, PdfStreamObject, PdfStringObject};
+use crate::objects::number::PdfNumberObject;
 //--------------------------- Pdf -------------------------//
 
 pub struct Pdf {}

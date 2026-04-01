@@ -49,7 +49,7 @@ pub use objects::indirect::PdfIndirectObject;
 pub use objects::metadata::PdfMetadata;
 pub use objects::name::PdfNameObject;
 pub use objects::null::PdfNullObject;
-pub use objects::number::{PdfNumberObject, NumberType};
+pub use objects::number_type::NumberType;
 pub use objects::pdf_object::PdfObject;
 pub use objects::stream::PdfStreamObject as Stream;
 pub use objects::stream::{CompressionMethod, PdfStreamObject};

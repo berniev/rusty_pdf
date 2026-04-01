@@ -2,11 +2,11 @@
 //!
 //! Actions define behaviors that can be triggered by user interactions, such as
 //! clicking links, opening documents, or interacting with form fields.
-use crate::objects::pdf_object::Pdf;
-use crate::util::Rect;
 /// Actions specify responses to various events in PDF documents, such as
 /// user interactions with annotations or form fields.
 
+use crate::objects::pdf_object::Pdf;
+use crate::util::Rect;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfResult};
 
 //------------------------ Action -------------------------------//

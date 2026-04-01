@@ -2,16 +2,14 @@
 //!
 //! Provides structures for embedding metadata in PDF documents, including
 //! both the legacy Info dictionary and modern XMP metadata streams.
-
-use crate::objects::pdf_object::Pdf;
 /// Document information dictionary (legacy PDF metadata).
 ///
 /// This is the traditional way of storing document metadata in PDF,
 /// predating XMP. Still widely supported and used.
 ///
-use crate::{
-    PdfDictionaryObject, PdfResult, PdfStreamObject,
-};
+use crate::objects::pdf_object::Pdf;
+use crate::{PdfDictionaryObject, PdfResult, PdfStreamObject};
+
 //--------------------------TrappedState-------------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -228,8 +226,7 @@ impl XmpMetadata {
         let mut dict = PdfDictionaryObject::new().typed("Metadata");
         dict.add("SubType", Pdf::name("XML"));
 
-        let stream =
-            PdfStreamObject::new().with_data(self.xmp_packet.as_bytes().to_vec(), dict);
+        let stream = PdfStreamObject::new().with_data(self.xmp_packet.as_bytes().to_vec(), dict);
 
         Ok(stream)
     }
