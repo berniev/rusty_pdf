@@ -11,7 +11,6 @@
 /// An array shall be written as a sequence of objects enclosed in SQUARE BRACKETS.
 /// EXAMPLE [ 549 3.14 false ( Ralph ) /SomeName ]
 ///
-
 use crate::{PdfError, PdfObject};
 
 //--------------------------- PdfArrayObject --------------------------//
@@ -24,10 +23,17 @@ pub struct PdfArrayObject {
 
 impl PdfArrayObject {
     pub fn new() -> Self {
-        Self { values: vec![],
-        object_number: None}
+        Self {
+            values: vec![],
+            object_number: None,
+        }
     }
 
+    pub fn with_object_number(mut self, value: u64) -> Self {
+        self.object_number = Some(value);
+        self
+    }
+    
     pub fn push(&mut self, value: PdfObject) {
         self.values.push(value);
     }
@@ -41,12 +47,6 @@ impl PdfArrayObject {
             arr.push(b' ');
         }
         arr.push(b']');
-
-        if self.object_number.is_some() {
-            arr.extend(self.object_number.unwrap().to_string().into_bytes());
-            arr.push(b' ');
-            arr.push(b'0');
-        }
 
         Ok(arr)
     }

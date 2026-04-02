@@ -4,16 +4,16 @@
 /// These tests verify the DICTIONARY entries of object streams.
 /// The internal stream format is compressed with FlateDecode and not tested here.
 use pydyf::color::{Color, RGB};
-use pydyf::objects::pdf_object::Pdf;
+use pydyf::objects::pdf_object::PdfObj;
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::util::{Dims, Posn};
-use pydyf::{PdfFile, PdfStreamObject};
+use pydyf::{Pdf, PdfStreamObject};
 
 
 /// Test: Object stream dictionary must have /Type /ObjStm
 #[test]
 fn test_objstm_has_type() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
     let color = RGB::new(Color::new(0.0), Color::new(0.0), Color::new(1.0));
     stream.set_color_rgb(color, StrokeOrFill::Fill);
@@ -26,7 +26,7 @@ fn test_objstm_has_type() {
     );
     stream.fill(WindingRule::EvenOdd);
 
-    let _content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let _content_id = pdf.save_indirect_object(PdfObj::stream(stream));
 /*    let mut page = PageObject::new(0usize.into());
     page.add_content(content_id);
     page.set_media_box(PageSize::A4);
@@ -46,7 +46,7 @@ fn test_objstm_has_type() {
 /// Test: Object stream dictionary must have /N entry (integer)
 #[test]
 fn test_objstm_has_n() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
     stream.add_rectangle(
         Posn { x: 0.0, y: 0.0 },
@@ -55,7 +55,7 @@ fn test_objstm_has_n() {
             width: 10.0,
         },
     );
-    let _content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let _content_id = pdf.save_indirect_object(PdfObj::stream(stream));
 
 /*    let mut page = PageObject::new(0usize.into());
     page.add_content(content_id);
@@ -84,7 +84,7 @@ fn test_objstm_has_n() {
 /// Test: Object stream dictionary must have /First entry (integer)
 #[test]
 fn test_objstm_has_first() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
     stream.add_rectangle(
         Posn { x: 0.0, y: 0.0 },
@@ -93,7 +93,7 @@ fn test_objstm_has_first() {
             width: 10.0,
         },
     );
-    let _content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let _content_id = pdf.save_indirect_object(PdfObj::stream(stream));
 
 /*    let mut page = PageObject::new(0usize.into());
     page.add_content(content_id);
@@ -125,7 +125,7 @@ fn test_objstm_has_first() {
 /// Test: Object stream must have /Filter /FlateDecode
 #[test]
 fn test_objstm_has_filter() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
     stream.add_rectangle(
         Posn { x: 0.0, y: 0.0 },
@@ -134,7 +134,7 @@ fn test_objstm_has_filter() {
             width: 10.0,
         },
     );
-    let _content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let _content_id = pdf.save_indirect_object(PdfObj::stream(stream));
 
  /*   let mut page = PageObject::new(0usize.into());
     page.add_content(content_id);
@@ -165,7 +165,7 @@ fn test_objstm_has_filter() {
 /// Test: Content streams should NOT be in object stream (they have stream data)
 #[test]
 fn test_content_streams_not_compressed() {
-    let _pdf = PdfFile::new();
+    let _pdf = Pdf::new();
 
     // Add a content stream
     let mut stream = PdfStreamObject::new();

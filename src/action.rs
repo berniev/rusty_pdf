@@ -5,7 +5,7 @@
 /// Actions specify responses to various events in PDF documents, such as
 /// user interactions with annotations or form fields.
 
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 use crate::util::Rect;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfResult};
 
@@ -39,11 +39,11 @@ impl Action for UriAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", Pdf::name(self.action_type()));
-        dict.add("URI", Pdf::string(self.uri.as_str()));
+        dict.add("S", PdfObj::name(self.action_type()));
+        dict.add("URI", PdfObj::string(self.uri.as_str()));
 
         if self.is_map {
-            dict.add("IsMap", Pdf::bool(true));
+            dict.add("IsMap", PdfObj::bool(true));
         }
 
         Ok(dict)
@@ -67,8 +67,8 @@ impl Action for GoToAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", Pdf::name(self.action_type()));
-        dict.add("D", Pdf::array(self.destination.to_pdf_array()));
+        dict.add("S", PdfObj::name(self.action_type()));
+        dict.add("D", PdfObj::array(self.destination.to_pdf_array()));
         Ok(dict)
     }
 }
@@ -90,8 +90,8 @@ impl Action for JavaScriptAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", Pdf::name(self.action_type()));
-        dict.add("JS", Pdf::string(self.script.as_str()));
+        dict.add("S", PdfObj::name(self.action_type()));
+        dict.add("JS", PdfObj::string(self.script.as_str()));
 
         Ok(dict)
     }
@@ -123,14 +123,14 @@ impl Action for LaunchAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", Pdf::name(self.action_type()));
+        dict.add("S", PdfObj::name(self.action_type()));
 
         let mut file_dict = PdfDictionaryObject::new().typed("Filespec");
-        file_dict.add("F", Pdf::string(self.file.as_str()));
-        dict.add("F", Pdf::dict(file_dict));
+        file_dict.add("F", PdfObj::string(self.file.as_str()));
+        dict.add("F", PdfObj::dict(file_dict));
 
         if let Some(new_win) = self.new_window {
-            dict.add("NewWindow", Pdf::bool(new_win));
+            dict.add("NewWindow", PdfObj::bool(new_win));
         }
 
         Ok(dict)
@@ -173,8 +173,8 @@ impl Action for NamedAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", Pdf::name(self.action_type()));
-        dict.add("N", Pdf::name(self.name.as_str()));
+        dict.add("S", PdfObj::name(self.action_type()));
+        dict.add("N", PdfObj::name(self.name.as_str()));
 
         Ok(dict)
     }
@@ -236,37 +236,37 @@ impl FitDestination {
                 top,
                 zoom,
             } => {
-                arr.push(Pdf::num(*page));
-                arr.push(Pdf::name("XYZ"));
-                arr.push(Pdf::num_or_null(*left));
-                arr.push(Pdf::num_or_null(*top));
-                arr.push(Pdf::num_or_null(*zoom));
+                arr.push(PdfObj::num(*page));
+                arr.push(PdfObj::name("XYZ"));
+                arr.push(PdfObj::num_or_null(*left));
+                arr.push(PdfObj::num_or_null(*top));
+                arr.push(PdfObj::num_or_null(*zoom));
             }
 
             FitDestination::Fit { page } => {
-                arr.push(Pdf::num(*page));
-                arr.push(Pdf::name("Fit"));
+                arr.push(PdfObj::num(*page));
+                arr.push(PdfObj::name("Fit"));
             }
 
             FitDestination::FitH { page, top } => {
-                arr.push(Pdf::num(*page));
-                arr.push(Pdf::name("FitH"));
-                arr.push(Pdf::num_or_null(*top));
+                arr.push(PdfObj::num(*page));
+                arr.push(PdfObj::name("FitH"));
+                arr.push(PdfObj::num_or_null(*top));
             }
 
             FitDestination::FitV { page, left } => {
-                arr.push(Pdf::num(*page));
-                arr.push(Pdf::name("FitV"));
-                arr.push(Pdf::num_or_null(*left));
+                arr.push(PdfObj::num(*page));
+                arr.push(PdfObj::name("FitV"));
+                arr.push(PdfObj::num_or_null(*left));
             }
 
             FitDestination::FitR { page, rect } => {
-                arr.push(Pdf::num(*page));
-                arr.push(Pdf::name("FitR"));
-                arr.push(Pdf::num(rect.x1));
-                arr.push(Pdf::num(rect.y1));
-                arr.push(Pdf::num(rect.x2));
-                arr.push(Pdf::num(rect.y2));
+                arr.push(PdfObj::num(*page));
+                arr.push(PdfObj::name("FitR"));
+                arr.push(PdfObj::num(rect.x1));
+                arr.push(PdfObj::num(rect.y1));
+                arr.push(PdfObj::num(rect.x2));
+                arr.push(PdfObj::num(rect.y2));
             }
         }
 

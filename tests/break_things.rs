@@ -1,9 +1,9 @@
 use pydyf::color::{Color, RGB};
-use pydyf::objects::pdf_object::Pdf;
+use pydyf::objects::pdf_object::PdfObj;
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::util::{Dims, Matrix, Posn};
 use pydyf::PdfStreamObject;
-use pydyf::PdfFile;
+use pydyf::Pdf;
 /*fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageObject {
     let mut page = PageObject::new(0usize.into());
     page.add_content(content_index);
@@ -270,7 +270,7 @@ fn test_compressed_empty() {
 */
 #[test]
 fn test_extreme_font_sizes() {
-    let  _pdf = PdfFile::new();
+    let  _pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
 
     stream.set_color_rgb(
@@ -325,7 +325,7 @@ fn test_extreme_font_sizes() {
 
 #[test]
 fn test_overlapping_operations() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
 
     stream.begin_text();
@@ -343,7 +343,7 @@ fn test_overlapping_operations() {
     stream.fill(WindingRule::EvenOdd);
     stream.end_text();
 
-    let _content_index = pdf.save_indirect_object(Pdf::stream(stream));
+    let _content_index = pdf.save_indirect_object(PdfObj::stream(stream));
 /*    let page = create_page_with_content(PageSize::A4, content_index);
     pdf.add_page(page);
 

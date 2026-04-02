@@ -3,7 +3,7 @@
 //! The outline provides a hierarchical table of contents that allows users
 //! to navigate through the document.
 
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 use crate::{
     action::FitDestination, color::RGB, PdfDictionaryObject,
     PdfResult,
@@ -152,9 +152,9 @@ impl DocumentOutline {
         let mut outline_dict = PdfDictionaryObject::new().typed("Outlines");
 
         if !self.items.is_empty() {
-            outline_dict.add("First", Pdf::num(item_ids[0]));
-            outline_dict.add("Last", Pdf::num(item_ids[self.items.len() - 1]));
-            outline_dict.add("Count", Pdf::num(self.total_count() as i64));
+            outline_dict.add("First", PdfObj::num(item_ids[0]));
+            outline_dict.add("Last", PdfObj::num(item_ids[self.items.len() - 1]));
+            outline_dict.add("Count", PdfObj::num(self.total_count() as i64));
         }
 
         Ok(OutlineDictionaries {
@@ -196,14 +196,14 @@ impl DocumentOutline {
         //dict.add("Parent", Pdf::indirect(parent_id));
 
         if let Some(prev) = prev_id {
-            dict.add("Prev", Pdf::num(prev));
+            dict.add("Prev", PdfObj::num(prev));
         }
         if let Some(next) = next_id {
-            dict.add("Next", Pdf::num(next));
+            dict.add("Next", PdfObj::num(next));
         }
 
         if let Some(dest) = item.destination.clone() {
-            dict.add("Dest", Pdf::array(dest.to_pdf_array()));
+            dict.add("Dest", PdfObj::array(dest.to_pdf_array()));
         }
 
         if !item.children.is_empty() {
@@ -227,21 +227,21 @@ impl DocumentOutline {
                 )?;
  */           }
 
-            dict.add("First", Pdf::num(first_child_id));
-            dict.add("Last", Pdf::num(all_ids[first_child_idx + item.children.len() - 1]));
+            dict.add("First", PdfObj::num(first_child_id));
+            dict.add("Last", PdfObj::num(all_ids[first_child_idx + item.children.len() - 1]));
 
             // Count: positive if open, negative if closed
             let count = item.count_descendants();
             let count_val = if item.is_open { count } else { -count };
-            dict.add("Count", Pdf::num(count_val as i64));
+            dict.add("Count", PdfObj::num(count_val as i64));
         }
 
         if let Some(rgb) = item.color {
-            dict.add("C", Pdf::array(rgb.as_pdf_array()));
+            dict.add("C", PdfObj::array(rgb.as_pdf_array()));
         }
 
         if item.flags.bits() != 0 {
-            dict.add("F", Pdf::num(item.flags.bits() as i64));
+            dict.add("F", PdfObj::num(item.flags.bits() as i64));
         }
 
         dicts.push((current_id, dict));

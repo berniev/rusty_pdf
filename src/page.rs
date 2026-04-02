@@ -65,22 +65,22 @@
 /// MediaBox  Rectangle   Opt    Inh
 /// CropBox   Rectangle   Opt    Inh
 /// Rotate    Integer     Opt    Inh
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 pub use crate::page_size::PageSize;
 use crate::{PdfArrayObject, PdfDictionaryObject};
 
 //--------------------------- Page ---------------------------//
 
-pub fn make_page() -> PdfDictionaryObject {
-    PdfDictionaryObject::new().typed("Page")
+pub fn make_page(object_number: u64) -> PdfDictionaryObject {
+    PdfDictionaryObject::new().typed("Page").with_object_number(object_number)
  }
 
 //--------------------------- PageTree -------------------------//
 
-pub fn make_page_tree() -> PdfDictionaryObject {
-    let mut tree = PdfDictionaryObject::new().typed("Pages");
-    tree.add("Kids", Pdf::array(PdfArrayObject::new()));
-    tree.add("Count", Pdf::num(0));
+pub fn make_page_tree(object_number: u64) -> PdfDictionaryObject {
+    let mut tree = PdfDictionaryObject::new().typed("Pages").with_object_number(object_number);
+    tree.add("Kids", PdfObj::array(PdfArrayObject::new()));
+    tree.add("Count", PdfObj::num(0));
 
     tree
 }
@@ -90,12 +90,12 @@ pub fn make_page_tree() -> PdfDictionaryObject {
 #[allow(unused_variables)]
 #[allow(dead_code)]
 fn add_page_to_tree(mut page_dict: PdfDictionaryObject, mut tree_dict: PdfDictionaryObject) {
-   page_dict.add("Parent", Pdf::num(0)); // indirect ref to tree
+   page_dict.add("Parent", PdfObj::num(0)); // indirect ref to tree
     if !page_dict.contains_key("Resources") && !tree_dict.contains_key("Resources") {}
     if !page_dict.contains_key("MediaBox") && !tree_dict.contains_key("MediaBox") {}
     let curr_count = tree_dict.get_integer("Count").unwrap_or(0);
     //tree_dict.add_ref(page_dict);
-    tree_dict.update("Count", Pdf::num(curr_count + 1));
+    tree_dict.update("Count", PdfObj::num(curr_count + 1));
 
     /*if let Some(obj) = tree_dict.get_mut("Kids") {
         if let Some(array) = obj.as_any_mut().downcast_mut::<PdfArrayObject>() {

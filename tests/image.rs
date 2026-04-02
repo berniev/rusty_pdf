@@ -1,6 +1,6 @@
 use pydyf::color::ColorSpace;
 use pydyf::util::{Matrix, Posn};
-use pydyf::{PdfFile, Stream};
+use pydyf::{Pdf, Stream};
 /*fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     let content_index = String::from_utf8(content_stream_ref).unwrap();
     // Extract just the number from "N 0 R" format
@@ -14,7 +14,7 @@ use pydyf::{PdfFile, Stream};
 */
 #[test]
 fn test_inline_image() {
-    let _pdf = PdfFile::new();
+    let _pdf = Pdf::new();
     let mut stream = Stream::new();
 
     let image_data = vec![255, 0, 0, 255, 0, 0, 0, 0, 255, 0, 0, 255];

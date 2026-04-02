@@ -33,59 +33,44 @@ startxref
 %%EOF
 ```
 */
-/*
-How to determine if an object will be indirect or direct?
 
-Three criteria, in order of priority:
-1. Spec mandates it — some objects must be indirect. Streams are always indirect. Certain
-   dictionary entries like /Pages and /Outlines are required to be indirect references. No choice.
-2. Shared — if the same object is referenced from multiple places, it must be indirect so multiple
-   references can point to it by number. A font used on every page is the classic example.
-3. Size / complexity — large or complex objects (page dictionaries, images, fonts) are better
-   as indirect so the cross-reference table enables random access to them without parsing the
-   whole file. Small trivial values (a boolean, a name, a short string) are better inline as
-   direct objects — the overhead of an indirect object isn't worth it.
-
-In practice for a write-once writer: if in doubt, make it indirect.
-The cost is just an xref entry.
-
-so maybe for starters we:
-    indirect: stream, dict, array.
-    direct  : bool, name, string, number, null. (always part of an indirect object)
-
-    So the concrete rule is: if the object has a /Type entry, it's almost certainly indirect.
-    Typed objects are named, standalone PDF entities. Untyped objects are supporting data
-    embedded in their parent.
-*/
 use std::io::Write;
 
-use crate::body::Body;
+use crate::{PdfDictionaryObject, PdfArrayObject};
+use crate::cross_reference_table::CrossRefTable;
 use crate::file_identifier::FileIdentifierMode;
 use crate::fonts::Fonts;
 use crate::header::Header;
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 use crate::page::make_page_tree;
 use crate::pdf_version::PdfVersion;
-use crate::trailer::Trailer;
 use crate::writer::{CompressedStrategy, LegacyStrategy, PdfWriter};
-use crate::{PdfDictionaryObject, PdfObject};
 
 //--------------------------- PDF -------------------------//
 
-pub struct PdfFile {
+pub struct Pdf {
     header: Header,
-    body: Body,
-    pub catalog: PdfDictionaryObject,
-    pub _trailer: Trailer,
+    catalog_dict: PdfDictionaryObject,
+    page_tree_dict: PdfDictionaryObject,
+    trailer_dict: PdfDictionaryObject,
+    xref_table: CrossRefTable,
+    last_object_number: u64,
 }
-impl PdfFile {
+
+impl Pdf {
+    //--------------------------- construction --------------------------//
     pub fn new() -> Self {
-        PdfFile {
+        let mut pdf = Pdf {
             header: Header::new(),
-            body: Body::new(), // contains serialised objects
-            catalog: PdfDictionaryObject::new().typed("Catalog"),
-            _trailer: Trailer::new(),
-        }
+            catalog_dict: PdfDictionaryObject::new().typed("Catalog"), // serialises into body
+            page_tree_dict: PdfDictionaryObject::new(),
+            trailer_dict: PdfDictionaryObject::new(), // not typed
+            xref_table: CrossRefTable::new(), // buffers xref until body is complete, then appended
+            last_object_number: 0,
+        };
+        pdf.page_tree_dict = make_page_tree(pdf.next_object_number());
+
+        pdf
     }
 
     pub fn version(mut self, version: PdfVersion) -> Self {
@@ -94,27 +79,50 @@ impl PdfFile {
         self
     }
 
-    pub fn initialize_catalog(&mut self) {
-        let page_tree_dict = make_page_tree();
-        self.catalog.add(
-            "Pages",
-            Pdf::dict(page_tree_dict).with_object_number(self.body.next_num()),
-        );
+    pub fn encrypted(&mut self) -> &mut Self {
+        let mut encryption_dict = PdfDictionaryObject::new(); // direct
+        encryption_dict
+            .add("Filter", PdfObj::name("Standard"));
+
+        self.trailer_dict
+            .add("Encrypt", PdfObj::dict(encryption_dict));
+        
+        let mut id_array = PdfArrayObject::new();
+        id_array.push(PdfObj::string("1234567890"));
+        id_array.push(PdfObj::string("0987654321"));
+        
+        self.trailer_dict
+            .add("ID", PdfObj::array(id_array));
+
+        self
     }
 
-    pub fn get_catalog(&self) -> &PdfDictionaryObject {
-        &self.catalog
+    //-------------------------------------------------------
+
+    pub fn get_catalog_dict(&mut self) -> &mut PdfDictionaryObject {
+        &mut self.catalog_dict
     }
 
-    pub fn save_indirect_object(&mut self, _obj: PdfObject) -> u64 {
-        let object_number = self.body.next_num();
-
-        object_number
+    pub fn get_trailer_dict(&mut self) -> &mut PdfDictionaryObject {
+        &mut self.trailer_dict
     }
+
+    pub fn get_xref_table_dict(&mut self) -> &mut CrossRefTable {
+        &mut self.xref_table
+    }
+
+    pub fn next_object_number(&mut self) -> u64 {
+        self.last_object_number += 1;
+
+        self.last_object_number
+    }
+
+    // put it all together
+    pub fn serialise() {}
 
     fn write_common(&mut self) {
         let _resources_number = self.add_font_resources();
-        self.initialize_catalog();
+        //self.initialize_catalog();
     }
 
     pub fn write_legacy<W: Write>(
@@ -137,7 +145,7 @@ impl PdfFile {
 
     pub fn add_font_resources(&mut self) -> usize {
         let mut resources_dict = PdfDictionaryObject::new();
-        resources_dict.add("Font", Pdf::dict(Fonts::get_standard_fonts_dict()));
+        resources_dict.add("Font", PdfObj::dict(Fonts::get_standard_fonts_dict()));
 
         //self.indirect_pdf_objects.push(resources_dict.boxed());
 

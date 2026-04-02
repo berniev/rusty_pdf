@@ -8,27 +8,4 @@ document such as fonts, pages, and sampled images.
 Beginning with PDF 1.5, the body can also contain object streams, each of which contains a
 sequence of indirect objects;
 */
-use crate::{PdfObject};
 
-pub struct Body {
-    last_object_number: u64,
-}
-
-impl Body {
-    pub fn new() -> Self {
-        Body {
-            last_object_number: 0,
-        }
-    }
-
-    pub fn add_indirect_object(&mut self, mut object: PdfObject){
-        self.last_object_number += 1;
-        object.serialise().expect("TODO: panic message");
-    }
-
-    pub fn next_num(&mut self) ->u64{
-        self.last_object_number += 1;
-
-        self.last_object_number
-    }
-}

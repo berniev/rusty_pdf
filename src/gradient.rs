@@ -27,9 +27,9 @@
 
 use std::rc::Rc;
 use crate::color::RGBA;
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 use crate::util::{Dims, Posn};
-use crate::{PdfArrayObject, PdfDictionaryObject, PdfFile};
+use crate::{PdfArrayObject, PdfDictionaryObject, Pdf};
 
 pub enum PdfFunctionType {
     Sampled {
@@ -100,7 +100,7 @@ impl Gradient {
     /// Returns a tuple of (Pattern Name, optional Graphics State Name for transparency).
     pub fn create_pattern(
         &self,
-        pdf: &mut PdfFile,          // <== todo
+        _pdf: &mut Pdf,          // <== todo
         resource_counter: &mut u32, // <== todo
         posn: Posn,
         size: Dims,
@@ -118,37 +118,37 @@ impl Gradient {
         let first = &self.stops[0].rgba;
         let last = &self.stops.last().unwrap().rgba;
 
-        let color_func = create_interpolation_function_type_2(
+        let _color_func = create_interpolation_function_type_2(
             first.as_vec_64().to_vec(),
             last.as_vec_64().to_vec(),
             0.0,
         );
 
         let mut color_shading_dict = PdfDictionaryObject::new();
-        color_shading_dict.add("ShadingType", Pdf::num(shading_type));
-        color_shading_dict.add("ColorSpace", Pdf::name("DeviceRGB"));
+        color_shading_dict.add("ShadingType", PdfObj::num(shading_type));
+        color_shading_dict.add("ColorSpace", PdfObj::name("DeviceRGB"));
 
         let make_coords = || {
             let mut arr = PdfArrayObject::new();
             for coord in coords.iter() {
-                arr.push(Pdf::num(*coord));
+                arr.push(PdfObj::num(*coord));
             }
             arr
         };
-        color_shading_dict.add("Coords", Pdf::array(make_coords()));
+        color_shading_dict.add("Coords", PdfObj::array(make_coords()));
 
-        pdf.save_indirect_object(Pdf::dict(color_func));
+        //pdf.save_indirect_object(Pdf::dict(color_func));
 
         //color_shading_dict.add("Function", Pdf::indirect(color_func_num));
 
         let make_extend = || {
             let mut arr = PdfArrayObject::new();
-            arr.push(Pdf::bool(true));
-            arr.push(Pdf::bool(true));
+            arr.push(PdfObj::bool(true));
+            arr.push(PdfObj::bool(true));
             arr
         };
 
-        color_shading_dict.add("Extend", Pdf::array(make_extend()));
+        color_shading_dict.add("Extend", PdfObj::array(make_extend()));
 
         //let shading_num = pdf.add_object(Pdf::dict(color_shading_dict));
 
@@ -159,21 +159,21 @@ impl Gradient {
             let name = format!("GS{}", *resource_counter);
             *resource_counter += 1;
 
-            let alpha_func_dict = create_interpolation_function_type_2(
+            let _alpha_func_dict = create_interpolation_function_type_2(
                 vec![first.a().to_f64(), last.a().to_f64()],
                 vec![last.a().to_f64()],
                 0.0,
             );
-            pdf.save_indirect_object(Pdf::dict(alpha_func_dict)); // <== todo
+            //pdf.save_indirect_object(Pdf::dict(alpha_func_dict)); // <== todo
 
             let mut alpha_shading_dict = PdfDictionaryObject::new();
-            alpha_shading_dict.add("ShadingType", Pdf::num(shading_type as i64));
-            alpha_shading_dict.add("ColorSpace", Pdf::name("DeviceGray"));
-            alpha_shading_dict.add("Coords", Pdf::array(make_coords()));
+            alpha_shading_dict.add("ShadingType", PdfObj::num(shading_type as i64));
+            alpha_shading_dict.add("ColorSpace", PdfObj::name("DeviceGray"));
+            alpha_shading_dict.add("Coords", PdfObj::array(make_coords()));
             //alpha_shading_dict.add("Function", Pdf::indirect(alpha_func_num));
-            alpha_shading_dict.add("Extend", Pdf::array(make_extend()));
+            alpha_shading_dict.add("Extend", PdfObj::array(make_extend()));
 
-            pdf.save_indirect_object(Pdf::dict(alpha_shading_dict)); // <== todo
+            //pdf.save_indirect_object(Pdf::dict(alpha_shading_dict)); // <== todo
 
             //create_soft_mask_for_shading(pdf, alpha_shading_num, size.width, size.height);
 
@@ -181,10 +181,10 @@ impl Gradient {
         };
 
         let mut pattern_dict = PdfDictionaryObject::new().typed("Pattern");
-        pattern_dict.add("PatternType", Pdf::num(2));
+        pattern_dict.add("PatternType", PdfObj::num(2));
         //pattern_dict.add("Shading", Pdf::indirect(shading_num));
 
-        pdf.save_indirect_object(Pdf::dict(pattern_dict)); // <== todo
+        //pdf.save_indirect_object(Pdf::dict(pattern_dict)); // <== todo
 
         Some((pattern_name, gs_name))
     }
@@ -232,12 +232,12 @@ fn create_interpolation_function_type_2(
     exponent: f32,
 ) -> PdfDictionaryObject {
     let mut dict = PdfDictionaryObject::new();
-    dict.add("FunctionType", Pdf::num(2));
+    dict.add("FunctionType", PdfObj::num(2));
 
-    dict.add("Domain", Pdf::array(to_array(vec![0.0, 1.0])));
-    dict.add("C0", Pdf::array(to_array(c0)));
-    dict.add("C1", Pdf::array(to_array(c1)));
-    dict.add("N", Pdf::num(exponent as f64)); // Linear interpolation
+    dict.add("Domain", PdfObj::array(to_array(vec![0.0, 1.0])));
+    dict.add("C0", PdfObj::array(to_array(c0)));
+    dict.add("C1", PdfObj::array(to_array(c1)));
+    dict.add("N", PdfObj::num(exponent as f64)); // Linear interpolation
 
     dict
 }
@@ -245,7 +245,7 @@ fn create_interpolation_function_type_2(
 fn to_array(v: Vec<f64>) -> PdfArrayObject {
     let mut arr = PdfArrayObject::new();
     for val in v {
-        arr.push(Pdf::num(val));
+        arr.push(PdfObj::num(val));
     }
 
     arr

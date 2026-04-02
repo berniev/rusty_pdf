@@ -1,8 +1,8 @@
 use pydyf::color::{Color, RGB};
-use pydyf::objects::pdf_object::Pdf;
+use pydyf::objects::pdf_object::PdfObj;
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::util::{Dims, Matrix, Posn};
-use pydyf::{PdfFile, Stream};
+use pydyf::{Pdf, Stream};
 /*fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     let content_index = String::from_utf8(content_stream_ref).unwrap();
     // Extract just the number from "N 0 R" format
@@ -16,7 +16,7 @@ use pydyf::{PdfFile, Stream};
 
 */#[test]
 fn test_generate_simple_uncompressed_pdf() {
-    let _pdf = PdfFile::new();
+    let _pdf = Pdf::new();
     let mut stream = Stream::new();
 
     stream.set_color_rgb(
@@ -87,7 +87,7 @@ fn test_generate_simple_uncompressed_pdf() {
 
 #[test]
 fn test_generate_circle_over_rectangle() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = Stream::new();
 
     stream.set_color_rgb(
@@ -172,7 +172,7 @@ fn test_generate_circle_over_rectangle() {
     stream.show_single_text_string("Tests Bezier curves for circular paths");
     stream.end_text();
 
-    let content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let content_id = pdf.save_indirect_object(PdfObj::stream(stream));
     let _content_ref = format!("{} 0 R", content_id).into_bytes();
 /*    let page = create_page_with_content(content_ref);
     pdf.add_page(page);
@@ -186,7 +186,7 @@ fn test_generate_circle_over_rectangle() {
 
 #[test]
 fn test_multipage_pdf() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
 
     let mut stream1 = Stream::new();
     stream1.set_color_rgb(
@@ -228,7 +228,7 @@ fn test_multipage_pdf() {
     stream1.show_single_text_string("Red rectangle - Tests multi-page PDF generation");
     stream1.end_text();
 
-    let content_id1 = pdf.save_indirect_object(Pdf::stream(stream1));
+    let content_id1 = pdf.save_indirect_object(PdfObj::stream(stream1));
     let _content_ref1 = format!("{} 0 R", content_id1).into_bytes();
  /*   let page1 = create_page_with_content(content_ref1);
     pdf.add_page(page1);
@@ -332,7 +332,7 @@ fn test_multipage_pdf() {
 
 #[test]
 fn test_graphics_operations() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = Stream::new();
 
     stream.set_color_rgb(
@@ -479,7 +479,7 @@ fn test_graphics_operations() {
     stream.show_single_text_string("Cyan triangle | Orange trapezoid");
     stream.end_text();
 
-    let content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let content_id = pdf.save_indirect_object(PdfObj::stream(stream));
     let _content_ref = format!("{} 0 R", content_id).into_bytes();
  /*   let page = create_page_with_content(content_ref);
     pdf.add_page(page);
@@ -493,7 +493,7 @@ fn test_graphics_operations() {
 
 #[test]
 fn test_comparison_uncompressed() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = Stream::new();
 
     stream.set_color_rgb(
@@ -530,7 +530,7 @@ fn test_comparison_uncompressed() {
 
     stream.end_text();
 
-    let content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let content_id = pdf.save_indirect_object(PdfObj::stream(stream));
     let _content_ref = format!("{} 0 R", content_id).into_bytes();
 /*    let page = create_page_with_content(content_ref);
     pdf.add_page(page);
@@ -544,7 +544,7 @@ fn test_comparison_uncompressed() {
 
 #[test]
 fn test_comparison_compressed() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = Stream::new().compressed();
 
     stream.set_color_rgb(
@@ -581,7 +581,7 @@ fn test_comparison_compressed() {
 
     stream.end_text();
 
-    let content_id = pdf.save_indirect_object(Pdf::stream(stream));
+    let content_id = pdf.save_indirect_object(PdfObj::stream(stream));
     let _content_ref = format!("{} 0 R", content_id).into_bytes();
 /*    let page = create_page_with_content(content_ref);
     pdf.add_page(page);

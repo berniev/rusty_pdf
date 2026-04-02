@@ -1,5 +1,5 @@
 use pydyf::file_identifier::FileIdentifierMode;
-use pydyf::objects::pdf_object::Pdf;
+use pydyf::objects::pdf_object::PdfObj;
 
 /// Tests to verify single source of truth for object numbering
 ///
@@ -27,14 +27,14 @@ fn test_next_object_number_is_single_source_of_truth() {
 */
 #[test]
 fn test_add_object_assigns_sequential_ids() {
-    use pydyf::{PdfFile, PdfStreamObject};
+    use pydyf::{Pdf, PdfStreamObject};
 
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
 
     // Add objects one by one and verify IDs are sequential starting from 1
-    let id1 = pdf.save_indirect_object(Pdf::stream(PdfStreamObject::new()));
-    let id2 = pdf.save_indirect_object(Pdf::stream(PdfStreamObject::new()));
-    let id3 = pdf.save_indirect_object(Pdf::stream(PdfStreamObject::new()));
+    let id1 = pdf.save_indirect_object(PdfObj::stream(PdfStreamObject::new()));
+    let id2 = pdf.save_indirect_object(PdfObj::stream(PdfStreamObject::new()));
+    let id3 = pdf.save_indirect_object(PdfObj::stream(PdfStreamObject::new()));
 
     println!("Added object IDs: {}, {}, {}", id1, id2, id3);
 
@@ -53,11 +53,11 @@ fn test_all_object_assignments_use_consistent_numbering() {
     // This test verifies that ALL objects get sequential IDs with no duplicates
     // Whether assigned via add_object, initialize_catalog, etc.
 
-    use pydyf::{PdfFile, PdfStreamObject};
-    let mut pdf = PdfFile::new();
+    use pydyf::{Pdf, PdfStreamObject};
+    let mut pdf = Pdf::new();
 
     // Add a page
-    pdf.save_indirect_object(Pdf::stream(PdfStreamObject::new()));
+    pdf.save_indirect_object(PdfObj::stream(PdfStreamObject::new()));
 
     // Initialize everything
 /*    let resources_id = pdf.add_font_resources();
@@ -96,11 +96,11 @@ fn test_compressed_write_assigns_unique_objstm_number() {
     // Verify that when creating object streams during compressed write,
     // the ObjStm gets a unique object number that doesn't collide
 
-    use pydyf::{PdfFile, PdfStreamObject};
+    use pydyf::{Pdf, PdfStreamObject};
     use std::collections::HashMap;
 
-    let mut pdf = PdfFile::new();
-    pdf.save_indirect_object(Pdf::stream(PdfStreamObject::new()));
+    let mut pdf = Pdf::new();
+    pdf.save_indirect_object(PdfObj::stream(PdfStreamObject::new()));
 
     let mut output = Vec::new();
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();
@@ -139,10 +139,10 @@ fn test_objstm_number_calculation() {
     // Test the specific calculation used for ObjStm numbering
     // It should be: max(all existing object IDs) + 1
 
-    use pydyf::{PdfFile, PdfStreamObject};
+    use pydyf::{Pdf, PdfStreamObject};
 
-    let mut pdf = PdfFile::new();
-    pdf.save_indirect_object(Pdf::stream(PdfStreamObject::new()));
+    let mut pdf = Pdf::new();
+    pdf.save_indirect_object(PdfObj::stream(PdfStreamObject::new()));
 
     // Before write_compressed, find max object ID
  /*   let max_id_before = pdf.objects.iter()

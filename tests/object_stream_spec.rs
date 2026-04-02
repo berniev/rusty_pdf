@@ -36,18 +36,18 @@
 
 use pydyf::color::{Color, RGB};
 use pydyf::file_identifier::FileIdentifierMode;
-use pydyf::objects::pdf_object::Pdf;
+use pydyf::objects::pdf_object::PdfObj;
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
 use pydyf::util::{Dims, Posn};
-use pydyf::{PdfFile, PdfStreamObject};
+use pydyf::{Pdf, PdfStreamObject};
 
 /// SPEC TEST 1: /Type must be /ObjStm
 #[test]
 fn spec_objstm_must_have_type() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
     stream.add_rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
-    pdf.save_indirect_object(Pdf::stream(stream));
+    pdf.save_indirect_object(PdfObj::stream(stream));
 
     let mut output = Vec::new();
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();
@@ -59,10 +59,10 @@ fn spec_objstm_must_have_type() {
 /// SPEC TEST 2: /N must be present and be an integer
 #[test]
 fn spec_objstm_must_have_n() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
     stream.add_rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
-    pdf.save_indirect_object(Pdf::stream(stream));
+    pdf.save_indirect_object(PdfObj::stream(stream));
 
     let mut output = Vec::new();
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();
@@ -81,10 +81,10 @@ fn spec_objstm_must_have_n() {
 /// SPEC TEST 3: /First must be present and be an integer
 #[test]
 fn spec_objstm_must_have_first() {
-    let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
     stream.add_rectangle(Posn { x: 0.0, y: 0.0 }, Dims { height: 10.0, width: 10.0 });
-    pdf.save_indirect_object(Pdf::stream(stream));
+    pdf.save_indirect_object(PdfObj::stream(stream));
 
     let mut output = Vec::new();
     pdf.write_compressed(&mut output, FileIdentifierMode::None).unwrap();

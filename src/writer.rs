@@ -6,9 +6,9 @@ use crate::cross_reference_table::CrossRefStream;
 use crate::cross_reference_table::CrossRefEntry;
 use crate::file_identifier::FileIdentifierMode;
 use crate::generation::Generation;
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 use crate::objects::string::encode_pdf_string;
-use crate::{PdfDictionaryObject, PdfFile, PdfObject, PdfStreamObject};
+use crate::{PdfDictionaryObject, Pdf, PdfObject, PdfStreamObject};
 
 //------------------------------ PdfStream ------------------
 
@@ -52,7 +52,7 @@ impl<W: Write, S: WriteStrategy> PdfWriter<W, S> {
         }
     }
 
-    pub fn perform(&mut self, pdf: &mut PdfFile) -> std::io::Result<()> {
+    pub fn perform(&mut self, pdf: &mut Pdf) -> std::io::Result<()> {
         self.strategy.write_header(&mut self.stream)?;
         self.strategy.write_body(pdf, &mut self.stream)?;
         //self.strategy.write_index(pdf, &mut self.stream, &self.id_mode)?;
@@ -71,14 +71,14 @@ pub(crate) trait WriteStrategy {
 
     fn write_body<W: Write>(
         &self,
-        pdf: &mut PdfFile,
+        pdf: &mut Pdf,
         stream: &mut PdfStream<W>,
     ) -> std::io::Result<()>;
 
     #[allow(dead_code)]
     fn write_index<W: Write>(
         &self,
-        pdf: &mut PdfFile,
+        pdf: &mut Pdf,
         stream: &mut PdfStream<W>,
         id_mode: &FileIdentifierMode,
     ) -> std::io::Result<()>;
@@ -158,7 +158,7 @@ impl WriteStrategy for LegacyStrategy {
 
     fn write_body<W: Write>(
         &self,
-        _pdf: &mut PdfFile,
+        _pdf: &mut Pdf,
         _stream: &mut PdfStream<W>,
     ) -> std::io::Result<()> {
         // Write all objects individually (uncompressed)
@@ -174,7 +174,7 @@ impl WriteStrategy for LegacyStrategy {
 
     fn write_index<W: Write>(
         &self,
-        _pdf: &mut PdfFile,
+        _pdf: &mut Pdf,
         stream: &mut PdfStream<W>,
         _id_mode: &FileIdentifierMode,
     ) -> std::io::Result<()> {
@@ -227,7 +227,7 @@ impl CompressedStrategy {
     /// Returns a map of (object_id -> (objstm_number, index_in_stream))
     fn write_body_compressed<W: Write>(
         &self,
-        _pdf: &mut PdfFile, // <<=== todo bad!
+        _pdf: &mut Pdf, // <<=== todo bad!
         _stream: &mut PdfStream<W>,
     ) -> std::io::Result<HashMap<usize, (usize, usize)>> {
         // Track which objects are compressed: object_id -> (objstm_num, index)
@@ -294,8 +294,8 @@ impl CompressedStrategy {
         // Create object stream (reuse obj_stream_num allocated above)
 
         let mut dict = PdfDictionaryObject::new().typed("ObjStm");
-        dict.add("N", Pdf::num(compressed_objects.len() as i64));
-        dict.add("First", Pdf::num(first_offset as i64));
+        dict.add("N", PdfObj::num(compressed_objects.len() as i64));
+        dict.add("First", PdfObj::num(first_offset as i64));
 
         let _obj_stream = PdfStreamObject::new()
             .compressed()
@@ -324,7 +324,7 @@ impl WriteStrategy for CompressedStrategy {
 
     fn write_body<W: Write>(
         &self,
-        pdf: &mut PdfFile,
+        pdf: &mut Pdf,
         stream: &mut PdfStream<W>,
     ) -> std::io::Result<()> {
         // Call the compressed version and store the compression map
@@ -336,7 +336,7 @@ impl WriteStrategy for CompressedStrategy {
     /// Write cross-reference stream instead of traditional xref table (PDF 1.5+)
     fn write_index<W: Write>(
         &self,
-        _pdf: &mut PdfFile,
+        _pdf: &mut Pdf,
         stream: &mut PdfStream<W>,
         _id_mode: &FileIdentifierMode,
     ) -> std::io::Result<()> {

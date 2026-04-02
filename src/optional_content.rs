@@ -3,7 +3,7 @@
 //! Optional Content Groups (OCGs) allow parts of a PDF to be selectively
 //! visible or hidden, commonly used for layers in technical drawings.
 
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 use crate::{PdfArrayObject, PdfDictionaryObject};
 
 //------------------ VisibilityInitialState -----------------------
@@ -84,18 +84,18 @@ impl OptionalContentGroup {
 
     pub fn to_dict(&self) -> PdfDictionaryObject {
         let mut dict = PdfDictionaryObject::new().typed("OCG");
-        dict.add("Name", Pdf::string(self.name.as_str()));
+        dict.add("Name", PdfObj::string(self.name.as_str()));
         //dict.add_name("Name", self.name.clone());
 
         if let Some(ref intent) = self.intent {
             if intent.len() == 1 {
-                dict.add("Intent", Pdf::name(&intent[0]));
+                dict.add("Intent", PdfObj::name(&intent[0]));
             } else {
                 let mut arr = PdfArrayObject::new();
                 for i in intent {
-                    arr.push(Pdf::name(i.as_str()));
+                    arr.push(PdfObj::name(i.as_str()));
                 }
-                dict.add("Intent", Pdf::array(arr));
+                dict.add("Intent", PdfObj::array(arr));
             }
         }
 
@@ -106,33 +106,33 @@ impl OptionalContentGroup {
                 let mut print_dict = PdfDictionaryObject::new();
                 print_dict.add(
                     "PrintState",
-                    Pdf::name(match print.state {
+                    PdfObj::name(match print.state {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
                     }),
                 );
-                usage_dict.add("Print", Pdf::dict(print_dict));
+                usage_dict.add("Print", PdfObj::dict(print_dict));
             }
 
             if let Some(ref view) = usage.view {
                 let mut view_dict = PdfDictionaryObject::new();
-                view_dict.add("ViewState", Pdf::name(&*view.state.to_string()));
-                usage_dict.add("View", Pdf::dict(view_dict));
+                view_dict.add("ViewState", PdfObj::name(&*view.state.to_string()));
+                usage_dict.add("View", PdfObj::dict(view_dict));
             }
 
             if let Some(ref export) = usage.export {
                 let mut export_dict = PdfDictionaryObject::new();
                 export_dict.add(
                     "ExportState",
-                    Pdf::name(match export.state {
+                    PdfObj::name(match export.state {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
                     }),
                 );
-                usage_dict.add("Export", Pdf::dict(export_dict));
+                usage_dict.add("Export", PdfObj::dict(export_dict));
             }
 
-            dict.add("Usage", Pdf::dict(usage_dict));
+            dict.add("Usage", PdfObj::dict(usage_dict));
         }
 
         dict
@@ -197,15 +197,15 @@ impl OptionalContentConfig {
     pub fn to_dict(&self) -> PdfDictionaryObject {
         let mut dict = PdfDictionaryObject::new();
 
-        dict.add("Name", Pdf::string(self.name.as_str()));
+        dict.add("Name", PdfObj::string(self.name.as_str()));
 
         if let Some(ref creator) = self.creator {
-            dict.add("Creator", Pdf::string(creator));
+            dict.add("Creator", PdfObj::string(creator));
         }
 
         dict.add(
             "BaseState",
-            Pdf::name(match self.base_state {
+            PdfObj::name(match self.base_state {
                 VisibilityInitialState::On => "ON",
                 VisibilityInitialState::Off => "OFF",
             }),
@@ -216,7 +216,7 @@ impl OptionalContentConfig {
             /*for &id in &self.on_list {
                 //arr.push(Pdf::indirect(id));
             }*/
-            dict.add("ON", Pdf::array(arr));
+            dict.add("ON", PdfObj::array(arr));
         }
 
         if !self.off_list.is_empty() {
@@ -224,12 +224,12 @@ impl OptionalContentConfig {
             //for &id in &self.off_list {
                 //arr.push(Pdf::indirect(id));
             //}
-            dict.add("OFF", Pdf::array(arr));
+            dict.add("OFF", PdfObj::array(arr));
         }
 
         // Order array (simplified - full implementation would handle nested groups)
         if !self.order.is_empty() {
-            dict.add("Order", Pdf::array(self.build_order_array(&self.order)));
+            dict.add("Order", PdfObj::array(self.build_order_array(&self.order)));
         }
 
         dict
@@ -244,8 +244,8 @@ impl OptionalContentConfig {
                     //arr.push(Pdf::indirect(*id));
                 }
                 LayerOrder::Group { label, children } => {
-                    arr.push(Pdf::string(label.as_str()));
-                    arr.push(Pdf::array(self.build_order_array(children)));
+                    arr.push(PdfObj::string(label.as_str()));
+                    arr.push(PdfObj::array(self.build_order_array(children)));
                 }
             }
         }

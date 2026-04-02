@@ -6,12 +6,13 @@ use crate::{
     NumberType, PdfArrayObject, PdfBooleanObject, PdfDictionaryObject, PdfError, PdfNameObject,
     PdfNullObject, PdfStreamObject, PdfStringObject,
 };
+use std::cmp::PartialEq;
 
-//--------------------------- Pdf -------------------------//
+//--------------------------- PdfObj -------------------------//
 
-pub struct Pdf {}
+pub struct PdfObj {}
 
-impl Pdf {
+impl PdfObj {
     pub fn array(value: PdfArrayObject) -> PdfObject {
         PdfObject::Array(value)
     }
@@ -38,8 +39,8 @@ impl Pdf {
 
     pub fn num_or_null<T: Into<NumberType>>(value: Option<T>) -> PdfObject {
         match value {
-            Some(v) => Pdf::num(v),
-            None => Pdf::null(),
+            Some(v) => PdfObj::num(v),
+            None => PdfObj::null(),
         }
     }
 
@@ -76,25 +77,7 @@ pub struct ObjectId {
     pub generation: Generation, // for obj#0 is 65535, else is 0 for new objects
 }
 
-// Indirect is a wrapper, not a peer variant
-// Example: {id} {gen} obj {object} endobj
-#[allow(dead_code)]
-struct IndirectObject {
-    pub id: ObjectId,
-    pub location: Option<SerialLocation>,
-    //pub inner: PdfObjectType, // owns the direct object
-}
-
 //--------------------------- PdfObject -------------------------//
-
-// IfReqd:
-//   referenced from multiple places (shared fonts, images, etc.), or
-//   referenced by object number (e.g. a page in the Kids array)
-pub enum Indirect {
-    Always,
-    Never,
-    IfReferenced,
-}
 
 #[derive(Clone)]
 pub enum PdfObject {
@@ -121,20 +104,6 @@ impl PdfObject {
             PdfObject::Reference(r) => r.serialise(),
             PdfObject::Stream(s) => s.serialise(),
             PdfObject::String(sg) => sg.serialise(),
-        }
-    }
-
-    pub fn is_indirect_by_default(&self) -> Indirect {
-        match self {
-            PdfObject::Array(_) => Indirect::IfReferenced,
-            PdfObject::Boolean(_) => Indirect::Never,
-            PdfObject::Dictionary(_) => Indirect::IfReferenced,
-            PdfObject::Name(_) => Indirect::Never,
-            PdfObject::Null(_) => Indirect::Never,
-            PdfObject::Number(_) => Indirect::Never,
-            PdfObject::Reference(_) => Indirect::Never,
-            PdfObject::Stream(_) => Indirect::Always,
-            PdfObject::String(_) => Indirect::Never,
         }
     }
 
@@ -166,21 +135,21 @@ impl PdfObject {
         }
     }
 
-    pub fn with_object_number(mut self, value: u64) -> PdfObject {
-        self.set_object_number(value);
-        self
-    }
-
+    // todo: add to body
+    // result of this gets added to body
     pub fn serialise_wrapper(&mut self) -> Result<Vec<u8>, PdfError> {
-        if self.get_object_number().is_some() {
+        if let Some(object_number) = self.get_object_number()
+        {
             let mut vec = vec![];
-            vec.extend(b"obj\n");
+            vec.extend(object_number.to_string().as_bytes());
+            vec.extend(b" 0 obj\n");
             vec.extend(self.serialise()?);
             vec.extend(b"\nendobj\n");
-            // todo: add to xref table
+            // todo: add obj num to xref table
+
             Ok(vec)
         } else {
-            Ok(self.serialise()?)
+            self.serialise()
         }
     }
 }

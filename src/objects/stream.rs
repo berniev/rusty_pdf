@@ -63,7 +63,7 @@ use flate2::Compression;
 use crate::color::{Color, ColorSpace, CMYK, RGB};
 use crate::encoding::{ascii85_encode, f_to_pdf_num};
 use crate::error::{PdfError, PdfResult};
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 use crate::objects::string::encode_pdf_string;
 pub use crate::util::{CompressionMethod, Dims, Matrix, Posn, StrokeOrFill, ToPdf, WindingRule};
 use crate::PdfDictionaryObject;
@@ -130,14 +130,14 @@ impl PdfStreamObject {
         let stream_bytes: Vec<u8> = match self.compression_method {
             CompressionMethod::None => self.content.clone(),
             CompressionMethod::Flate => {
-                self.dict.add("Filter", Pdf::name("FlateDecode"));
+                self.dict.add("Filter", PdfObj::name("FlateDecode"));
                 let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
                 encoder.write_all(&self.content)?;
                 encoder.finish()?
             }
         };
 
-        self.dict.add("Length", Pdf::num(stream_bytes.len() as f64));
+        self.dict.add("Length", PdfObj::num(stream_bytes.len() as f64));
 
         let mut vec = self.dict.serialise()?;
         vec.push(b'\n');

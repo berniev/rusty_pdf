@@ -1,4 +1,4 @@
-use crate::objects::pdf_object::Pdf;
+use crate::objects::pdf_object::PdfObj;
 /// Spec:
 /// Dictionary:
 ///     An associative table containing pairs of objects, the first object being a name object
@@ -29,13 +29,20 @@ pub struct PdfDictionaryObject {
 
 impl PdfDictionaryObject {
     pub fn new() -> Self {
-        Self { values: vec![] ,
-        object_number: None,}
+        Self {
+            values: vec![],
+            object_number: None,
+        }
     }
 
     pub(crate) fn typed(mut self, name: &str) -> Self {
-        self.add("Type", Pdf::name(name));
+        self.add("Type", PdfObj::name(name));
 
+        self
+    }
+
+    pub fn with_object_number(mut self, value: u64) -> Self {
+        self.object_number = Some(value);
         self
     }
 
@@ -99,7 +106,7 @@ impl PdfDictionaryObject {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::objects::pdf_object::Pdf;
+    use crate::objects::pdf_object::PdfObj;
 
     #[test]
     fn test_dictionary_methods() {
@@ -107,13 +114,13 @@ mod tests {
         assert!(dict.is_empty());
         assert_eq!(dict.len(), 0);
 
-        dict.add("Key1", *Box::from(Pdf::name("Value1")));
+        dict.add("Key1", *Box::from(PdfObj::name("Value1")));
         assert!(!dict.is_empty());
         assert_eq!(dict.len(), 1);
         assert!(dict.contains_key("Key1"));
         assert!(!dict.contains_key("Key2"));
 
-        dict.add("Key2", *Box::from(Pdf::name("Value2")));
+        dict.add("Key2", *Box::from(PdfObj::name("Value2")));
         assert_eq!(dict.len(), 2);
         assert!(dict.contains_key("Key2"));
     }
