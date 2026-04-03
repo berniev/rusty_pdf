@@ -32,7 +32,7 @@ A resource dictionary shall be associated with a content stream in one of the fo
 • PDF files written obeying earlier versions of PDF may have omitted the Resources entry in all form
   XObjects and Type 3 fonts used on a page. All resources that are referenced from those forms and
   fonts shall be inherited from the resource dictionary of the page on which they are used. This
-  construct is obsolete and should not be used by conforming writers.
+  construct is --obsolete-- and should not be used by conforming writers.
 
 In the context of a given content stream, the term current resource dictionary refers to the
 resource dictionary associated with the stream in one of the ways described above.
@@ -43,19 +43,20 @@ corresponding values shall be as follows:
   shall be the name of a specific resource, and the corresponding value shall be a PDF object
   associated with the name.
 
-Table 33 – Entries in a resource dictionary (all are optional)
+Optional entries in a resource dictionary (none reqd)
 ==========  ==========  ============================================================================
 Key         Type        Value
 ==========  ==========  ============================================================================
-ExtGState   Dictionary  Resource names to graphics state parameter dictionaries
-Pattern     Dictionary  Resource names to pattern objects
 ColorSpace  Dictionary  Maps each resource name to either the name of a device-dependent colour
                         space or an array describing a colour space
+ExtGState   Dictionary  Resource names to graphics state parameter dictionaries
+Font        Dictionary  Resource names to font dictionaries
+Pattern     Dictionary  Resource names to pattern objects
+Properties  Dictionary  Resource names to property list dictionaries for marked content
 Shading     Dictionary  Resource names to shading dictionaries
 XObject     Dictionary  Resource names to external objects
-Font        Dictionary  Resource names to font dictionaries
+
 ProcSet     Array       An array of predefined procedure set names
-Properties  Dictionary  Resource names to property list dictionaries for marked content
 ==========  ==========  ============================================================================
 
 EXAMPLE 2 The following shows a resource dictionary containing procedure sets, fonts, and external

@@ -1,3 +1,5 @@
+use crate::objects::pdf_object::PdfObj;
+use crate::PdfArrayObject;
 use crate::util::Dims;
 
 //--------------------------- PageSize ---------------------------//
@@ -37,6 +39,17 @@ impl PageSize {
                 height: dims.height.max(0.0),
             },
         }
+    }
+
+    pub fn to_rect(&self) -> PdfArrayObject {
+        let dims = self.dims();
+        let mut arr = PdfArrayObject::new();
+        arr.push(PdfObj::num(0.0));
+        arr.push(PdfObj::num(0.0));
+        arr.push(PdfObj::num(dims.width));
+        arr.push(PdfObj::num(dims.height));
+        
+        arr
     }
 }
 

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use crate::drawing_commands::set_state;
 use crate::objects::pdf_object::PdfObj;
 use crate::objects::stream::PdfStreamObject;
 use crate::pdf::Pdf;
@@ -53,7 +53,7 @@ impl GraphicsStateManager {
 
     pub fn apply_opacity(&mut self, stream: &mut PdfStreamObject, pdf: &mut Pdf, alpha: f32) {
         let resource_name = self.get_or_create_opacity_state(pdf, alpha);
-        stream.set_state(&resource_name);
+        stream.add_content(set_state(&resource_name));
     }
 
     /// Returns a HashMap that can be used to build the page Resources dictionary.

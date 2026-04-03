@@ -1,37 +1,42 @@
-// Main entry point for pydyf
-// This is a simple example/test program
-
 use pydyf::color::{Color, RGB};
+use pydyf::file_identifier::FileIdentifierMode;
+use pydyf::objects::pdf_object::PdfObj;
 use pydyf::objects::stream::{StrokeOrFill, WindingRule};
+use pydyf::page::*;
 use pydyf::util::{Dims, Posn};
-use pydyf::{PdfStreamObject};
+use pydyf::{drawing_commands, PdfDictionaryObject};
+use pydyf::{Pdf, PdfStreamObject};
+use std::fs::File;
+use std::io::Write;
 
 fn main() {
     println!("PyDyf - PDF library for Rust");
     println!("Ported from Python pydyf library\n");
 
-    //let mut pdf = PdfFile::new();
+    let mut pdf = Pdf::new();
 
     let mut stream = PdfStreamObject::new();
-    stream.set_color_rgb(
+
+    stream.add_content(drawing_commands::set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(0.5), Color::new(1.0)),
         StrokeOrFill::Fill,
-    );
-    stream.add_rectangle(
+    ));
+    stream.add_content(drawing_commands::add_rectangle(
         Posn { x: 100.0, y: 100.0 },
         Dims {
             height: 200.0,
             width: 300.0,
         },
-    );
-    stream.fill(WindingRule::EvenOdd);
+    ));
+    stream.add_content(drawing_commands::fill(WindingRule::EvenOdd));
 
-    /*let content_id = pdf.add_indirect_object(Box::new(stream));
+    let resources = PdfDictionaryObject::new();
+    let mut page = make_page(pdf.next_object_number());
+    page.add("MediaBox", PdfObj::array(PageSize::A4.to_rect()));
+    page.add("Contents", PdfObj::stream(stream));
+    page.add("Resources", PdfObj::dict(resources));
 
-    let mut page = PageObject::new(0usize.into());
-    page.add_content(content_id);
-    page.set_media_box(PageSize::A4);
-    pdf.add_page(page);
+    add_page_to_tree(&mut page, pdf.root_page_tree_dict_ref()).expect("Add page to tree failed");
 
     let mut output = Vec::new();
     pdf.write_legacy(&mut output, FileIdentifierMode::None)
@@ -41,5 +46,5 @@ fn main() {
     let mut file = File::create(path).expect("Failed to create file");
     file.write_all(&output).expect("Failed to write file");
 
-    println!("Created {} with {} objects", path, pdf.objects.len());*/
+    println!("Created {} with {} objects", path, pdf.next_object_number()-1);
 }

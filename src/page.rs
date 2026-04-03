@@ -90,14 +90,14 @@ pub fn make_page_tree(
 }
 
 pub fn add_tree_to_tree(
-    child_tree_dict: &mut PdfDictionaryObject,
+    child_tree_dict: &PdfDictionaryObject,
     parent_tree_dict: &mut PdfDictionaryObject,
 ) -> Result<(), PdfError> {
     if let Some(PdfObject::Array(kids)) = parent_tree_dict.get_mut("Kids") {
         kids.push(PdfObj::reference(child_tree_dict.object_number.unwrap()));
     } else {
         return Err(PdfError::StructureError(
-            "Destination page tree must have a Kids array".to_string(),
+            "Parent page tree must have a Kids array".to_string(),
         ));
     }
     Ok(())
@@ -107,19 +107,19 @@ pub fn add_tree_to_tree(
 
 #[allow(unused_variables)]
 #[allow(dead_code)]
-fn add_page_to_tree(
+pub fn add_page_to_tree(
     page_dict: &mut PdfDictionaryObject,
     tree_dict: &mut PdfDictionaryObject,
 ) -> Result<(), PdfError> {
     if !page_dict.contains_key("Resources") && !tree_dict.contains_key("Resources") {
         return Err(PdfError::StructureError(
-            "Page must have or inherit a Resources dictionary".to_string(),
+            "Page must have, or inherit, a Resources dictionary".to_string(),
         ));
     }
 
     if !page_dict.contains_key("MediaBox") && !tree_dict.contains_key("MediaBox") {
         return Err(PdfError::StructureError(
-            "Page must have or inherit a MediaBox dictionary".to_string(),
+            "Page must have, or inherit, a MediaBox dictionary".to_string(),
         ));
     }
 

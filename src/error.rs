@@ -16,6 +16,7 @@ pub enum PdfError {
     InvalidImage(String),
     StructureError(String),
     SerializeError(String),
+    StreamError(String),
 }
 
 impl fmt::Display for PdfError {
@@ -62,6 +63,7 @@ impl fmt::Display for PdfError {
             PdfError::InvalidImage(msg) => write!(f, "Invalid image: {}", msg),
             PdfError::StructureError(msg) => write!(f, "PDF structure error: {}", msg),
             PdfError::SerializeError(msg) => write!(f, "Serialization error: {}", msg),
+            PdfError::StreamError(msg) => write!(f, "Stream error: {}", msg),
         }
     }
 }

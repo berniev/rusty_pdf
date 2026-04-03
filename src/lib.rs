@@ -31,6 +31,7 @@ pub mod file_identifier;
 pub mod encryption;
 pub mod resource_category;
 pub mod resource_manager;
+pub mod drawing_commands;
 
 // Re-export main types for user API convenience
 pub use action::{
