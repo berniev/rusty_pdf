@@ -654,7 +654,6 @@ dependencies = [
  "flate2",
  "image",
  "md5",
- "once_cell",
 ]
 
 [[package]]

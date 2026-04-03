@@ -124,7 +124,7 @@ fn add_page_to_tree(
     }
 
     let tree_dict_num = tree_dict.object_number.unwrap();
-    page_dict.add("Parent", PdfObj::reference(tree_dict_num)); // ref to tree
+    page_dict.add("Parent", PdfObj::reference(tree_dict_num));
 
     let new_count = tree_dict.get_integer("Count").unwrap_or(0) + 1;
     tree_dict.update("Count", PdfObj::num(new_count));
