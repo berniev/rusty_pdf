@@ -35,9 +35,9 @@ startxref
 */
 use std::io::Write;
 
+
 use crate::cross_reference_table::CrossRefTable;
 use crate::file_identifier::FileIdentifierMode;
-use crate::fonts::Fonts;
 use crate::header::Header;
 use crate::objects::pdf_object::PdfObj;
 use crate::page::make_page_tree;
@@ -124,18 +124,15 @@ impl Pdf {
     // put it all together
     pub fn serialise() {}
 
-    fn write_common(&mut self) {
-        let _resources_number = self.add_font_resources();
-        //self.initialize_catalog();
-    }
-
     pub fn write_legacy<W: Write>(
         &mut self,
         output: W,
         id_mode: FileIdentifierMode,
     ) -> std::io::Result<()> {
-        self.write_common();
-        PdfWriter::new(output, LegacyStrategy::default(), id_mode).perform(self)
+        self.add_font_resources();
+        let mut writer = PdfWriter::new(output, LegacyStrategy::default(), id_mode);
+
+        writer.perform(self)
     }
 
     pub fn write_compressed<W: Write>(
@@ -143,19 +140,18 @@ impl Pdf {
         output: W,
         id_mode: FileIdentifierMode,
     ) -> std::io::Result<()> {
-        self.write_common();
-        PdfWriter::new(output, CompressedStrategy::default(), id_mode).perform(self)
+        self.add_font_resources();
+        let mut writer = PdfWriter::new(output, CompressedStrategy::default(), id_mode);
+
+        writer.perform(self)
     }
 
-    pub fn add_font_resources(&mut self) -> usize {
+    pub fn add_font_resources(&mut self) -> u64 {
         let mut resources_dict = PdfDictionaryObject::new();
-        resources_dict.add("Font", PdfObj::dict(Fonts::get_standard_fonts_dict()));
+        let next_num = self.next_object_number();
+        let fonts_dict = PdfDictionaryObject::new().with_object_number(next_num);
+        resources_dict.add("Font", PdfObj::dict(fonts_dict));
 
-        //self.indirect_pdf_objects.push(resources_dict.boxed());
-
-        let resources_number = 0; // self.allocate_object_id();
-        //resources_dict.metadata.object_identifier = Some(resources_number);
-
-        resources_number
+        next_num
     }
 }

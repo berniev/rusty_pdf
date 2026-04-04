@@ -6,7 +6,7 @@
 /// user interactions with annotations or form fields.
 
 use crate::objects::pdf_object::PdfObj;
-use crate::util::Rect;
+use crate::util::Rectangle;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfResult};
 
 //------------------------ Action -------------------------------//
@@ -208,7 +208,7 @@ pub enum FitDestination {
     },
     FitR {
         page: usize,
-        rect: Rect,
+        rect: Rectangle,
     },
 }
 

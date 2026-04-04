@@ -1,9 +1,12 @@
-use crate::objects::pdf_object::PdfObj;
 use crate::PdfDictionaryObject;
+use crate::objects::pdf_object::PdfObj;
 
+
+#[allow(dead_code)]
 pub(crate) struct Fonts {}
 
 impl Fonts {
+    #[allow(dead_code)]
     pub(crate) fn get_standard_fonts_dict() -> PdfDictionaryObject {
         let fonts = [
             ("Helvetica", "Type1"),
@@ -13,11 +16,10 @@ impl Fonts {
 
         let mut fonts_dict = PdfDictionaryObject::new();
         for (name, subtype) in fonts {
-            
             let mut dict = PdfDictionaryObject::new().typed("Font");
             dict.add("Subtype", PdfObj::name(subtype));
             dict.add("BaseFont", PdfObj::name(name));
-            
+
             fonts_dict.add(name, PdfObj::dict(dict));
         }
 

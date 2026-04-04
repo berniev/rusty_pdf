@@ -11,7 +11,7 @@ use std::hash::{Hash, Hasher};
 use crate::color::Color;
 use crate::color::RGB;
 use crate::objects::pdf_object::PdfObj;
-use crate::util::{Line, Matrix, Rect, ToPdf};
+use crate::util::{Line, Matrix, Rectangle, ToPdf};
 use crate::{
     PdfArrayObject, PdfDictionaryObject, PdfStreamObject, Resource,
     ResourceCategory,
@@ -39,7 +39,7 @@ pub enum PaintType {
 
 #[derive(Clone)]
 pub struct TilingPattern {
-    pub bounding_box: Rect,
+    pub bounding_box: Rectangle,
     pub x_step: f64,
     pub y_step: f64,
     pub paint_type: PaintType,
@@ -49,7 +49,7 @@ pub struct TilingPattern {
 }
 
 impl TilingPattern {
-    pub fn new(bbox: Rect, x_step: f64, y_step: f64, content: Vec<u8>) -> Self {
+    pub fn new(bbox: Rectangle, x_step: f64, y_step: f64, content: Vec<u8>) -> Self {
         Self {
             bounding_box: bbox,
             x_step,
@@ -213,7 +213,7 @@ mod tests {
     #[test]
     fn test_tiling_pattern_creation() {
         let pattern = TilingPattern::new(
-            Rect {
+            Rectangle {
                 x1: 0.0,
                 y1: 0.0,
                 x2: 10.0,
@@ -226,7 +226,7 @@ mod tests {
 
         assert_eq!(
             pattern.bounding_box,
-            Rect {
+            Rectangle {
                 x1: 0.0,
                 y1: 0.0,
                 x2: 10.0,
@@ -240,7 +240,7 @@ mod tests {
     #[test]
     fn test_tiling_pattern_resource_trait() {
         let pattern = TilingPattern::new(
-            Rect {
+            Rectangle {
                 x1: 0.0,
                 y1: 0.0,
                 x2: 10.0,

@@ -32,6 +32,7 @@ pub mod encryption;
 pub mod resource_category;
 pub mod resource_manager;
 pub mod drawing_commands;
+pub mod tree_node;
 
 // Re-export main types for user API convenience
 pub use action::{
@@ -49,6 +50,7 @@ pub use metadata::{DocumentInfo, TrappedState, XmpMetadata};
 pub use objects::array::PdfArrayObject;
 pub use objects::boolean::PdfBooleanObject;
 pub use objects::dictionary::PdfDictionaryObject;
+pub use objects::reference::PdfReferenceObject;
 pub use objects::name::PdfNameObject;
 pub use objects::null::PdfNullObject;
 pub use objects::number_type::NumberType;
@@ -67,4 +69,4 @@ pub use resource::{Resource};
 pub use resources::ResourceMap;
 pub use resource_category::ResourceCategory;
 pub use text::{StandardFont, WrapMode, wrap_text};
-pub use util::Rect;
+pub use util::Rectangle;

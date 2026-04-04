@@ -10,6 +10,6 @@ pub mod pdf_object;
 pub mod stream;
 pub mod string;
 
-mod object_type;
+pub mod object_type;
 pub mod number;
-mod reference;
+pub mod reference;

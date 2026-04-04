@@ -1,8 +1,7 @@
-use crate::PdfArrayObject;
 use crate::encoding::f_to_pdf_num;
 use crate::objects::pdf_object::PdfObj;
-
-//------------------------- ToPdf -----------------------------
+use crate::PdfArrayObject;
+//------------------------- ToPdf -----------------------------//
 
 pub trait ToPdf {
     fn to_pdf(&self) -> String;
@@ -18,7 +17,7 @@ impl ToPdf for f64 {
     }
 }
 
-//------------------------ Posn -------------------------------
+//------------------------ Posn -------------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Posn {
@@ -35,10 +34,11 @@ impl Posn {
         arr
     }
 
-/*    fn as_vec(&self) -> Vec<f64> {
-        vec![self.x.clone().into(), self.y.into()]
-    }
-*/}
+    /*    fn as_vec(&self) -> Vec<f64> {
+            vec![self.x.clone().into(), self.y.into()]
+        }
+    */
+}
 
 impl ToPdf for Posn {
     fn to_pdf(&self) -> String {
@@ -50,7 +50,7 @@ impl ToPdf for Posn {
     }
 }
 
-//------------------------ Line -------------------------------
+//------------------------ Line -------------------------------//
 
 #[derive(Clone)]
 pub struct Line {
@@ -67,7 +67,7 @@ impl Line {
         arr
     }
 }
-//------------------------ Dims -------------------------------
+//------------------------ Dims -------------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Dims {
@@ -85,17 +85,17 @@ impl ToPdf for Dims {
     }
 }
 
-//------------------------ Rect -------------------------------
+//------------------------ Rect -------------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Rect {
-    pub x1: f64,
-    pub y1: f64,
-    pub x2: f64,
-    pub y2: f64,
+pub struct Rectangle {
+    pub x1: f64, // lower-left x
+    pub y1: f64, // lower-left y
+    pub x2: f64, // upper-right x
+    pub y2: f64, // upper-right y
 }
 
-impl Rect {
+impl Rectangle {
     pub fn as_vec(&self) -> Vec<f64> {
         vec![self.x1, self.y1, self.x2, self.y2]
     }
@@ -111,7 +111,7 @@ impl Rect {
     }
 }
 
-impl ToPdf for Rect {
+impl ToPdf for Rectangle {
     fn to_pdf(&self) -> String {
         format!(
             "{} {} {} {}",
@@ -143,10 +143,10 @@ pub struct Matrix {
 }
 
 impl Matrix {
-/*    fn as_vec(&self) -> Vec<f64> {
-        vec![self.a, self.b, self.c, self.d, self.e, self.f]
-    }
-*/
+    /*    fn as_vec(&self) -> Vec<f64> {
+            vec![self.a, self.b, self.c, self.d, self.e, self.f]
+        }
+    */
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
         arr.push(PdfObj::num(self.a));
@@ -181,7 +181,7 @@ impl ToPdf for Matrix {
     }
 }
 
-//------------------------ EvenOdd -------------------------------
+//------------------------ EvenOdd -------------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum WindingRule {
@@ -189,7 +189,7 @@ pub enum WindingRule {
     EvenOdd,
 }
 
-//------------------- CompressionMethod ----------------------------
+//------------------- CompressionMethod ----------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CompressionMethod {
@@ -205,7 +205,7 @@ impl CompressionMethod {
         }
     }
 }
-//--------------------- StrokeOrFill -----------------------------
+//--------------------- StrokeOrFill -----------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum StrokeOrFill {

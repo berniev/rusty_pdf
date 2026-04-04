@@ -1,10 +1,10 @@
-use crate::color::{Color, ColorSpace, CMYK, RGB};
+use crate::color::{CMYK, Color, ColorSpace, RGB};
 use crate::encoding::{ascii85_encode, f_to_pdf_num};
 use crate::objects::string::encode_pdf_string;
 use crate::util::{Dims, Matrix, Posn, StrokeOrFill, ToPdf, WindingRule};
 use crate::{CompressionMethod, PdfError, PdfStreamObject};
-use flate2::write::ZlibEncoder;
 use flate2::Compression;
+use flate2::write::ZlibEncoder;
 use std::io::Write;
 
 //-------------------------- Drawing Commands --------------------------
@@ -191,12 +191,12 @@ impl<'a> DrawingCommands<'a> {
         self.add_parts(&[&posn], "l")
     }
 
-    pub fn move_to_x_y(&mut self, posn: Posn) {
-        self.add_parts(&[&posn], "m")
-    }
-
     pub fn move_text_to_next_line_at(&mut self, posn: Posn) {
         self.add_parts(&[&posn], "T*")
+    }
+
+    pub fn move_to_x_y(&mut self, posn: Posn) {
+        self.add_parts(&[&posn], "m")
     }
 
     pub fn paint_shading(&mut self, name: &str) {
@@ -215,7 +215,7 @@ impl<'a> DrawingCommands<'a> {
         self.add_cmd('q');
     }
 
-    pub fn add_rectangle(&mut self, posn: Posn, size: Dims) {
+    pub fn rectangle(&mut self, posn: Posn, size: Dims) {
         self.add_parts(&[&posn, &size], "re")
     }
 
@@ -311,15 +311,15 @@ impl<'a> DrawingCommands<'a> {
         })
     }
 
-    pub fn show_text_strings(&mut self, text: &str) {
-        self.add(format!("[{text}] TJ").into_bytes());
-    }
-
     pub fn show_single_text_string(&mut self, text: &str) {
         let mut cmd = encode_pdf_string(text);
         cmd.push_str(" Tj");
 
         self.add(Vec::from(cmd));
+    }
+
+    pub fn show_text_strings(&mut self, text: &str) {
+        self.add(format!("[{text}] TJ").into_bytes());
     }
 
     // line
@@ -398,7 +398,7 @@ impl<'a> DrawingCommands<'a> {
         )
     }
 
-    pub fn add_rounded_rectangle(
+    pub fn rounded_rectangle(
         &mut self,
         posn: Posn,
         dims: Dims,

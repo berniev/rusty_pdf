@@ -6,7 +6,7 @@
 use crate::color::Color;
 use crate::color::RGB;
 use crate::objects::pdf_object::PdfObj;
-use crate::util::{Posn, Rect};
+use crate::util::{Posn, Rectangle};
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfResult};
 //-------------------AnnotationFlags ----------------------
 
@@ -72,7 +72,7 @@ impl BorderStyle {
 pub trait Annotation {
     fn subtype(&self) -> &'static str;
 
-    fn rect(&self) -> Rect;
+    fn rect(&self) -> Rectangle;
 
     fn flags(&self) -> AnnotationFlags {
         AnnotationFlags::NONE
@@ -156,7 +156,7 @@ impl TextIcon {
 //------------------- TextAnnotation ----------------------//
 
 pub struct TextAnnotation {
-    pub rect: Rect,
+    pub rect: Rectangle,
     pub contents: String,
     pub flags: AnnotationFlags,
     pub color: Option<RGB>,
@@ -166,7 +166,7 @@ pub struct TextAnnotation {
 impl Default for TextAnnotation {
     fn default() -> Self {
         Self {
-            rect: Rect {
+            rect: Rectangle {
                 x1: 0.0,
                 y1: 0.0,
                 x2: 0.0,
@@ -186,7 +186,7 @@ impl Default for TextAnnotation {
 }
 
 impl TextAnnotation {
-    pub fn new(rect: Rect, contents: String) -> Self {
+    pub fn new(rect: Rectangle, contents: String) -> Self {
         Self {
             rect,
             contents,
@@ -210,7 +210,7 @@ impl Annotation for TextAnnotation {
         "Text"
     }
 
-    fn rect(&self) -> Rect {
+    fn rect(&self) -> Rectangle {
         self.rect
     }
 
@@ -258,14 +258,14 @@ pub enum LinkAction {
 //-------------------LinkAnnotation ----------------------
 
 pub struct LinkAnnotation {
-    pub rect: Rect,
+    pub rect: Rectangle,
     pub flags: AnnotationFlags,
     pub border_style: Option<BorderStyle>,
     pub action: LinkAction,
 }
 
 impl LinkAnnotation {
-    pub fn uri(rect: Rect, uri: String) -> Self {
+    pub fn uri(rect: Rectangle, uri: String) -> Self {
         Self {
             rect,
             flags: AnnotationFlags::PRINT,
@@ -274,7 +274,7 @@ impl LinkAnnotation {
         }
     }
 
-    pub fn goto(rect: Rect, page: usize, position: Posn, zoom: Option<f64>) -> Self {
+    pub fn goto(rect: Rectangle, page: usize, position: Posn, zoom: Option<f64>) -> Self {
         Self {
             rect,
             flags: AnnotationFlags::PRINT,
@@ -298,7 +298,7 @@ impl Annotation for LinkAnnotation {
         "Link"
     }
 
-    fn rect(&self) -> Rect {
+    fn rect(&self) -> Rectangle {
         self.rect
     }
 
@@ -361,7 +361,7 @@ mod tests {
 
     #[test]
     fn test_rect_to_array() {
-        let rect = Rect {
+        let rect = Rectangle {
             x1: 10.0,
             y1: 20.0,
             x2: 100.0,
@@ -380,7 +380,7 @@ mod tests {
     #[test]
     fn test_text_annotation() {
         let annot = TextAnnotation::new(
-            Rect {
+            Rectangle {
                 x1: 100.0,
                 y1: 100.0,
                 x2: 120.0,
@@ -399,7 +399,7 @@ mod tests {
     #[test]
     fn test_link_annotation_uri() {
         let annot = LinkAnnotation::uri(
-            Rect {
+            Rectangle {
                 x1: 10.0,
                 y1: 10.0,
                 x2: 100.0,
@@ -415,7 +415,7 @@ mod tests {
     #[test]
     fn test_link_annotation_goto() {
         let annot = LinkAnnotation::goto(
-            Rect {
+            Rectangle {
                 x1: 10.0,
                 y1: 10.0,
                 x2: 100.0,
