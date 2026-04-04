@@ -34,8 +34,6 @@ startxref
 ```
 */
 use std::io::Write;
-
-
 use crate::cross_reference_table::CrossRefTable;
 use crate::file_identifier::FileIdentifierMode;
 use crate::header::Header;
@@ -45,7 +43,7 @@ use crate::pdf_version::PdfVersion;
 use crate::writer::write_legacy;
 use crate::{PdfArrayObject, PdfDictionaryObject};
 
-//--------------------------- PDF -------------------------//
+//--------------------------- Pdf -------------------------//
 
 pub struct Pdf {
     header: Header,
@@ -113,13 +111,13 @@ impl Pdf {
         &mut self.xref_table
     }
 
-    //------------------------------------------------------------
-
     pub fn next_object_number(&mut self) -> u64 {
         self.last_object_number += 1;
 
         self.last_object_number
     }
+
+    //------------------------------------------------------------
 
     // put it all together
     pub fn serialise<W: Write>(&mut self, output: W, id_mode: FileIdentifierMode) {
