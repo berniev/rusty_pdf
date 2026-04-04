@@ -62,7 +62,7 @@ fn test_inline_image() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/image.pdf").unwrap();
-    pdf.serialise(file, FileIdentifierMode::AutoMD5);
+    pdf.finalise(file, FileIdentifierMode::AutoMD5);
 
     println!("✅ Generated: /tmp/pydyf_test/image.pdf");
 }

@@ -119,8 +119,7 @@ impl Pdf {
 
     //------------------------------------------------------------
 
-    // put it all together
-    pub fn serialise<W: Write>(&mut self, output: W, id_mode: FileIdentifierMode) {
+    pub fn finalise<W: Write>(&mut self, output: W, id_mode: FileIdentifierMode) {
         write_legacy(|| self.next_object_number(), output, id_mode).unwrap();
     }
 }

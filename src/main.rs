@@ -43,7 +43,7 @@ fn main() {
     let mut output = Vec::new();
 
     ///////////////////////////
-    pdf.serialise(&mut output, FileIdentifierMode::None);
+    pdf.finalise(&mut output, FileIdentifierMode::None);
     ///////////////////////////
 
     let path = "output.pdf";
