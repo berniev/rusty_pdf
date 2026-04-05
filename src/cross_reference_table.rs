@@ -52,7 +52,7 @@ impl CrossReferenceEntry {
     /// eol: 2-character end-of-line sequence
     pub fn serialise(&self) -> Vec<u8> {
         format!(
-            "{:010} {:05} {} \r\n", // todo space before endline?
+            "{:010} {:05} {}\r\n",
             self.offset_or_next_free,
             self.generation,
             self.object_status.as_char()
