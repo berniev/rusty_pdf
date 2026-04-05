@@ -1,7 +1,7 @@
-use RustyPDF::color::{Color, RGB};
-use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
-use RustyPDF::util::{Dims, Posn};
-use RustyPDF::PdfStreamObject;
+use rusty_pdf::color::{Color, RGB};
+use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
+use rusty_pdf::util::{Dims, Posn};
+use rusty_pdf::PdfStreamObject;
 
 /*#[test]
 fn test_create_pdf() {
@@ -49,7 +49,7 @@ fn test_stream_operations() {
 #[test]
 fn test_compressed_stream() {
     let stream = PdfStreamObject::new().compressed();
-    assert_eq!(stream.compression_method(), RustyPDF::CompressionMethod::Flate);
+    assert_eq!(stream.compression_method(), rusty_pdf::CompressionMethod::Flate);
 }
 
 /*#[test]

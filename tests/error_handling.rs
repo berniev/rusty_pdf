@@ -1,5 +1,5 @@
-use RustyPDF::color::{Color, ColorSpace};
-use RustyPDF::PdfStreamObject;
+use rusty_pdf::color::{Color, ColorSpace};
+use rusty_pdf::PdfStreamObject;
 
 #[test]
 #[should_panic(expected = "color must be in range 0.0..=1.0")]

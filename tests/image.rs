@@ -1,10 +1,10 @@
-use RustyPDF::color::ColorSpace;
-use RustyPDF::drawing_commands::*;
-use RustyPDF::file_identifier::FileIdentifierMode;
-use RustyPDF::objects::pdf_object::PdfObj;
-use RustyPDF::page::{add_page_to_tree, make_page_dict};
-use RustyPDF::util::{Matrix, Posn};
-use RustyPDF::{PageSize, Pdf, Stream};
+use rusty_pdf::color::ColorSpace;
+use rusty_pdf::drawing_commands::*;
+use rusty_pdf::file_identifier::FileIdentifierMode;
+use rusty_pdf::objects::pdf_object::PdfObj;
+use rusty_pdf::page::{add_page_to_tree, make_page_dict};
+use rusty_pdf::util::{Matrix, Posn};
+use rusty_pdf::{PageSize, Pdf, Stream};
 use std::fs::File;
 
 #[test]

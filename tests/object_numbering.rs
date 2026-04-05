@@ -1,5 +1,5 @@
-use RustyPDF::file_identifier::FileIdentifierMode;
-use RustyPDF::objects::pdf_object::PdfObj;
+use rusty_pdf::file_identifier::FileIdentifierMode;
+use rusty_pdf::objects::pdf_object::PdfObj;
 
 /// Tests to verify single source of truth for object numbering
 ///
@@ -27,7 +27,7 @@ fn test_next_object_number_is_single_source_of_truth() {
 */
 #[test]
 fn test_add_object_assigns_sequential_ids() {
-    use RustyPDF::{Pdf, PdfStreamObject};
+    use rusty_pdf::{Pdf, PdfStreamObject};
 
     let mut pdf = Pdf::new();
 
@@ -53,7 +53,7 @@ fn test_all_object_assignments_use_consistent_numbering() {
     // This test verifies that ALL objects get sequential IDs with no duplicates
     // Whether assigned via add_object, initialize_catalog, etc.
 
-    use RustyPDF::{Pdf, PdfStreamObject};
+    use rusty_pdf::{Pdf, PdfStreamObject};
     let mut pdf = Pdf::new();
 
     // Add a page
@@ -96,7 +96,7 @@ fn test_compressed_write_assigns_unique_objstm_number() {
     // Verify that when creating object streams during compressed write,
     // the ObjStm gets a unique object number that doesn't collide
 
-    use RustyPDF::{Pdf, PdfStreamObject};
+    use rusty_pdf::{Pdf, PdfStreamObject};
     use std::collections::HashMap;
 
     let mut pdf = Pdf::new();
@@ -139,7 +139,7 @@ fn test_objstm_number_calculation() {
     // Test the specific calculation used for ObjStm numbering
     // It should be: max(all existing object IDs) + 1
 
-    use RustyPDF::{Pdf, PdfStreamObject};
+    use rusty_pdf::{Pdf, PdfStreamObject};
 
     let mut pdf = Pdf::new();
     pdf.save_indirect_object(PdfObj::stream(PdfStreamObject::new()));

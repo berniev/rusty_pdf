@@ -144,7 +144,7 @@ pub enum WrapMode {
 /// # Example
 ///
 /// ```rust
-/// use RustyPDF::text::{wrap_text, StandardFont, WrapMode};
+/// use rusty_pdf::text::{wrap_text, StandardFont, WrapMode};
 ///
 /// let lines = wrap_text(
 ///     "This is a long line of text that needs wrapping",

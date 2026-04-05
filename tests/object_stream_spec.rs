@@ -34,12 +34,12 @@
 /// 3. Test offset calculations match spec
 /// 4. Test exclusions (streams cannot be compressed)
 
-use RustyPDF::color::{Color, RGB};
-use RustyPDF::file_identifier::FileIdentifierMode;
-use RustyPDF::objects::pdf_object::PdfObj;
-use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
-use RustyPDF::util::{Dims, Posn};
-use RustyPDF::{Pdf, PdfStreamObject};
+use rusty_pdf::color::{Color, RGB};
+use rusty_pdf::file_identifier::FileIdentifierMode;
+use rusty_pdf::objects::pdf_object::PdfObj;
+use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
+use rusty_pdf::util::{Dims, Posn};
+use rusty_pdf::{Pdf, PdfStreamObject};
 
 /// SPEC TEST 1: /Type must be /ObjStm
 #[test]

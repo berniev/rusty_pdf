@@ -3,11 +3,11 @@
 ///
 /// These tests verify the DICTIONARY entries of object streams.
 /// The internal stream format is compressed with FlateDecode and not tested here.
-use RustyPDF::color::{Color, RGB};
-use RustyPDF::objects::pdf_object::PdfObj;
-use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
-use RustyPDF::util::{Dims, Posn};
-use RustyPDF::{Pdf, PdfStreamObject};
+use rusty_pdf::color::{Color, RGB};
+use rusty_pdf::objects::pdf_object::PdfObj;
+use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
+use rusty_pdf::util::{Dims, Posn};
+use rusty_pdf::{Pdf, PdfStreamObject};
 
 
 /// Test: Object stream dictionary must have /Type /ObjStm

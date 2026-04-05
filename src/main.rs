@@ -1,14 +1,14 @@
-use RustyPDF::color::{Color, RGB};
-use RustyPDF::drawing_commands::DrawingCommands;
-use RustyPDF::objects::pdf_object::PdfObj;
-use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
-use RustyPDF::page::*;
-use RustyPDF::util::{Dims, Posn};
-use RustyPDF::PdfDictionaryObject;
-use RustyPDF::{Pdf, PdfStreamObject};
+use rusty_pdf::color::{Color, RGB};
+use rusty_pdf::drawing_commands::DrawingCommands;
+use rusty_pdf::objects::pdf_object::PdfObj;
+use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
+use rusty_pdf::page::*;
+use rusty_pdf::util::{Dims, Posn};
+use rusty_pdf::PdfDictionaryObject;
+use rusty_pdf::{Pdf, PdfStreamObject};
 
 fn main() {
-    println!("RustyPDF - PDF library for Rust");
+    println!("rusty_pdf - PDF library for Rust");
     println!("Originally based on Python pydyf\n");
 
     let mut pdf = Pdf::new();

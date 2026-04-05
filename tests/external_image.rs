@@ -1,6 +1,6 @@
 use image::{Rgb, RgbImage};
-use RustyPDF::util::{Matrix, Posn};
-use RustyPDF::{Stream};
+use rusty_pdf::util::{Matrix, Posn};
+use rusty_pdf::{Stream};
 /*fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     let content_index = String::from_utf8(content_stream_ref).unwrap();
     // Extract just the number from "N 0 R" format

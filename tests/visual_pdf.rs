@@ -1,8 +1,8 @@
-use RustyPDF::color::{Color, RGB};
-use RustyPDF::objects::pdf_object::PdfObj;
-use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
-use RustyPDF::util::{Dims, Matrix, Posn};
-use RustyPDF::{Pdf, Stream};
+use rusty_pdf::color::{Color, RGB};
+use rusty_pdf::objects::pdf_object::PdfObj;
+use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
+use rusty_pdf::util::{Dims, Matrix, Posn};
+use rusty_pdf::{Pdf, Stream};
 /*fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     let content_index = String::from_utf8(content_stream_ref).unwrap();
     // Extract just the number from "N 0 R" format

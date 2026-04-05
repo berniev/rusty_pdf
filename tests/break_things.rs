@@ -1,9 +1,9 @@
-use RustyPDF::color::{Color, RGB};
-use RustyPDF::objects::pdf_object::PdfObj;
-use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
-use RustyPDF::util::{Dims, Matrix, Posn};
-use RustyPDF::PdfStreamObject;
-use RustyPDF::Pdf;
+use rusty_pdf::color::{Color, RGB};
+use rusty_pdf::objects::pdf_object::PdfObj;
+use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
+use rusty_pdf::util::{Dims, Matrix, Posn};
+use rusty_pdf::PdfStreamObject;
+use rusty_pdf::Pdf;
 /*fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageObject {
     let mut page = PageObject::new(0usize.into());
     page.add_content(content_index);

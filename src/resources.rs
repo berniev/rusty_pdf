@@ -3,20 +3,6 @@ use crate::resource_category::STANDARD_RESOURCE_CATEGORIES;
 use crate::{PdfDictionaryObject, PdfError, PdfResult};
 use std::collections::HashMap;
 
-//--------------------------- Resources ---------------------------------//
-
-struct Resources {
-    resources_dict: PdfDictionaryObject,
-}
-
-impl Resources {
-    pub fn new() -> Self {
-        Self {
-            resources_dict: PdfDictionaryObject::new(),
-        }
-    }
-}
-
 //--------------------------- ResourcesMap -------------------------------//
 
 #[derive(Clone)]

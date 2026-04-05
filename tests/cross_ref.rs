@@ -1,5 +1,5 @@
-use RustyPDF::cross_reference_table::CrossRefError;
-use RustyPDF::generation::Generation;
+use rusty_pdf::cross_reference_table::CrossRefError;
+use rusty_pdf::generation::Generation;
 
 /*#[test]
 fn test_new_table_has_root_entry() {
