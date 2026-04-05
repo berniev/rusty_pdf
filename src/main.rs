@@ -14,7 +14,9 @@ fn main() {
 
     let mut page_dict = make_page_dict(pdf.next_object_number());
     page_dict.add("MediaBox", PageSize::A4.to_rect());
-    page_dict.add("Resources", PdfDictionaryObject::new());
+
+    let resource_dict = PdfDictionaryObject::new();
+    page_dict.add("Resources", resource_dict);
 
     let mut stream = PdfStreamObject::new();
 
