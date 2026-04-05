@@ -22,7 +22,7 @@ pub mod text;
 pub mod util;
 pub mod writer;
 pub mod fonts;
-pub mod pdf_version;
+pub mod version;
 pub mod page_size;
 pub mod body;
 pub mod header;

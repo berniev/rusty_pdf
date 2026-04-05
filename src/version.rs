@@ -1,19 +1,19 @@
 //--------------------------- Version -------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
-pub enum PdfVersion {
+pub enum Version {
     #[default]
     Auto,
     V1_4,
     V1_5,
 }
 
-impl PdfVersion {
+impl Version {
     pub fn as_str(&self) -> &str {
         match self {
-            PdfVersion::Auto => "1.7",
-            PdfVersion::V1_4 => "1.4",
-            PdfVersion::V1_5 => "1.5",
+            Version::Auto => "1.7",
+            Version::V1_4 => "1.4",
+            Version::V1_5 => "1.5",
         }
     }
 }

@@ -1,7 +1,7 @@
 use crate::cross_reference_table::CrossRefTable;
 use crate::header::Header;
 use crate::page::make_page_tree;
-use crate::pdf_version::PdfVersion;
+use crate::version::Version;
 use crate::trailer::Trailer;
 use crate::{PdfDictionaryObject, PdfError};
 use std::fs::File;
@@ -32,7 +32,7 @@ impl Pdf {
         pdf
     }
 
-    pub fn version(mut self, version: PdfVersion) -> Self {
+    pub fn version(mut self, version: Version) -> Self {
         self.header.set_version(version);
 
         self

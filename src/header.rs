@@ -1,21 +1,21 @@
-use crate::pdf_version::PdfVersion;
+use crate::version::Version;
 
 pub struct Header {
-    version: PdfVersion,
+    version: Version,
 }
 
 impl Header {
     pub fn new() -> Self {
         Header {
-            version: PdfVersion::Auto,
+            version: Version::Auto,
         }
     }
     
-    pub fn set_version(&mut self, version: PdfVersion) {
+    pub fn set_version(&mut self, version: Version) {
         self.version = version;
     }
 
-    pub fn version(&self) -> PdfVersion {
+    pub fn version(&self) -> Version {
         self.version
     }
 
