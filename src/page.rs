@@ -77,7 +77,7 @@ pub fn make_page_dict(object_number: u64) -> PdfDictionaryObject {
 
 //--------------------------- PageTree -------------------------//
 
-pub fn make_page_tree(
+pub fn make_page_tree_dict(
     object_number: u64,
 ) -> PdfDictionaryObject {
     let mut tree = PdfDictionaryObject::new()

@@ -1,8 +1,3 @@
-use rusty_pdf::color::{Color, RGB};
-use rusty_pdf::objects::pdf_object::PdfObj;
-use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
-use rusty_pdf::util::{Dims, Matrix, Posn};
-use rusty_pdf::{Pdf, Stream};
 /*fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     let content_index = String::from_utf8(content_stream_ref).unwrap();
     // Extract just the number from "N 0 R" format
@@ -14,7 +9,7 @@ use rusty_pdf::{Pdf, Stream};
     page
 }
 
-*/#[test]
+#[test]
 fn test_generate_simple_uncompressed_pdf() {
     let _pdf = Pdf::new();
     let mut stream = Stream::new();
@@ -592,3 +587,4 @@ fn test_comparison_compressed() {
 
     println!("✅ Generated: /tmp/pydyf_test/cc.pdf");
 */}
+*/

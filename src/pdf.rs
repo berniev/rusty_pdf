@@ -1,6 +1,6 @@
 use crate::cross_reference_table::CrossRefTable;
 use crate::header::Header;
-use crate::page::make_page_tree;
+use crate::page::make_page_tree_dict;
 use crate::version::Version;
 use crate::trailer::Trailer;
 use crate::{PdfDictionaryObject, PdfError};
@@ -27,7 +27,7 @@ impl Pdf {
             xref_table: CrossRefTable::new(), // buffers xref until body is complete, then appended
             last_object_number: 0, // 0 is in xref table as 'free'. is gen# 65535, else 0 for new
         };
-        pdf.root_page_tree_dict = make_page_tree(pdf.next_object_number());
+        pdf.root_page_tree_dict = make_page_tree_dict(pdf.next_object_number());
 
         pdf
     }

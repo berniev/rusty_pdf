@@ -305,7 +305,7 @@ mod tests {
     #[test]
     fn test_xmp_to_stream() {
         let xmp = XmpMetadata::from_packet("<xml>test</xml>".to_string());
-        let mut stream = xmp.to_stream().unwrap();
+        let stream = xmp.to_stream().unwrap();
 
         assert!(!stream.serialise().expect("REASON").is_empty());
     }
