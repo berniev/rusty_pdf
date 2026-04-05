@@ -1,8 +1,8 @@
-use pydyf::color::{Color, RGB};
-use pydyf::objects::pdf_object::PdfObj;
-use pydyf::objects::stream::{StrokeOrFill, WindingRule};
-use pydyf::util::{Dims, Matrix, Posn};
-use pydyf::{Pdf, Stream};
+use RustyPDF::color::{Color, RGB};
+use RustyPDF::objects::pdf_object::PdfObj;
+use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
+use RustyPDF::util::{Dims, Matrix, Posn};
+use RustyPDF::{Pdf, Stream};
 /*fn create_page_with_content(content_stream_ref: Vec<u8>) -> PageObject {
     let content_index = String::from_utf8(content_stream_ref).unwrap();
     // Extract just the number from "N 0 R" format

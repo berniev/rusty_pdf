@@ -1,7 +1,7 @@
-use pydyf::color::{Color, RGB};
-use pydyf::objects::stream::{StrokeOrFill, WindingRule};
-use pydyf::util::{Dims, Posn};
-use pydyf::PdfStreamObject;
+use RustyPDF::color::{Color, RGB};
+use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
+use RustyPDF::util::{Dims, Posn};
+use RustyPDF::PdfStreamObject;
 
 /*#[test]
 fn test_create_pdf() {
@@ -49,7 +49,7 @@ fn test_stream_operations() {
 #[test]
 fn test_compressed_stream() {
     let stream = PdfStreamObject::new().compressed();
-    assert_eq!(stream.compression_method(), pydyf::CompressionMethod::Flate);
+    assert_eq!(stream.compression_method(), RustyPDF::CompressionMethod::Flate);
 }
 
 /*#[test]

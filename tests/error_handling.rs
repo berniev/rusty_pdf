@@ -1,5 +1,5 @@
-use pydyf::color::{Color, ColorSpace};
-use pydyf::PdfStreamObject;
+use RustyPDF::color::{Color, ColorSpace};
+use RustyPDF::PdfStreamObject;
 
 #[test]
 #[should_panic(expected = "color must be in range 0.0..=1.0")]

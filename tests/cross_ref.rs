@@ -1,5 +1,5 @@
-use pydyf::cross_reference_table::CrossRefError;
-use pydyf::generation::Generation;
+use RustyPDF::cross_reference_table::CrossRefError;
+use RustyPDF::generation::Generation;
 
 /*#[test]
 fn test_new_table_has_root_entry() {

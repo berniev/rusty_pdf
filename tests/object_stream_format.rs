@@ -3,11 +3,11 @@
 ///
 /// These tests verify the DICTIONARY entries of object streams.
 /// The internal stream format is compressed with FlateDecode and not tested here.
-use pydyf::color::{Color, RGB};
-use pydyf::objects::pdf_object::PdfObj;
-use pydyf::objects::stream::{StrokeOrFill, WindingRule};
-use pydyf::util::{Dims, Posn};
-use pydyf::{Pdf, PdfStreamObject};
+use RustyPDF::color::{Color, RGB};
+use RustyPDF::objects::pdf_object::PdfObj;
+use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
+use RustyPDF::util::{Dims, Posn};
+use RustyPDF::{Pdf, PdfStreamObject};
 
 
 /// Test: Object stream dictionary must have /Type /ObjStm

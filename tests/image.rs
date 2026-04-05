@@ -1,10 +1,10 @@
-use pydyf::color::ColorSpace;
-use pydyf::drawing_commands::*;
-use pydyf::file_identifier::FileIdentifierMode;
-use pydyf::objects::pdf_object::PdfObj;
-use pydyf::page::{add_page_to_tree, make_page_dict};
-use pydyf::util::{Matrix, Posn};
-use pydyf::{PageSize, Pdf, Stream};
+use RustyPDF::color::ColorSpace;
+use RustyPDF::drawing_commands::*;
+use RustyPDF::file_identifier::FileIdentifierMode;
+use RustyPDF::objects::pdf_object::PdfObj;
+use RustyPDF::page::{add_page_to_tree, make_page_dict};
+use RustyPDF::util::{Matrix, Posn};
+use RustyPDF::{PageSize, Pdf, Stream};
 use std::fs::File;
 
 #[test]

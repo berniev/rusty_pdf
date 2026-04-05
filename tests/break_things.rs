@@ -1,9 +1,9 @@
-use pydyf::color::{Color, RGB};
-use pydyf::objects::pdf_object::PdfObj;
-use pydyf::objects::stream::{StrokeOrFill, WindingRule};
-use pydyf::util::{Dims, Matrix, Posn};
-use pydyf::PdfStreamObject;
-use pydyf::Pdf;
+use RustyPDF::color::{Color, RGB};
+use RustyPDF::objects::pdf_object::PdfObj;
+use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
+use RustyPDF::util::{Dims, Matrix, Posn};
+use RustyPDF::PdfStreamObject;
+use RustyPDF::Pdf;
 /*fn create_page_with_content(page_size: PageSize, content_index: usize) -> PageObject {
     let mut page = PageObject::new(0usize.into());
     page.add_content(content_index);

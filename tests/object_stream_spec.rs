@@ -34,12 +34,12 @@
 /// 3. Test offset calculations match spec
 /// 4. Test exclusions (streams cannot be compressed)
 
-use pydyf::color::{Color, RGB};
-use pydyf::file_identifier::FileIdentifierMode;
-use pydyf::objects::pdf_object::PdfObj;
-use pydyf::objects::stream::{StrokeOrFill, WindingRule};
-use pydyf::util::{Dims, Posn};
-use pydyf::{Pdf, PdfStreamObject};
+use RustyPDF::color::{Color, RGB};
+use RustyPDF::file_identifier::FileIdentifierMode;
+use RustyPDF::objects::pdf_object::PdfObj;
+use RustyPDF::objects::stream::{StrokeOrFill, WindingRule};
+use RustyPDF::util::{Dims, Posn};
+use RustyPDF::{Pdf, PdfStreamObject};
 
 /// SPEC TEST 1: /Type must be /ObjStm
 #[test]
