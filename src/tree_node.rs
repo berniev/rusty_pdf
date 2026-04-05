@@ -73,7 +73,7 @@ impl TreeNode {
     pub fn set_kids(&mut self, kids: Vec<u64>) {
         let mut arr = PdfArrayObject::new();
         for kid in kids { arr.push(PdfObj::reference(kid)); }
-        self.dict.add("Kids", PdfObj::array(arr));
+        self.dict.add("Kids", arr);
     }
 
     pub fn set_entries<K: TreeKey>(&mut self, entries: Vec<(K, PdfObject)>) {
@@ -82,13 +82,13 @@ impl TreeNode {
             arr.push(key.to_pdf_obj());
             arr.push(val);
         }
-        self.dict.add(K::entry_key_name(), PdfObj::array(arr));
+        self.dict.add(K::entry_key_name(), arr);
     }
 
     pub fn set_limits<K: TreeKey>(&mut self, least: K, greatest: K) {
         let mut arr = PdfArrayObject::new();
         arr.push(least.to_pdf_obj());
         arr.push(greatest.to_pdf_obj());
-        self.dict.add("Limits", PdfObj::array(arr));
+        self.dict.add("Limits", arr);
     }
 }

@@ -4,7 +4,6 @@ use std::fmt::{self, Display};
 use crate::encoding::f_to_pdf_num;
 use crate::util::ToPdf;
 use crate::{PdfArrayObject, PdfError, PdfResult};
-use crate::objects::pdf_object::PdfObj;
 
 //------------------------ ColorSpace -------------------------------
 
@@ -134,9 +133,9 @@ impl RGB {
 
     pub(crate) fn as_pdf_array(&self) -> PdfArrayObject {
        let mut arr = PdfArrayObject::new();
-        arr.push(PdfObj::num(self.red.to_f64()));
-        arr.push(PdfObj::num(self.green.to_f64()));
-        arr.push(PdfObj::num(self.blue.to_f64()));
+        arr.push(self.red.to_f64());
+        arr.push(self.green.to_f64());
+        arr.push(self.blue.to_f64());
         
         arr
     }

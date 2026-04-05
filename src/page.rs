@@ -83,8 +83,8 @@ pub fn make_page_tree(
     let mut tree = PdfDictionaryObject::new()
         .typed("Pages")
         .with_object_number(object_number);
-    tree.add("Kids", PdfObj::array(PdfArrayObject::new()));
-    tree.add("Count", PdfObj::num(0));
+    tree.add("Kids", PdfArrayObject::new());
+    tree.add("Count", 0);
 
     tree
 }

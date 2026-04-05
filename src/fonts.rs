@@ -20,7 +20,7 @@ impl Fonts {
             dict.add("Subtype", PdfObj::name(subtype));
             dict.add("BaseFont", PdfObj::name(name));
 
-            fonts_dict.add(name, PdfObj::dict(dict));
+            fonts_dict.add(name, dict);
         }
 
         fonts_dict

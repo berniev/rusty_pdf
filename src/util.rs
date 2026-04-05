@@ -1,5 +1,4 @@
 use crate::encoding::f_to_pdf_num;
-use crate::objects::pdf_object::PdfObj;
 use crate::PdfArrayObject;
 //------------------------- ToPdf -----------------------------//
 
@@ -28,8 +27,8 @@ pub struct Posn {
 impl Posn {
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push(PdfObj::num(self.x));
-        arr.push(PdfObj::num(self.y));
+        arr.push(self.x);
+        arr.push(self.y);
 
         arr
     }
@@ -61,8 +60,8 @@ pub struct Line {
 impl Line {
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push(PdfObj::array(self.start.as_pdf_array()));
-        arr.push(PdfObj::array(self.end.as_pdf_array()));
+        arr.push(self.start.as_pdf_array());
+        arr.push(self.end.as_pdf_array());
 
         arr
     }
@@ -102,10 +101,10 @@ impl Rectangle {
 
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push(PdfObj::num(self.x1));
-        arr.push(PdfObj::num(self.y1));
-        arr.push(PdfObj::num(self.x2));
-        arr.push(PdfObj::num(self.y2));
+        arr.push(self.x1);
+        arr.push(self.y1);
+        arr.push(self.x2);
+        arr.push(self.y2);
 
         arr
     }
@@ -149,12 +148,12 @@ impl Matrix {
     */
     pub fn as_pdf_array(&self) -> PdfArrayObject {
         let mut arr = PdfArrayObject::new();
-        arr.push(PdfObj::num(self.a));
-        arr.push(PdfObj::num(self.b));
-        arr.push(PdfObj::num(self.c));
-        arr.push(PdfObj::num(self.d));
-        arr.push(PdfObj::num(self.e));
-        arr.push(PdfObj::num(self.f));
+        arr.push(self.a);
+        arr.push(self.b);
+        arr.push(self.c);
+        arr.push(self.d);
+        arr.push(self.e);
+        arr.push(self.f);
 
         arr
     }

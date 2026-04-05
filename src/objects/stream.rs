@@ -130,7 +130,7 @@ impl PdfStreamObject {
         };
 
         let mut dict = self.dict.clone(); // else self must be mut, which it can't be
-        dict.add("Length", PdfObj::num(stream_bytes.len() as f64));
+        dict.add("Length", stream_bytes.len() as f64);
         let mut vec = dict.serialise()?;
         vec.push(b'\n');
         vec.extend(b"stream\n");

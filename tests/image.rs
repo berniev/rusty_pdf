@@ -56,8 +56,8 @@ fn test_inline_image() {
 
     let mut pdf = Pdf::new();
     let mut page_dict = make_page_dict(pdf.next_object_number());
-    page_dict.add("MediaBox", PdfObj::array(PageSize::A4.to_rect()));
-    page_dict.add("Contents", PdfObj::stream(stream));
+    page_dict.add("MediaBox", PageSize::A4.to_rect());
+    page_dict.add("Contents", stream);
     add_page_to_tree(&mut page_dict, pdf.root_page_tree_dict_ref()).expect("fail");
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();

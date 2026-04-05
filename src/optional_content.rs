@@ -95,7 +95,7 @@ impl OptionalContentGroup {
                 for i in intent {
                     arr.push(PdfObj::name(i.as_str()));
                 }
-                dict.add("Intent", PdfObj::array(arr));
+                dict.add("Intent", arr);
             }
         }
 
@@ -111,13 +111,13 @@ impl OptionalContentGroup {
                         VisibilityInitialState::Off => "OFF",
                     }),
                 );
-                usage_dict.add("Print", PdfObj::dict(print_dict));
+                usage_dict.add("Print", print_dict);
             }
 
             if let Some(ref view) = usage.view {
                 let mut view_dict = PdfDictionaryObject::new();
                 view_dict.add("ViewState", PdfObj::name(&*view.state.to_string()));
-                usage_dict.add("View", PdfObj::dict(view_dict));
+                usage_dict.add("View", view_dict);
             }
 
             if let Some(ref export) = usage.export {
@@ -129,10 +129,10 @@ impl OptionalContentGroup {
                         VisibilityInitialState::Off => "OFF",
                     }),
                 );
-                usage_dict.add("Export", PdfObj::dict(export_dict));
+                usage_dict.add("Export", export_dict);
             }
 
-            dict.add("Usage", PdfObj::dict(usage_dict));
+            dict.add("Usage", usage_dict);
         }
 
         dict
@@ -216,7 +216,7 @@ impl OptionalContentConfig {
             /*for &id in &self.on_list {
                 //arr.push(Pdf::indirect(id));
             }*/
-            dict.add("ON", PdfObj::array(arr));
+            dict.add("ON", arr);
         }
 
         if !self.off_list.is_empty() {
@@ -224,12 +224,12 @@ impl OptionalContentConfig {
             //for &id in &self.off_list {
                 //arr.push(Pdf::indirect(id));
             //}
-            dict.add("OFF", PdfObj::array(arr));
+            dict.add("OFF", arr);
         }
 
         // Order array (simplified - full implementation would handle nested groups)
         if !self.order.is_empty() {
-            dict.add("Order", PdfObj::array(self.build_order_array(&self.order)));
+            dict.add("Order", self.build_order_array(&self.order));
         }
 
         dict
@@ -245,7 +245,7 @@ impl OptionalContentConfig {
                 }
                 LayerOrder::Group { label, children } => {
                     arr.push(PdfObj::string(label.as_str()));
-                    arr.push(PdfObj::array(self.build_order_array(children)));
+                    arr.push(self.build_order_array(children));
                 }
             }
         }

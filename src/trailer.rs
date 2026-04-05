@@ -28,7 +28,7 @@ impl Trailer {
     }
 
     pub fn with_size(mut self, size: u64) -> Self {
-        self.dict.add("Size", PdfObj::num(size));
+        self.dict.add("Size", size);
 
         self
     }
@@ -43,13 +43,13 @@ impl Trailer {
         let mut encryption_dict = PdfDictionaryObject::new(); // not typed, direct
         encryption_dict.add("Filter", PdfObj::name("Standard"));
 
-        self.dict.add("Encrypt", PdfObj::dict(encryption_dict));
+        self.dict.add("Encrypt", encryption_dict);
 
         let mut id_array = PdfArrayObject::new();
         id_array.push(PdfObj::string("1234567890"));
         id_array.push(PdfObj::string("0987654321"));
 
-        self.dict.add("ID", PdfObj::array(id_array));
+        self.dict.add("ID", id_array);
 
         self
     }

@@ -82,15 +82,15 @@ impl TilingPattern {
         stream.add(self.content.clone());
 
         stream.dict.add("Type", PdfObj::name("Pattern"));
-        stream.dict.add("PatternType", PdfObj::num(PatternType::Tiling as i64));
-        stream.dict.add("PaintType", PdfObj::num(self.paint_type as i64));
-        stream.dict.add("TilingType", PdfObj::num(self.tiling_type as i64));
-        stream.dict.add("BBox", PdfObj::array(self.bounding_box.as_pdf_array()));
-        stream.dict.add("XStep", PdfObj::num(self.x_step));
-        stream.dict.add("YStep", PdfObj::num(self.y_step));
+        stream.dict.add("PatternType", PatternType::Tiling as i64);
+        stream.dict.add("PaintType", self.paint_type as i64);
+        stream.dict.add("TilingType", self.tiling_type as i64);
+        stream.dict.add("BBox", self.bounding_box.as_pdf_array());
+        stream.dict.add("XStep", self.x_step);
+        stream.dict.add("YStep", self.y_step);
 
         if let Some(matrix) = self.matrix {
-            stream.dict.add("Matrix", PdfObj::array(matrix.as_pdf_array()));
+            stream.dict.add("Matrix", matrix.as_pdf_array());
         }
 
         stream
@@ -164,9 +164,9 @@ impl AxialShading {
     pub fn to_dict(&self) -> PdfDictionaryObject {
         let mut dict = PdfDictionaryObject::new();
 
-        dict.add("ShadingType", PdfObj::num(ShadingType::Axial as i64));
+        dict.add("ShadingType", ShadingType::Axial as i64);
         dict.add("ColorSpace", PdfObj::name("DeviceRGB"));
-        dict.add("Coords", PdfObj::array(self.line.as_pdf_array()));
+        dict.add("Coords", self.line.as_pdf_array());
 
         // Function (simplified: direct color interpolation)
         // In a full implementation, this would be a proper PDF function object
@@ -175,7 +175,7 @@ impl AxialShading {
         let mut extend_arr = PdfArrayObject::new();
         extend_arr.push(PdfObj::bool(self.extend_start));
         extend_arr.push(PdfObj::bool(self.extend_end));
-        dict.add("Extend", PdfObj::array(extend_arr));
+        dict.add("Extend", extend_arr);
 
         dict
     }

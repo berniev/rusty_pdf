@@ -153,27 +153,27 @@ impl ExtGState {
         let mut dict = PdfDictionaryObject::new().typed("ExtGState");
 
         if let Some(lw) = self.line_width {
-            dict.add("LW", PdfObj::num(lw));
+            dict.add("LW", lw);
         }
 
         if let Some(lc) = self.line_cap {
-            dict.add("LC", PdfObj::num(lc));
+            dict.add("LC", lc);
         }
 
         if let Some(lj) = self.line_join {
-            dict.add("LJ", PdfObj::num(lj as i64));
+            dict.add("LJ", lj as i64);
         }
 
         if let Some(ml) = self.miter_limit {
-            dict.add("ML", PdfObj::num(ml));
+            dict.add("ML", ml);
         }
 
         if let Some(ca) = self.stroke_alpha {
-            dict.add("CA", PdfObj::num(ca));
+            dict.add("CA", ca);
         }
 
         if let Some(ca) = self.fill_alpha {
-            dict.add("ca", PdfObj::num(ca));
+            dict.add("ca", ca);
         }
 
         if let Some(bm) = self.blend_mode {
@@ -185,35 +185,35 @@ impl ExtGState {
         }
 
         if let Some(op) = self.overprint_stroke {
-            dict.add("OP", PdfObj::bool(op));
+            dict.add("OP", op);
         }
 
         if let Some(op) = self.overprint_fill {
-            dict.add("op", PdfObj::bool(op));
+            dict.add("op", op);
         }
 
         if let Some(opm) = self.overprint_mode {
-            dict.add("OPM", PdfObj::num(opm));
+            dict.add("OPM", opm);
         }
 
         if let Some(fl) = self.flatness {
-            dict.add("FL", PdfObj::num(fl));
+            dict.add("FL", fl);
         }
 
         if let Some(sm) = self.smoothness {
-            dict.add("SM", PdfObj::num(sm));
+            dict.add("SM", sm);
         }
 
         if let Some(sa) = self.stroke_adjust {
-            dict.add("SA", PdfObj::bool(sa));
+            dict.add("SA", sa);
         }
 
         if let Some(ais) = self.alpha_is_shape {
-            dict.add("AIS", PdfObj::bool(ais));
+            dict.add("AIS", ais);
         }
 
         if let Some(tk) = self.text_knockout {
-            dict.add("TK", PdfObj::bool(tk));
+            dict.add("TK", tk);
         }
 
         dict

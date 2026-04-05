@@ -43,7 +43,7 @@ impl Action for UriAction {
         dict.add("URI", PdfObj::string(self.uri.as_str()));
 
         if self.is_map {
-            dict.add("IsMap", PdfObj::bool(true));
+            dict.add("IsMap", true);
         }
 
         Ok(dict)
@@ -68,7 +68,7 @@ impl Action for GoToAction {
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
         dict.add("S", PdfObj::name(self.action_type()));
-        dict.add("D", PdfObj::array(self.destination.to_pdf_array()));
+        dict.add("D", self.destination.to_pdf_array());
         Ok(dict)
     }
 }
@@ -127,7 +127,7 @@ impl Action for LaunchAction {
 
         let mut file_dict = PdfDictionaryObject::new().typed("Filespec");
         file_dict.add("F", PdfObj::string(self.file.as_str()));
-        dict.add("F", PdfObj::dict(file_dict));
+        dict.add("F", file_dict);
 
         if let Some(new_win) = self.new_window {
             dict.add("NewWindow", PdfObj::bool(new_win));
@@ -236,7 +236,7 @@ impl FitDestination {
                 top,
                 zoom,
             } => {
-                arr.push(PdfObj::num(*page));
+                arr.push(*page);
                 arr.push(PdfObj::name("XYZ"));
                 arr.push(PdfObj::num_or_null(*left));
                 arr.push(PdfObj::num_or_null(*top));
@@ -244,29 +244,29 @@ impl FitDestination {
             }
 
             FitDestination::Fit { page } => {
-                arr.push(PdfObj::num(*page));
+                arr.push(*page);
                 arr.push(PdfObj::name("Fit"));
             }
 
             FitDestination::FitH { page, top } => {
-                arr.push(PdfObj::num(*page));
+                arr.push(*page);
                 arr.push(PdfObj::name("FitH"));
                 arr.push(PdfObj::num_or_null(*top));
             }
 
             FitDestination::FitV { page, left } => {
-                arr.push(PdfObj::num(*page));
+                arr.push(*page);
                 arr.push(PdfObj::name("FitV"));
                 arr.push(PdfObj::num_or_null(*left));
             }
 
             FitDestination::FitR { page, rect } => {
-                arr.push(PdfObj::num(*page));
+                arr.push(*page);
                 arr.push(PdfObj::name("FitR"));
-                arr.push(PdfObj::num(rect.x1));
-                arr.push(PdfObj::num(rect.y1));
-                arr.push(PdfObj::num(rect.x2));
-                arr.push(PdfObj::num(rect.y2));
+                arr.push(rect.x1);
+                arr.push(rect.y1);
+                arr.push(rect.x2);
+                arr.push(rect.y2);
             }
         }
 

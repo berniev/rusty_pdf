@@ -34,8 +34,8 @@ impl PdfArrayObject {
         self
     }
 
-    pub fn push(&mut self, value: PdfObject) {
-        self.values.push(value);
+    pub fn push(&mut self, value: impl Into<PdfObject>) {
+        self.values.push(value.into());
     }
 
     pub fn serialise(&self) -> Result<Vec<u8>, PdfError> {

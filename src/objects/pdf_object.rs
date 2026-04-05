@@ -200,8 +200,7 @@ impl PdfObject {
     // todo: add to body
     // result gets added to body
     pub fn serialise_wrapper(&mut self) -> Result<Vec<u8>, PdfError> {
-        if let Some(object_number) = self.get_object_number()
-        {
+        if let Some(object_number) = self.get_object_number() {
             let mut vec = vec![];
             vec.extend(object_number.to_string().as_bytes());
             vec.extend(b" 0 obj\n");
@@ -213,5 +212,98 @@ impl PdfObject {
         } else {
             self.serialise()
         }
+    }
+}
+impl From<PdfArrayObject> for PdfObject {
+    fn from(v: PdfArrayObject) -> Self {
+        PdfObject::Array(v)
+    }
+}
+impl From<PdfBooleanObject> for PdfObject {
+    fn from(v: PdfBooleanObject) -> Self {
+        PdfObject::Boolean(v)
+    }
+}
+impl From<PdfDictionaryObject> for PdfObject {
+    fn from(v: PdfDictionaryObject) -> Self {
+        PdfObject::Dictionary(v)
+    }
+}
+impl From<PdfNameObject> for PdfObject {
+    fn from(v: PdfNameObject) -> Self {
+        PdfObject::Name(v)
+    }
+}
+impl From<PdfNullObject> for PdfObject {
+    fn from(v: PdfNullObject) -> Self {
+        PdfObject::Null(v)
+    }
+}
+impl From<PdfNumberObject> for PdfObject {
+    fn from(v: PdfNumberObject) -> Self {
+        PdfObject::Number(v)
+    }
+}
+impl From<PdfReferenceObject> for PdfObject {
+    fn from(v: PdfReferenceObject) -> Self {
+        PdfObject::Reference(v)
+    }
+}
+impl From<PdfStreamObject> for PdfObject {
+    fn from(v: PdfStreamObject) -> Self {
+        PdfObject::Stream(v)
+    }
+}
+impl From<PdfStringObject> for PdfObject {
+    fn from(v: PdfStringObject) -> Self {
+        PdfObject::String(v)
+    }
+}
+
+impl From<bool> for PdfObject {
+    fn from(v: bool) -> Self {
+        PdfObject::Boolean(PdfBooleanObject::new(v))
+    }
+}
+
+impl From<NumberType> for PdfObject {
+    fn from(v: NumberType) -> Self {
+        PdfObject::Number(PdfNumberObject::new(v))
+    }
+}
+
+impl From<u8> for PdfObject {
+    fn from(v: u8) -> Self {
+        PdfObject::from(NumberType::from(v))
+    }
+}
+impl From<usize> for PdfObject {
+    fn from(v: usize) -> Self {
+        PdfObject::from(NumberType::from(v))
+    }
+}
+impl From<u64> for PdfObject {
+    fn from(v: u64) -> Self {
+        PdfObject::from(NumberType::from(v))
+    }
+}
+impl From<i32> for PdfObject {
+    fn from(v: i32) -> Self {
+        PdfObject::from(NumberType::from(v))
+    }
+}
+impl From<i64> for PdfObject {
+    fn from(v: i64) -> Self {
+        PdfObject::from(NumberType::from(v))
+    }
+}
+impl From<f32> for PdfObject {
+    fn from(v: f32) -> Self {
+        PdfObject::from(NumberType::from(v))
+    }
+}
+impl From<f64> for PdfObject {
+    fn from(v: f64) -> Self {
+        PdfObject::from(NumberType::from(v))
     }
 }
