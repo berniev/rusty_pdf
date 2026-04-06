@@ -72,14 +72,21 @@ impl PdfDictionaryObject {
             .find_map(|(k, v)| if k.value == key { Some(v) } else { None })
     }
 
-        pub fn push_to_array(&mut self, key: &str, object: impl Into<PdfObject>) -> bool {
-            if let Some(PdfObject::Array(arr)) = self.get_mut(key) {
-                arr.push(object);
-                true
-            } else {
-                false
-            }
+    pub fn push_to_array(
+        &mut self,
+        key: &str,
+        object: impl Into<PdfObject>,
+    ) -> Result<(), PdfError> {
+        if let Some(PdfObject::Array(arr)) = self.get_mut(key) {
+            arr.push(object);
+            Ok(())
+        } else {
+            Err(PdfError::StructureError(format!(
+                "Key '{}' is not an array",
+                key
+            )))
         }
+    }
 
     pub fn get_integer(&self, key: &str) -> Option<i64> {
         match self.get(key) {
@@ -96,7 +103,7 @@ impl PdfDictionaryObject {
         }
     }
 
-    pub fn add(&mut self, key: &str, object: impl Into<PdfObject>){
+    pub fn add(&mut self, key: &str, object: impl Into<PdfObject>) {
         if self.contains_key(key) {
             PdfError::StructureError(format!("add: Duplicate key {} in dictionary", key));
         }
@@ -106,7 +113,7 @@ impl PdfDictionaryObject {
     pub fn serialise(&self) -> Result<Vec<u8>, PdfError> {
         let mut arr = vec![];
         arr.extend(b"<<");
-        for (pdf_name_obj, pdf_object) in & self.values {
+        for (pdf_name_obj, pdf_object) in &self.values {
             arr.extend(pdf_name_obj.serialise()?);
             arr.push(b' ');
             arr.extend(pdf_object.serialise()?);

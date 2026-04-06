@@ -67,7 +67,6 @@ use crate::objects::pdf_object::PdfObj;
 pub use crate::page_size::PageSize;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
 
-
 //--------------------------- Page ---------------------------//
 
 pub fn make_page_dict(object_number: u64) -> PdfDictionaryObject {
@@ -100,8 +99,8 @@ pub fn add_tree_to_tree(
     parent_tree_dict.push_to_array(
         "Kids",
         PdfObj::reference(child_tree_dict.object_number.unwrap()),
-    );
-    
+    )?;
+
     Ok(())
 }
 
@@ -131,7 +130,7 @@ pub fn add_page_to_tree(
     let new_count = tree_dict.get_integer("Count").unwrap_or(0) + 1;
     tree_dict.update("Count", PdfObj::num(new_count));
 
-    tree_dict.push_to_array("Kids", PdfObj::reference(page_dict.object_number.unwrap()));
+    tree_dict.push_to_array("Kids", PdfObj::reference(page_dict.object_number.unwrap()))?;
 
     Ok(())
 }
