@@ -17,8 +17,8 @@ impl Fonts {
         let mut fonts_dict = PdfDictionaryObject::new();
         for (name, subtype) in fonts {
             let mut dict = PdfDictionaryObject::new().typed("Font");
-            dict.add("Subtype", PdfObj::name(subtype));
-            dict.add("BaseFont", PdfObj::name(name));
+            dict.add("Subtype", PdfObj::make_name_obj(subtype));
+            dict.add("BaseFont", PdfObj::make_name_obj(name));
 
             fonts_dict.add(name, dict);
         }

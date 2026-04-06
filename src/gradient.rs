@@ -126,7 +126,7 @@ impl Gradient {
 
         let mut color_shading_dict = PdfDictionaryObject::new();
         color_shading_dict.add("ShadingType", shading_type);
-        color_shading_dict.add("ColorSpace", PdfObj::name("DeviceRGB"));
+        color_shading_dict.add("ColorSpace", PdfObj::make_name_obj("DeviceRGB"));
 
         let make_coords = || {
             let mut arr = PdfArrayObject::new();
@@ -139,8 +139,8 @@ impl Gradient {
 
         let make_extend = || {
             let mut arr = PdfArrayObject::new();
-            arr.push(PdfObj::bool(true));
-            arr.push(PdfObj::bool(true));
+            arr.push(true);
+            arr.push(true);
             arr
         };
 
@@ -164,7 +164,7 @@ impl Gradient {
 
             let mut alpha_shading_dict = PdfDictionaryObject::new();
             alpha_shading_dict.add("ShadingType", shading_type as i64);
-            alpha_shading_dict.add("ColorSpace", PdfObj::name("DeviceGray"));
+            alpha_shading_dict.add("ColorSpace", PdfObj::make_name_obj("DeviceGray"));
             alpha_shading_dict.add("Coords", make_coords());
             alpha_shading_dict.add("Extend", make_extend());
 

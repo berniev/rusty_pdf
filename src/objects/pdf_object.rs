@@ -76,69 +76,6 @@ use crate::{
 };
 use std::cmp::PartialEq;
 
-//--------------------------- PdfObj -------------------------//
-
-pub struct PdfObj {}
-
-impl PdfObj {
-    pub fn array(value: PdfArrayObject) -> PdfObject {
-        PdfObject::Array(value)
-    }
-
-    pub fn bool(value: bool) -> PdfObject {
-        PdfObject::Boolean(PdfBooleanObject::new(value))
-    }
-
-    pub fn dict(value: PdfDictionaryObject) -> PdfObject {
-        PdfObject::Dictionary(value)
-    }
-
-    pub fn name(value: &str) -> PdfObject {
-        PdfObject::Name(PdfNameObject::new(value))
-    }
-
-    pub fn null() -> PdfObject {
-        PdfObject::Null(PdfNullObject::new())
-    }
-
-    pub fn num(value: impl Into<NumberType>) -> PdfObject {
-        PdfObject::Number(PdfNumberObject::new(value.into()))
-    }
-
-    pub fn num_or_null<T: Into<NumberType>>(value: Option<T>) -> PdfObject {
-        match value {
-            Some(v) => PdfObj::num(v),
-            None => PdfObj::null(),
-        }
-    }
-
-    pub fn reference(value: u64) -> PdfObject {
-        PdfObject::Reference(PdfReferenceObject::new(value))
-    }
-
-    pub fn stream(value: PdfStreamObject) -> PdfObject {
-        PdfObject::Stream(value)
-    }
-
-    pub fn string(value: &str) -> PdfObject {
-        PdfObject::String(PdfStringObject::new(value))
-    }
-}
-
-// Tracks where an object ended up after serialisation — not intrinsic to the object itself
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct SerialLocation {
-    pub offset: usize,
-    pub status: ObjectStatus, // free or inuse
-}
-
-// The PDF spec identity of an __ indirect __ object (§7.3.10)
-#[derive(Debug, Clone, PartialEq)]
-pub struct ObjectId {
-    pub number: usize,          // 0 is root. 1 is first object
-    pub generation: Generation, // for obj#0 is 65535, else is 0 for new objects
-}
-
 //--------------------------- PdfObject -------------------------//
 
 #[derive(Clone)]
@@ -189,6 +126,20 @@ impl PdfObject {
         Ok(vec)
     }
 
+    //------------------ constructor helpers --------------------------
+
+    pub fn with_object_number(mut self, value: u64) -> Self {
+        match_pdf_object!(&mut self, x => x.object_number = Some(value));
+        self
+    }
+
+    pub fn with_generation_number(mut self, value: u16) -> Self {
+        match_pdf_object!(&mut self, x => x.generation_number = Some(value));
+        self
+    }
+
+    //------------------ getters and setters --------------------------
+
     pub fn get_object_number(&self) -> Option<u64> {
         match_pdf_object!(self, x => x.object_number)
     }
@@ -204,17 +155,9 @@ impl PdfObject {
     pub fn set_generation_number(&mut self, generation_number: u16) {
         match_pdf_object!(self, x => x.generation_number = Some(generation_number));
     }
-
-    pub fn with_object_number(mut self, value: u64) -> Self {
-        match_pdf_object!(&mut self, x => x.object_number = Some(value));
-        self
-    }
-
-    pub fn with_generation_number(mut self, value: u16) -> Self {
-        match_pdf_object!(&mut self, x => x.generation_number = Some(value));
-        self
-    }
 }
+
+//--------------------------- From impl -------------------------//
 
 impl From<PdfArrayObject> for PdfObject {
     fn from(v: PdfArrayObject) -> Self {
@@ -322,4 +265,69 @@ impl From<f64> for PdfObject {
     fn from(v: f64) -> Self {
         PdfObject::from(NumberType::from(v))
     }
+}
+
+//--------------------------- PdfObj -------------------------//
+
+pub struct PdfObj {}
+
+impl PdfObj {
+    /*pub fn array(value: PdfArrayObject) -> PdfObject {
+            PdfObject::Array(value)
+        }
+
+        pub fn bool(value: bool) -> PdfObject {
+            PdfObject::Boolean(PdfBooleanObject::new(value))
+        }
+
+        pub fn dict(value: PdfDictionaryObject) -> PdfObject {
+            PdfObject::Dictionary(value)
+        }
+
+
+    pub fn stream(value: PdfStreamObject) -> PdfObject {
+        PdfObject::Stream(value)
+    }
+      */
+
+        pub fn make_reference_obj(value: u64) -> PdfObject {
+            PdfObject::Reference(PdfReferenceObject::new(value))
+        }
+
+    pub fn make_null_obj() -> PdfObject {
+        PdfObject::Null(PdfNullObject::new())
+    }
+
+    pub fn make_num_obj(value: impl Into<NumberType>) -> PdfObject {
+        PdfObject::Number(PdfNumberObject::new(value.into()))
+    }
+
+    pub fn make_num_or_null_obj<T: Into<NumberType>>(value: Option<T>) -> PdfObject {
+        match value {
+            Some(v) => PdfObj::make_num_obj(v),
+            None => PdfObj::make_null_obj(),
+        }
+    }
+
+    pub fn make_name_obj(value: &str) -> PdfObject {
+        PdfObject::Name(PdfNameObject::new(value))
+    }
+
+    pub fn make_string_obj(value: &str) -> PdfObject {
+        PdfObject::String(PdfStringObject::new(value))
+    }
+}
+
+// Tracks where an object ended up after serialisation — not intrinsic to the object itself
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct SerialLocation {
+    pub offset: usize,
+    pub status: ObjectStatus, // free or inuse
+}
+
+// The PDF spec identity of an __ indirect __ object (§7.3.10)
+#[derive(Debug, Clone, PartialEq)]
+pub struct ObjectId {
+    pub number: usize,          // 0 is root. 1 is first object
+    pub generation: Generation, // for obj#0 is 65535, else is 0 for new objects
 }

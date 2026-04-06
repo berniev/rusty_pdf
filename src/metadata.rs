@@ -110,39 +110,39 @@ impl DocumentInfo {
         let mut dict = PdfDictionaryObject::new();
 
         if let Some(ref title) = self.title {
-            dict.add("Title", PdfObj::string(title.as_str()));
+            dict.add("Title", PdfObj::make_string_obj(title.as_str()));
         }
 
         if let Some(ref author) = self.author {
-            dict.add("Author", PdfObj::string(author.as_str()));
+            dict.add("Author", PdfObj::make_string_obj(author.as_str()));
         }
 
         if let Some(ref subject) = self.subject {
-            dict.add("Subject", PdfObj::string(subject.as_str()));
+            dict.add("Subject", PdfObj::make_string_obj(subject.as_str()));
         }
 
         if let Some(ref keywords) = self.keywords {
-            dict.add("Keywords", PdfObj::string(keywords.as_str()));
+            dict.add("Keywords", PdfObj::make_string_obj(keywords.as_str()));
         }
 
         if let Some(ref creator) = self.creator {
-            dict.add("Creator", PdfObj::string(creator.as_str()));
+            dict.add("Creator", PdfObj::make_string_obj(creator.as_str()));
         }
 
         if let Some(ref producer) = self.producer {
-            dict.add("Producer", PdfObj::string(producer.as_str()));
+            dict.add("Producer", PdfObj::make_string_obj(producer.as_str()));
         }
 
         if let Some(ref creation_date) = self.creation_date {
-            dict.add("CreationDate", PdfObj::string(creation_date.as_str()));
+            dict.add("CreationDate", PdfObj::make_string_obj(creation_date.as_str()));
         }
 
         if let Some(ref mod_date) = self.mod_date {
-            dict.add("ModDate", PdfObj::string(mod_date.as_str()));
+            dict.add("ModDate", PdfObj::make_string_obj(mod_date.as_str()));
         }
 
         if let Some(trapped) = self.trapped {
-            dict.add("Trapped", PdfObj::string(trapped.as_name()));
+            dict.add("Trapped", PdfObj::make_string_obj(trapped.as_name()));
         }
 
         dict
@@ -224,7 +224,7 @@ impl XmpMetadata {
 
     pub fn to_stream(&self) -> PdfResult<PdfStreamObject> {
         let mut dict = PdfDictionaryObject::new().typed("Metadata");
-        dict.add("SubType", PdfObj::name("XML"));
+        dict.add("SubType", PdfObj::make_name_obj("XML"));
 
         let stream = PdfStreamObject::new(1u64).with_data(self.xmp_packet.as_bytes().to_vec(), dict);
 

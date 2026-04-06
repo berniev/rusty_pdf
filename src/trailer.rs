@@ -34,20 +34,20 @@ impl Trailer {
     }
 
     pub fn with_root(mut self, root: u64) -> Self {
-        self.dict.add("Root", PdfObj::reference(root));
+        self.dict.add("Root", PdfObj::make_reference_obj(root));
 
         self
     }
 
     pub fn encrypted(&mut self) -> &mut Self {
         let mut encryption_dict = PdfDictionaryObject::new(); // not typed, direct
-        encryption_dict.add("Filter", PdfObj::name("Standard"));
+        encryption_dict.add("Filter", PdfObj::make_name_obj("Standard"));
 
         self.dict.add("Encrypt", encryption_dict);
 
         let mut id_array = PdfArrayObject::new();
-        id_array.push(PdfObj::string("1234567890"));
-        id_array.push(PdfObj::string("0987654321"));
+        id_array.push(PdfObj::make_string_obj("1234567890"));
+        id_array.push(PdfObj::make_string_obj("0987654321"));
 
         self.dict.add("ID", id_array);
 

@@ -102,7 +102,7 @@ impl PdfStreamObject {
 
     pub fn compressed(mut self) -> Self {
         self.compression_method = CompressionMethod::Flate;
-        self.dict.add("Filter", PdfObj::name("FlateDecode"));
+        self.dict.add("Filter", PdfObj::make_name_obj("FlateDecode"));
         self
     }
 

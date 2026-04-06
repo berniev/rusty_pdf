@@ -93,7 +93,7 @@ pub trait Annotation {
     fn add_border_style_to_dict(&self, dest_dict: &mut PdfDictionaryObject) {
         if let Some(style) = self.border_style() {
             let mut bs_dict = PdfDictionaryObject::new();
-            bs_dict.add("S", PdfObj::string(style.as_str()));
+            bs_dict.add("S", PdfObj::make_string_obj(style.as_str()));
             dest_dict.add("BS", bs_dict);
         }
     }
@@ -102,8 +102,8 @@ pub trait Annotation {
         let mut dest_dict = PdfDictionaryObject::new();
 
         // Required entries
-        dest_dict.add("Type", PdfObj::string("Annot"));
-        dest_dict.add("Subtype", PdfObj::string(self.subtype()));
+        dest_dict.add("Type", PdfObj::make_string_obj("Annot"));
+        dest_dict.add("Subtype", PdfObj::make_string_obj(self.subtype()));
         dest_dict.add("Rect", self.rect().as_pdf_array());
 
         // Optional common entries
@@ -119,7 +119,7 @@ pub trait Annotation {
         }
 
         if let Some(contents) = self.contents() {
-            dest_dict.add("Contents", PdfObj::string(contents));
+            dest_dict.add("Contents", PdfObj::make_string_obj(contents));
         }
 
         Ok(dest_dict)
@@ -228,7 +228,7 @@ impl Annotation for TextAnnotation {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new().typed("Annot");
-        dict.add("Subtype", PdfObj::name(self.subtype()));
+        dict.add("Subtype", PdfObj::make_name_obj(self.subtype()));
         dict.add("Rect", self.rect.as_pdf_array());
         if !self.flags.is_empty() {
             dict.add("F", self.flags.bits() as i64);
@@ -236,8 +236,8 @@ impl Annotation for TextAnnotation {
         if let Some(rgb) = self.color {
             dict.add("C", rgb.as_pdf_array());
         }
-        dict.add("Contents", PdfObj::string(self.contents.as_str()));
-        dict.add("Name", PdfObj::name(self.icon.as_str()));
+        dict.add("Contents", PdfObj::make_string_obj(self.contents.as_str()));
+        dict.add("Name", PdfObj::make_name_obj(self.icon.as_str()));
 
         Ok(dict)
     }
@@ -312,7 +312,7 @@ impl Annotation for LinkAnnotation {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new().typed("Annot");
-        dict.add("Subtype", PdfObj::name(self.subtype()));
+        dict.add("Subtype", PdfObj::make_name_obj(self.subtype()));
         dict.add("Rect", self.rect().as_pdf_array());
 
         let flags = self.flags();
@@ -325,8 +325,8 @@ impl Annotation for LinkAnnotation {
         match &self.action {
             LinkAction::Uri(uri) => {
                 let mut action_dict = PdfDictionaryObject::new();
-                action_dict.add("S", PdfObj::name("URI"));
-                action_dict.add("URI", PdfObj::string(uri));
+                action_dict.add("S", PdfObj::make_name_obj("URI"));
+                action_dict.add("URI", PdfObj::make_string_obj(uri));
                 dict.add("A", action_dict);
             }
             LinkAction::GoTo {
@@ -336,13 +336,13 @@ impl Annotation for LinkAnnotation {
             } => {
                 let mut dest = PdfArrayObject::new();
                 dest.push(*page as i64);
-                dest.push(PdfObj::name("XYZ"));
+                dest.push(PdfObj::make_name_obj("XYZ"));
                 dest.push(position.x);
                 dest.push(position.y);
                 if let Some(z) = zoom {
                     dest.push(*z);
                 } else {
-                    dest.push(PdfObj::name("null"));
+                    dest.push(PdfObj::make_name_obj("null"));
                 }
                 
                 dict.add("Dest", dest);

@@ -39,8 +39,8 @@ impl Action for UriAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::name(self.action_type()));
-        dict.add("URI", PdfObj::string(self.uri.as_str()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()));
+        dict.add("URI", PdfObj::make_string_obj(self.uri.as_str()));
 
         if self.is_map {
             dict.add("IsMap", true);
@@ -67,7 +67,7 @@ impl Action for GoToAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::name(self.action_type()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()));
         dict.add("D", self.destination.to_pdf_array());
         Ok(dict)
     }
@@ -90,8 +90,8 @@ impl Action for JavaScriptAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::name(self.action_type()));
-        dict.add("JS", PdfObj::string(self.script.as_str()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()));
+        dict.add("JS", PdfObj::make_string_obj(self.script.as_str()));
 
         Ok(dict)
     }
@@ -123,14 +123,14 @@ impl Action for LaunchAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::name(self.action_type()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()));
 
         let mut file_dict = PdfDictionaryObject::new().typed("Filespec");
-        file_dict.add("F", PdfObj::string(self.file.as_str()));
+        file_dict.add("F", PdfObj::make_string_obj(self.file.as_str()));
         dict.add("F", file_dict);
 
         if let Some(new_win) = self.new_window {
-            dict.add("NewWindow", PdfObj::bool(new_win));
+            dict.add("NewWindow", new_win);
         }
 
         Ok(dict)
@@ -173,8 +173,8 @@ impl Action for NamedAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::name(self.action_type()));
-        dict.add("N", PdfObj::name(self.name.as_str()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()));
+        dict.add("N", PdfObj::make_name_obj(self.name.as_str()));
 
         Ok(dict)
     }
@@ -237,32 +237,32 @@ impl FitDestination {
                 zoom,
             } => {
                 arr.push(*page);
-                arr.push(PdfObj::name("XYZ"));
-                arr.push(PdfObj::num_or_null(*left));
-                arr.push(PdfObj::num_or_null(*top));
-                arr.push(PdfObj::num_or_null(*zoom));
+                arr.push(PdfObj::make_name_obj("XYZ"));
+                arr.push(PdfObj::make_num_or_null_obj(*left));
+                arr.push(PdfObj::make_num_or_null_obj(*top));
+                arr.push(PdfObj::make_num_or_null_obj(*zoom));
             }
 
             FitDestination::Fit { page } => {
                 arr.push(*page);
-                arr.push(PdfObj::name("Fit"));
+                arr.push(PdfObj::make_name_obj("Fit"));
             }
 
             FitDestination::FitH { page, top } => {
                 arr.push(*page);
-                arr.push(PdfObj::name("FitH"));
-                arr.push(PdfObj::num_or_null(*top));
+                arr.push(PdfObj::make_name_obj("FitH"));
+                arr.push(PdfObj::make_num_or_null_obj(*top));
             }
 
             FitDestination::FitV { page, left } => {
                 arr.push(*page);
-                arr.push(PdfObj::name("FitV"));
-                arr.push(PdfObj::num_or_null(*left));
+                arr.push(PdfObj::make_name_obj("FitV"));
+                arr.push(PdfObj::make_num_or_null_obj(*left));
             }
 
             FitDestination::FitR { page, rect } => {
                 arr.push(*page);
-                arr.push(PdfObj::name("FitR"));
+                arr.push(PdfObj::make_name_obj("FitR"));
                 arr.push(rect.x1);
                 arr.push(rect.y1);
                 arr.push(rect.x2);

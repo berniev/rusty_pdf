@@ -38,7 +38,7 @@ impl PdfDictionaryObject {
     }
 
     pub(crate) fn typed(mut self, name: &str) -> Self {
-        self.add("Type", PdfObj::name(name));
+        self.add("Type", PdfObj::make_name_obj(name));
 
         self
     }
@@ -95,11 +95,11 @@ impl PdfDictionaryObject {
         }
     }
 
-    pub fn update(&mut self, key: &str, object: PdfObject) {
+    pub fn update(&mut self, key: &str, object: impl Into<PdfObject>) {
         if let Some((_, value)) = self.values.iter_mut().find(|(k, _)| k.value == key) {
-            *value = object;
+            *value = object.into();
         } else {
-            self.values.push((PdfNameObject::new(key), object));
+            self.values.push((PdfNameObject::new(key), object.into()));
         }
     }
 
@@ -136,13 +136,13 @@ mod tests {
         assert!(dict.is_empty());
         assert_eq!(dict.len(), 0);
 
-        dict.add("Key1", *Box::from(PdfObj::name("Value1")));
+        dict.add("Key1", *Box::from(PdfObj::make_name_obj("Value1")));
         assert!(!dict.is_empty());
         assert_eq!(dict.len(), 1);
         assert!(dict.contains_key("Key1"));
         assert!(!dict.contains_key("Key2"));
 
-        dict.add("Key2", *Box::from(PdfObj::name("Value2")));
+        dict.add("Key2", *Box::from(PdfObj::make_name_obj("Value2")));
         assert_eq!(dict.len(), 2);
         assert!(dict.contains_key("Key2"));
     }

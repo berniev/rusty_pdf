@@ -81,7 +81,7 @@ impl TilingPattern {
 
         stream.add(self.content.clone());
 
-        stream.dict.add("Type", PdfObj::name("Pattern"));
+        stream.dict.add("Type", PdfObj::make_name_obj("Pattern"));
         stream.dict.add("PatternType", PatternType::Tiling as i64);
         stream.dict.add("PaintType", self.paint_type as i64);
         stream.dict.add("TilingType", self.tiling_type as i64);
@@ -165,7 +165,7 @@ impl AxialShading {
         let mut dict = PdfDictionaryObject::new();
 
         dict.add("ShadingType", ShadingType::Axial as i64);
-        dict.add("ColorSpace", PdfObj::name("DeviceRGB"));
+        dict.add("ColorSpace", PdfObj::make_name_obj("DeviceRGB"));
         dict.add("Coords", self.line.as_pdf_array());
 
         // Function (simplified: direct color interpolation)
@@ -173,8 +173,8 @@ impl AxialShading {
         // todo: For now, we use a simplified representation
 
         let mut extend_arr = PdfArrayObject::new();
-        extend_arr.push(PdfObj::bool(self.extend_start));
-        extend_arr.push(PdfObj::bool(self.extend_end));
+        extend_arr.push(self.extend_start);
+        extend_arr.push(self.extend_end);
         dict.add("Extend", extend_arr);
 
         dict

@@ -98,7 +98,7 @@ pub fn add_tree_to_tree(
     }
     parent_tree_dict.push_to_array(
         "Kids",
-        PdfObj::reference(child_tree_dict.object_number.unwrap()),
+        PdfObj::make_reference_obj(child_tree_dict.object_number.unwrap()),
     )?;
 
     Ok(())
@@ -125,12 +125,9 @@ pub fn add_page_to_tree(
     }
 
     let tree_dict_num = tree_dict.object_number.unwrap();
-    page_dict.add("Parent", PdfObj::reference(tree_dict_num));
-
-    let new_count = tree_dict.get_integer("Count").unwrap_or(0) + 1;
-    tree_dict.update("Count", PdfObj::num(new_count));
-
-    tree_dict.push_to_array("Kids", PdfObj::reference(page_dict.object_number.unwrap()))?;
+    page_dict.add("Parent", PdfObj::make_reference_obj(tree_dict_num));
+    tree_dict.update("Count", tree_dict.get_integer("Count").unwrap_or(0) + 1);
+    tree_dict.push_to_array("Kids", PdfObj::make_reference_obj(page_dict.object_number.unwrap()))?;
 
     Ok(())
 }

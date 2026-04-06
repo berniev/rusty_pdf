@@ -48,12 +48,12 @@ pub trait TreeKey: Sized {
 }
 
 impl TreeKey for String {
-    fn to_pdf_obj(self) -> PdfObject { PdfObj::string(&self) }
+    fn to_pdf_obj(self) -> PdfObject { PdfObj::make_string_obj(&self) }
     fn entry_key_name() -> &'static str { "Names" }
 }
 
 impl TreeKey for i64 {
-    fn to_pdf_obj(self) -> PdfObject { PdfObj::num(self) }
+    fn to_pdf_obj(self) -> PdfObject { PdfObj::make_num_obj(self) }
     fn entry_key_name() -> &'static str { "Nums" }
 }
 
@@ -72,7 +72,7 @@ impl TreeNode {
 
     pub fn set_kids(&mut self, kids: Vec<u64>) {
         let mut arr = PdfArrayObject::new();
-        for kid in kids { arr.push(PdfObj::reference(kid)); }
+        for kid in kids { arr.push(PdfObj::make_reference_obj(kid)); }
         self.dict.add("Kids", arr);
     }
 

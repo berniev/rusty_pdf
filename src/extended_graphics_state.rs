@@ -177,11 +177,11 @@ impl ExtGState {
         }
 
         if let Some(bm) = self.blend_mode {
-            dict.add("BM", PdfObj::name(bm.as_str()));
+            dict.add("BM", PdfObj::make_name_obj(bm.as_str()));
         }
 
         if let Some(ri) = self.rendering_intent {
-            dict.add("RI", PdfObj::name(ri.as_str()));
+            dict.add("RI", PdfObj::make_name_obj(ri.as_str()));
         }
 
         if let Some(op) = self.overprint_stroke {
