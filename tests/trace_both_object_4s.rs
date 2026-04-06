@@ -2,8 +2,8 @@
 
 /*#[test]
 fn trace_both_object_4s() {
-    use pydyf::{PdfStreamObject, PdfFile};
-    use pydyf::page::PageSize;
+    use rusty_pdf::{PdfStreamObject, PdfFile};
+    use rusty_pdf::page::PageSize;
 
     let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::new();

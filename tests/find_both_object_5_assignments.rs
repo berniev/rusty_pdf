@@ -2,8 +2,8 @@
 
 /*#[test]
 fn find_both_object_5_assignments() {
-    use pydyf::{FileIdentifierMode, PageObject, PdfStreamObject, PdfFile};
-    use pydyf::page::PageSize;
+    use rusty_pdf::{FileIdentifierMode, PageObject, PdfStreamObject, PdfFile};
+    use rusty_pdf::page::PageSize;
 
     let mut pdf = PdfFile::new();
     let stream = PdfStreamObject::new();

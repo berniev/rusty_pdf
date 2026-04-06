@@ -2,7 +2,7 @@
 
 #[test]
 fn trace_id_assignments_during_write_compressed() {
- /*    use pydyf::{PdfFile, PdfStreamObject};
+ /*    use rusty_pdf::{PdfFile, PdfStreamObject};
 
     let mut pdf = PdfFile::new();
 
@@ -68,7 +68,7 @@ fn trace_next_object_number_helper() {
     // Test what next_object_number() returns at each stage
     // Note: it's private, so we infer it from add_object()
 
-    use pydyf::{PdfFile, PdfStreamObject};
+    use rusty_pdf::{PdfFile, PdfStreamObject};
 
     let mut pdf = PdfFile::new();
 
@@ -99,7 +99,7 @@ fn trace_next_object_number_helper() {
 fn trace_page_tree_id_calculation() {
     // The page tree ID calculation is complex - let's trace it
 
-    use pydyf::{PdfFile, PdfStreamObject};
+    use rusty_pdf::{PdfFile, PdfStreamObject};
 
     let mut pdf = PdfFile::new();
 

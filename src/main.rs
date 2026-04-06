@@ -8,7 +8,7 @@ use rusty_pdf::{Pdf, PdfStreamObject};
 
 fn main() {
     println!("rusty_pdf - PDF library for Rust");
-    println!("Originally based on Python pydyf\n");
+    println!("Originally based on Python rusty_pdf\n");
 
     let mut pdf = Pdf::new();
 
@@ -18,7 +18,7 @@ fn main() {
     let resource_dict = PdfDictionaryObject::new();
     page_dict.add("Resources", resource_dict);
 
-    let mut stream = PdfStreamObject::new();
+    let mut stream = PdfStreamObject::new(pdf.next_object_number());
 
     let mut cmd = DrawingCommands::new(&mut stream);
 

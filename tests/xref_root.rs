@@ -1,7 +1,7 @@
 // Test that xref stream /Root entry points to the actual Catalog object
 /*#[test]
 fn test_xref_root_points_to_catalog() {
-    use pydyf::{FileIdentifierMode, PdfFile};
+    use rusty_pdf::{FileIdentifierMode, PdfFile};
 
     let mut pdf = PdfFile::new();
     let mut output = Vec::new();
@@ -59,7 +59,7 @@ fn test_xref_root_points_to_catalog() {
 fn test_objects_match_their_declarations() {
     // Verify that when we write "N 0 obj", the metadata.object_identifier matches N
 
-    use pydyf::{FileIdentifierMode, PdfFile};
+    use rusty_pdf::{FileIdentifierMode, PdfFile};
 
     let mut pdf = PdfFile::new();
     let mut output = Vec::new();
@@ -102,7 +102,7 @@ fn test_all_object_numbers_are_sequential() {
     // Per PDF spec, objects should be numbered starting from 1 (0 is free)
     // and should be sequential (or have gaps marked as free in xref)
 
-    use pydyf::{FileIdentifierMode, PdfFile};
+    use rusty_pdf::{FileIdentifierMode, PdfFile};
 
     let mut pdf = PdfFile::new();
     let mut output = Vec::new();

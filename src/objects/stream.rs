@@ -1,45 +1,50 @@
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
-/// PDF content stream.
+/// PDF content stream
 ///
-/// Content streams define page content, eg:
+/// Content streams most commonly define page content, e.g.
 /// - Graphics: paths, rectangles, curves
 /// - Text: fonts, positioning, display
 /// - Colors: RGB, CMYK, grayscale
 /// - Images: inline images
 /// - Transformations: matrices, state management
+/// but have other uses as well.
 ///
-///   A stream object, like a string object, is a sequence of bytes. Furthermore, a stream may be
-///   of unlimited length, whereas a string shall be subject to an implementation limit. For this
-///   reason, objects with potentially large amounts of data, such as images and page
-///   descriptions, shall be represented as streams.
+/// A stream object is a (potentially very long) sequence of bytes. Objects with potentially large 
+/// amounts of data, such as images and page descriptions, shall be represented as streams.
 ///
-///   A stream shall consist of a dictionary followed by zero or more bytes bracketed between the
-///   keywords'stream' and 'endstream'.
-///
-///   All streams shall be indirect objects and the stream dictionary shall be a direct object.
-///
-///   Beginning with PDF 1.5, indirect objects may reside in object streams (see 7.5.7, "Object
-///   Streams"). They are referred to in the same way; however, their definition shall not
-///   include the keywords obj and endobj, and their generation number shall be zero.
-///
+/// A stream shall be an indirect object and consist of a direct dictionary object (known as the 
+/// Stream Extent) followed by zero or more bytes bracketed between the keywords'stream' and 
+/// 'endstream'.
 /// ```
-/// Stream Extent: Entries common to all stream --dictionaries--:
+///     5 0 obj          ← object number + generation number
+///     <<
+///       /Length 42
+///       /Filter /FlateDecode
+///     >>
+///     stream
+///     ...bytes...
+///     endstream
+///     endobj
+///```
+/// ```
+/// Stream dictionary (Stream Extent) Entries:
 /// ===========================================================================
-/// Entry         Type     Reqd Description
+/// Name          Type     Reqd Description
 /// ============  ==========  = ===============================================
 /// Length        int         R The length of the stream in bytes
+/// DL            int         O Non-negative len of the decoded stream in bytes
 /// Filter        nam or arr  O A filter or sequence of filters to be applied
 /// DecodeParms   dic or arr  O Parameters for the filter(s) in Filter
+/// 
 /// F             filespec    O A file specification for the stream data
 /// FFilter       nam or arr  O A filter or sequence of filters to file data
 /// FDecodeParms  dic or arr  O Parameters for the filter(s) in FFilter
-/// DL            int         O Non-negative len of the decoded stream in bytes
 /// ===========================================================================
 /// ```
-///   Filter:
-///   An optional part of the specification of a stream object, indicating how the data in the
-///   stream should be decoded before it is used
+/// Stream Filters:
+/// Indicate how the data in the stream should be decoded before it is used. Used in "Filter" and 
+/// "FFilter" dict entries.
 /// ```
 /// Stream Filters:
 /// =============================================================================
@@ -60,7 +65,10 @@ use flate2::write::ZlibEncoder;
 /// Crypt           y 5 data    Data encrypted by a security handler
 /// =============================================================================
 /// ```
-
+/// Beginning with PDF 1.5, indirect objects may reside in object streams. 
+/// They are referred to in the same way; however, their definition shall not include the keywords 
+/// obj and endobj, and their generation number shall be zero.
+///
 use std::io::Write as IoWrite;
 
 use crate::PdfDictionaryObject;
@@ -79,24 +87,14 @@ pub struct PdfStreamObject {
     pub(crate) compression_method: CompressionMethod,
 }
 
-impl Default for PdfStreamObject {
-    fn default() -> Self {
+impl PdfStreamObject {
+    //-------------------------- Constructors --------------------------
+    pub fn new(object_number: u64) -> Self {
         Self {
             dict: PdfDictionaryObject::new(),
             content: Vec::new(),
-            object_number: None,
-
+            object_number: Some(object_number), // all streams objects are indirect
             compression_method: CompressionMethod::None,
-        }
-    }
-}
-
-impl PdfStreamObject {
-    //-------------------------- Constructors --------------------------
-    pub fn new() -> Self {
-        Self {
-            compression_method: CompressionMethod::None,
-            ..Default::default()
         }
     }
 
@@ -136,7 +134,7 @@ impl PdfStreamObject {
         let mut dict = self.dict.clone(); // else self must be mut, which it can't be
         dict.add("Length", stream_bytes.len() as f64);
 
-        let mut vec = dict.serialise()?;
+        let mut vec = dict.serialise()?; // direct object
 
         vec.push(b'\n');
         vec.extend(b"stream\n");

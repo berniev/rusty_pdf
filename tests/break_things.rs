@@ -25,7 +25,7 @@ fn test_empty_page() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_empty.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */
 /*#[test]
@@ -54,7 +54,7 @@ fn test_massive_page_count() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_massive.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */
 /*#[test]
@@ -126,7 +126,7 @@ fn test_extreme_coordinates() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_coords.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */
 /*#[test]
@@ -161,7 +161,7 @@ fn test_very_long_text() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_longtext.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */
 /*#[test]
@@ -224,7 +224,7 @@ fn test_special_characters_text() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_special_chars.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */
 /*#[test]
@@ -251,7 +251,7 @@ fn test_huge_rectangle() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_huge.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */
 /*#[test]
@@ -265,13 +265,13 @@ fn test_compressed_empty() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_compressed_empty.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */
 #[test]
 fn test_extreme_font_sizes() {
-    let _pdf = Pdf::new();
-    let mut stream = PdfStreamObject::new();
+    let mut pdf = Pdf::new();
+    let mut stream = PdfStreamObject::new(pdf.next_object_number());
     let mut cmd = DrawingCommands::new(&mut stream);
 
     cmd.set_color_rgb(
@@ -321,7 +321,7 @@ fn test_extreme_font_sizes() {
 
         std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
         let file = File::create("/tmp/pydyf_test/break_fonts.pdf").unwrap();
-        pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+        pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
     */
 }
 
@@ -352,7 +352,7 @@ let mut cmd = DrawingCommands::new(&mut stream);
 
         std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
         let file = File::create("/tmp/pydyf_test/break_overlap.pdf").unwrap();
-        pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+        pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
     
 }
 
@@ -362,6 +362,6 @@ fn test_no_pages() {
 
     std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
     let file = File::create("/tmp/pydyf_test/break_no_pages.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 }
 */

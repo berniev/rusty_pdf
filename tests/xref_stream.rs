@@ -1,7 +1,7 @@
 /*#[test]
 fn test_xref_stream_basic_structure() {
     // Test that xref stream has required entries per PDF spec Table 3.15
-    use pydyf::{PdfFile};
+    use rusty_pdf::{PdfFile};
 
     let mut pdf = PdfFile::new();
     let mut output = Vec::new();
@@ -29,7 +29,7 @@ fn test_xref_entries_for_minimal_pdf() {
     // Type 1: uncompressed (field2=byte offset, field3=generation)
     // Type 2: compressed (field2=object stream number, field3=index)
 
-    use pydyf::{FileIdentifierMode, PdfFile};
+    use rusty_pdf::{FileIdentifierMode, PdfFile};
 
     let mut pdf = PdfFile::new();
     let mut output = Vec::new();
@@ -112,7 +112,7 @@ fn test_object_zero_handling() {
     // "Object number 0 shall always be free and shall have a generation
     // number of 65,535; it is the head of the linked list of free objects."
 
-    use pydyf::{FileIdentifierMode, PdfFile};
+    use rusty_pdf::{FileIdentifierMode, PdfFile};
 
     let mut pdf = PdfFile::new();
     let mut output = Vec::new();

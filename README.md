@@ -1,6 +1,6 @@
-# PyDyf - PDF Library for Rust
+# rusty_pdf - PDF Library for Rust
 
-A low-level PDF generation library ported from python at [pydyf](https://github.com/CourtBouillon/pydyf).
+A low-level PDF generation library originally based on [pydyf](https://github.com/CourtBouillon/pydyf).
 
 ## Features
 
@@ -11,7 +11,7 @@ A low-level PDF generation library ported from python at [pydyf](https://github.
 - **Compression**: Optional stream compression with flate
 - **Error Handling**: Comprehensive validation with custom error types
 
-## Quick Start
+## Quick Start (mostly out of date)
 
 ```rust
 use pydyf::{PDF, Stream, Page, PageSize};
@@ -22,7 +22,7 @@ fn main() {
     let mut pdf = PDF::new(PageSize::A4);
 
     // Create a content stream
-    let mut stream = Stream::new();
+    let mut stream = Stream::new(pdf.next_object_id());
 
     // Draw a red rectangle
     stream.set_color_rgb(1.0, 0.0, 0.0, false).unwrap();
@@ -264,5 +264,3 @@ cargo test --test color_spaces_test
 ```
 
 ## License
-
-Ported from Python's pydyf library.

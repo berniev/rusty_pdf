@@ -71,7 +71,7 @@ fn test_external_image_from_file() {
     pdf.add_page(page);
 
     let file = File::create("/tmp/pydyf_test/ext.pdf").unwrap();
-    pdf.write_legacy(file, pydyf::FileIdentifierMode::AutoMD5).unwrap();
+    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 
     println!("✅ Generated: /tmp/pydyf_test/ext.pdf");
 */}
