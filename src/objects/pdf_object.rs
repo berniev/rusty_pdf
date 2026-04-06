@@ -154,106 +154,103 @@ pub enum PdfObject {
     String(PdfStringObject),
 }
 
+macro_rules! match_pdf_object {
+    ($self:expr, $x:ident => $body:expr) => {
+        match $self {
+            PdfObject::Array($x)      => $body,
+            PdfObject::Boolean($x)    => $body,
+            PdfObject::Dictionary($x) => $body,
+            PdfObject::Name($x)       => $body,
+            PdfObject::Null($x)       => $body,
+            PdfObject::Number($x)     => $body,
+            PdfObject::Reference($x)  => $body,
+            PdfObject::Stream($x)     => $body,
+            PdfObject::String($x)     => $body,
+        }
+    };
+}
+
 impl PdfObject {
     pub fn serialise(&self) -> Result<Vec<u8>, PdfError> {
-        match self {
-            PdfObject::Array(a) => a.serialise(),
-            PdfObject::Boolean(b) => b.serialise(),
-            PdfObject::Dictionary(d) => d.serialise(),
-            PdfObject::Name(na) => na.serialise(),
-            PdfObject::Null(nu) => nu.serialise(),
-            PdfObject::Number(m) => m.serialise(),
-            PdfObject::Reference(r) => r.serialise(),
-            PdfObject::Stream(s) => s.serialise(),
-            PdfObject::String(sg) => sg.serialise(),
-        }
+        match_pdf_object!(self, x => x.serialise())
     }
 
     pub fn get_object_number(&self) -> Option<u64> {
-        match self {
-            PdfObject::Array(a) => a.object_number,
-            PdfObject::Boolean(b) => b.object_number,
-            PdfObject::Dictionary(d) => d.object_number,
-            PdfObject::Name(na) => na.object_number,
-            PdfObject::Null(nu) => nu.object_number,
-            PdfObject::Number(m) => m.object_number,
-            PdfObject::Reference(r) => r.object_number,
-            PdfObject::Stream(s) => s.object_number,
-            PdfObject::String(sg) => sg.object_number,
-        }
-    }
+        match_pdf_object!(self, x => x.object_number);
+     }
 
     pub fn set_object_number(&mut self, object_number: u64) {
-        match self {
-            PdfObject::Array(a) => a.object_number = Some(object_number),
-            PdfObject::Boolean(b) => b.object_number = Some(object_number),
-            PdfObject::Stream(s) => s.object_number = Some(object_number),
-            PdfObject::String(sg) => sg.object_number = Some(object_number),
-            PdfObject::Null(nu) => nu.object_number = Some(object_number),
-            PdfObject::Number(m) => m.object_number = Some(object_number),
-            PdfObject::Dictionary(d) => d.object_number = Some(object_number),
-            PdfObject::Name(na) => na.object_number = Some(object_number),
-            PdfObject::Reference(r) => r.object_number = Some(object_number),
-        }
+        match_pdf_object!(self, x => x.object_number = Some(object_number));
     }
 
     // todo: add to body
     // result gets added to body
     pub fn serialise_wrapper(&mut self) -> Result<Vec<u8>, PdfError> {
+        let ser = self.serialise();
+
         if let Some(object_number) = self.get_object_number() {
             let mut vec = vec![];
             vec.extend(object_number.to_string().as_bytes());
             vec.extend(b" 0 obj\n");
-            vec.extend(self.serialise()?);
+            vec.extend(ser);
             vec.extend(b"\nendobj\n");
             // todo: add obj num to xref table
 
             Ok(vec)
         } else {
-            self.serialise()
+            ser
         }
     }
 }
+
 impl From<PdfArrayObject> for PdfObject {
     fn from(v: PdfArrayObject) -> Self {
         PdfObject::Array(v)
     }
 }
+
 impl From<PdfBooleanObject> for PdfObject {
     fn from(v: PdfBooleanObject) -> Self {
         PdfObject::Boolean(v)
     }
 }
+
 impl From<PdfDictionaryObject> for PdfObject {
     fn from(v: PdfDictionaryObject) -> Self {
         PdfObject::Dictionary(v)
     }
 }
+
 impl From<PdfNameObject> for PdfObject {
     fn from(v: PdfNameObject) -> Self {
         PdfObject::Name(v)
     }
 }
+
 impl From<PdfNullObject> for PdfObject {
     fn from(v: PdfNullObject) -> Self {
         PdfObject::Null(v)
     }
 }
+
 impl From<PdfNumberObject> for PdfObject {
     fn from(v: PdfNumberObject) -> Self {
         PdfObject::Number(v)
     }
 }
+
 impl From<PdfReferenceObject> for PdfObject {
     fn from(v: PdfReferenceObject) -> Self {
         PdfObject::Reference(v)
     }
 }
+
 impl From<PdfStreamObject> for PdfObject {
     fn from(v: PdfStreamObject) -> Self {
         PdfObject::Stream(v)
     }
 }
+
 impl From<PdfStringObject> for PdfObject {
     fn from(v: PdfStringObject) -> Self {
         PdfObject::String(v)
