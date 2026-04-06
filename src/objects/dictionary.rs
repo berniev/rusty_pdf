@@ -87,10 +87,13 @@ impl PdfDictionaryObject {
             .find_map(|(k, v)| if k.value == key { Some(v) } else { None })
     }
 
-    pub fn add(&mut self, key: &str, object: impl Into<PdfObject>) {
-        // todo: check key is not duplicate
+    pub fn add(&mut self, key: &str, object: impl Into<PdfObject>){
+        if self.contains_key(key) {
+            PdfError::StructureError(format!("add: Duplicate key {} in dictionary", key));
+        }
         self.values.push((PdfNameObject::new(key), object.into()));
     }
+
     pub fn serialise(&self) -> Result<Vec<u8>, PdfError> {
         let mut arr = vec![];
         arr.extend(b"<<");
