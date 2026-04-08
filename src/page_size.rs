@@ -1,5 +1,5 @@
-use crate::util::Dims;
 use crate::PdfArrayObject;
+use crate::util::Dims;
 
 //--------------------------- PageSize ---------------------------//
 
@@ -47,8 +47,7 @@ impl PageSize {
         arr.push(0.0);
         arr.push(dims.width);
         arr.push(dims.height);
-        
+
         arr
     }
 }
-

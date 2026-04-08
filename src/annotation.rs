@@ -344,7 +344,7 @@ impl Annotation for LinkAnnotation {
                 } else {
                     dest.push(PdfObj::make_name_obj("null"));
                 }
-                
+
                 dict.add("Dest", dest);
             }
         }

@@ -1,7 +1,7 @@
+use crate::PdfDictionaryObject;
 use crate::drawing_commands::DrawingCommands;
 use crate::objects::stream::PdfStreamObject;
 use crate::pdf::Pdf;
-use crate::PdfDictionaryObject;
 use std::collections::HashMap;
 
 pub struct GraphicsStateManager {

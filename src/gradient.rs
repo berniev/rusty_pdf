@@ -1,5 +1,9 @@
 //--------------------------- PDF Function ---------------------------//
 
+use crate::color::RGBA;
+use crate::objects::pdf_object::PdfObj;
+use crate::util::{Dims, Posn};
+use crate::{Pdf, PdfArrayObject, PdfDictionaryObject};
 /// Type 0: Sampled. Maps input to output via lookup table
 /// `sample_data` The raw binary data containing the sample points (PDF Stream data).
 /// `samples_per_dimension` The number of samples along each dimension (PDF /Size).
@@ -24,12 +28,7 @@
 /// `encoding_ranges` How the input domain maps into each sub-function.
 ///
 /// Type 4: PostScript. Calculated using a subset of the PostScript language.
-
 use std::rc::Rc;
-use crate::color::RGBA;
-use crate::objects::pdf_object::PdfObj;
-use crate::util::{Dims, Posn};
-use crate::{PdfArrayObject, PdfDictionaryObject, Pdf};
 
 pub enum PdfFunctionType {
     Sampled {
@@ -100,7 +99,7 @@ impl Gradient {
     /// Returns a tuple of (Pattern Name, optional Graphics State Name for transparency).
     pub fn create_pattern(
         &self,
-        _pdf: &mut Pdf,          // <== todo
+        _pdf: &mut Pdf,             // <== todo
         resource_counter: &mut u32, // <== todo
         posn: Posn,
         size: Dims,

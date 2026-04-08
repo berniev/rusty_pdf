@@ -33,9 +33,15 @@ fn test_external_image_from_file() {
 
     let mut cmd = DrawingCommands::new(&mut stream);
     cmd.push_state();
-    cmd.set_transformation_matrix(Matrix { a: 200.0, b: 0.0, c: 0.0, d: 200.0, e: 50.0, f: 500.0 });
-    cmd
-        .inline_image_from_file("/tmp/pydyf_test/gradient.png", CompressionMethod::None);
+    cmd.set_transformation_matrix(Matrix {
+        a: 200.0,
+        b: 0.0,
+        c: 0.0,
+        d: 200.0,
+        e: 50.0,
+        f: 500.0,
+    });
+    cmd.inline_image_from_file("/tmp/pydyf_test/gradient.png", CompressionMethod::None);
     cmd.pop_state();
 
     // Title
@@ -55,7 +61,9 @@ fn test_external_image_from_file() {
     cmd.begin_text();
     cmd.set_font_name_and_size("Helvetica", 10.0);
     cmd.set_text_position(Posn { x: 50.0, y: 720.0 });
-    cmd.show_single_text_string("Gradient: Red increases left-to-right, Blue increases top-to-bottom");
+    cmd.show_single_text_string(
+        "Gradient: Red increases left-to-right, Blue increases top-to-bottom",
+    );
     cmd.end_text();
 
     cmd.begin_text();
@@ -64,14 +72,15 @@ fn test_external_image_from_file() {
     cmd.show_single_text_string("Scaled to 200x200 points");
     cmd.end_text();
 
- /*   stream.add();
-    let content_id = pdf.add_object(Pdf::stream(stream));
-    let content_ref = format!("{} 0 R", content_id).into_bytes();
-    let page_dict = create_page_with_content(content_ref);
-    pdf.add_page(page);
+    /*   stream.add();
+        let content_id = pdf.add_object(Pdf::stream(stream));
+        let content_ref = format!("{} 0 R", content_id).into_bytes();
+        let page_dict = create_page_with_content(content_ref);
+        pdf.add_page(page);
 
-    let file = File::create("/tmp/pydyf_test/ext.pdf").unwrap();
-    pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
+        let file = File::create("/tmp/pydyf_test/ext.pdf").unwrap();
+        pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
 
-    println!("✅ Generated: /tmp/pydyf_test/ext.pdf");
-*/}
+        println!("✅ Generated: /tmp/pydyf_test/ext.pdf");
+    */
+}

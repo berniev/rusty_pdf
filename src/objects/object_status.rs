@@ -23,4 +23,3 @@ impl fmt::Display for ObjectStatus {
         write!(f, "{}", self.as_char())
     }
 }
-

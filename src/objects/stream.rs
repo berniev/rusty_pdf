@@ -1,9 +1,9 @@
+use crate::PdfDictionaryObject;
 use crate::error::PdfError;
 use crate::objects::pdf_object::PdfObj;
 pub use crate::util::{CompressionMethod, Dims, Matrix, Posn, StrokeOrFill, ToPdf, WindingRule};
-use crate::PdfDictionaryObject;
-use flate2::write::ZlibEncoder;
 use flate2::Compression;
+use flate2::write::ZlibEncoder;
 /// PDF content stream
 ///
 /// Content streams most commonly define page content, e.g.

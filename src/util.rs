@@ -1,5 +1,5 @@
-use crate::encoding::f_to_pdf_num;
 use crate::PdfArrayObject;
+use crate::encoding::f_to_pdf_num;
 //------------------------- ToPdf -----------------------------//
 
 pub trait ToPdf {

@@ -132,11 +132,11 @@ impl RGB {
     }
 
     pub(crate) fn as_pdf_array(&self) -> PdfArrayObject {
-       let mut arr = PdfArrayObject::new();
+        let mut arr = PdfArrayObject::new();
         arr.push(self.red.to_f64());
         arr.push(self.green.to_f64());
         arr.push(self.blue.to_f64());
-        
+
         arr
     }
     pub fn as_vec(&self) -> [Color; 3] {

@@ -1,9 +1,9 @@
+use rusty_pdf::Pdf;
+use rusty_pdf::PdfStreamObject;
 use rusty_pdf::color::{Color, RGB};
 use rusty_pdf::drawing_commands::DrawingCommands;
 use rusty_pdf::objects::stream::StrokeOrFill;
 use rusty_pdf::util::Matrix;
-use rusty_pdf::PdfStreamObject;
-use rusty_pdf::Pdf;
 /*fn create_page_with_content(page_size: PageSize, content_index: usize) -> PdfDictionaryObject {
     let page = make_page_dict(content_index as u64);
     page.add_content(content_index);
@@ -330,7 +330,7 @@ fn test_overlapping_operations() {
     let mut pdf = Pdf::new();
     let mut stream = PdfStreamObject::new();
 let mut cmd = DrawingCommands::new(&mut stream);
-    
+
     cmd.begin_text();
     cmd.set_color_rgb(
         RGB::new(Color::new(1.0), Color::new(0.0), Color::new(0.0)),
@@ -353,7 +353,7 @@ let mut cmd = DrawingCommands::new(&mut stream);
         std::fs::create_dir_all("/tmp/pydyf_test").unwrap();
         let file = File::create("/tmp/pydyf_test/break_overlap.pdf").unwrap();
         pdf.write_legacy(file, rusty_pdf::FileIdentifierMode::AutoMD5).unwrap();
-    
+
 }
 
 #[test]

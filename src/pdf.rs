@@ -42,7 +42,7 @@ impl Pdf {
 
         self
     }
-    
+
     pub fn catalog_dict_ref(&mut self) -> &mut PdfDictionaryObject {
         &mut self.catalog_dict
     }

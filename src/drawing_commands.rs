@@ -1,10 +1,10 @@
-use crate::color::{Color, ColorSpace, CMYK, RGB};
+use crate::color::{CMYK, Color, ColorSpace, RGB};
 use crate::encoding::{ascii85_encode, f_to_pdf_num};
 use crate::string_functions::encode_pdf_string;
 use crate::util::{Dims, Matrix, Posn, StrokeOrFill, ToPdf, WindingRule};
 use crate::{CompressionMethod, PdfError, PdfStreamObject};
-use flate2::write::ZlibEncoder;
 use flate2::Compression;
+use flate2::write::ZlibEncoder;
 use std::io::Write;
 //-------------------------- Drawing Commands --------------------------
 

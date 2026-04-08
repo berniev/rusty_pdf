@@ -77,10 +77,11 @@ fn validate_all_generated_pdfs() {
             if path.extension().and_then(|s| s.to_str()) == Some("pdf") {
                 // Skip intentionally broken PDFs
                 if let Some(filename) = path.file_name().and_then(|n| n.to_str())
-                    && skip_files.contains(&filename) {
-                        println!("⊘ {} (intentionally invalid, skipped)", filename);
-                        continue;
-                    }
+                    && skip_files.contains(&filename)
+                {
+                    println!("⊘ {} (intentionally invalid, skipped)", filename);
+                    continue;
+                }
                 pdf_files.push(path);
             }
         }

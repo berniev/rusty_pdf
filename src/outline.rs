@@ -3,10 +3,7 @@
 //! The outline provides a hierarchical table of contents that allows users
 //! to navigate through the document.
 
-use crate::{
-    action::FitDestination, color::RGB, PdfDictionaryObject,
-    PdfResult,
-};
+use crate::{PdfDictionaryObject, PdfResult, action::FitDestination, color::RGB};
 //------------------ OutlineItemFlags -----------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -131,23 +128,23 @@ impl DocumentOutline {
         let mut item_ids = Vec::new();
         self.allocate_item_ids(&self.items, allocate_id, &mut item_ids);
 
- //       let mut idx = 0;
- /*       for (i, item) in self.items.iter().enumerate() {
-            self.build_item_dict(
-                item,
-                &mut item_dicts,
-                &item_ids,
-                &mut idx,
-                outline_id,
-                if i > 0 { Some(item_ids[i - 1]) } else { None },
-                if i < self.items.len() - 1 {
-                    Some(item_ids[i + 1])
-                } else {
-                    None
-                },
-            )?;
-        }
-*/
+        //       let mut idx = 0;
+        /*       for (i, item) in self.items.iter().enumerate() {
+                    self.build_item_dict(
+                        item,
+                        &mut item_dicts,
+                        &item_ids,
+                        &mut idx,
+                        outline_id,
+                        if i > 0 { Some(item_ids[i - 1]) } else { None },
+                        if i < self.items.len() - 1 {
+                            Some(item_ids[i + 1])
+                        } else {
+                            None
+                        },
+                    )?;
+                }
+        */
         let mut outline_dict = PdfDictionaryObject::new().typed("Outlines");
 
         if !self.items.is_empty() {
@@ -192,7 +189,7 @@ impl DocumentOutline {
 
         let mut dict = PdfDictionaryObject::new().typed(&*item.title);
 
-         if let Some(prev) = prev_id {
+        if let Some(prev) = prev_id {
             dict.add("Prev", prev);
         }
         if let Some(next) = next_id {
@@ -219,10 +216,11 @@ impl DocumentOutline {
                     None
                 };
 
- /*               self.build_item_dict(
-                    child, dicts, all_ids, idx, current_id, child_prev, child_next,
-                )?;
- */           }
+                /*               self.build_item_dict(
+                                   child, dicts, all_ids, idx, current_id, child_prev, child_next,
+                               )?;
+                */
+            }
 
             dict.add("First", first_child_id);
             dict.add("Last", all_ids[first_child_idx + item.children.len() - 1]);

@@ -134,7 +134,10 @@ impl DocumentInfo {
         }
 
         if let Some(ref creation_date) = self.creation_date {
-            dict.add("CreationDate", PdfObj::make_string_obj(creation_date.as_str()));
+            dict.add(
+                "CreationDate",
+                PdfObj::make_string_obj(creation_date.as_str()),
+            );
         }
 
         if let Some(ref mod_date) = self.mod_date {
@@ -226,7 +229,8 @@ impl XmpMetadata {
         let mut dict = PdfDictionaryObject::new().typed("Metadata");
         dict.add("SubType", PdfObj::make_name_obj("XML"));
 
-        let stream = PdfStreamObject::new(1u64).with_data(self.xmp_packet.as_bytes().to_vec(), dict);
+        let stream =
+            PdfStreamObject::new(1u64).with_data(self.xmp_packet.as_bytes().to_vec(), dict);
 
         Ok(stream)
     }

@@ -8,4 +8,3 @@ document such as fonts, pages, and sampled images.
 Beginning with PDF 1.5, the body can also contain object streams, each of which contains a
 sequence of indirect objects;
 */
-

@@ -12,10 +12,7 @@ use crate::color::Color;
 use crate::color::RGB;
 use crate::objects::pdf_object::PdfObj;
 use crate::util::{Line, Matrix, Rectangle, ToPdf};
-use crate::{
-    PdfArrayObject, PdfDictionaryObject, PdfStreamObject, Resource,
-    ResourceCategory,
-};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfStreamObject, Resource, ResourceCategory};
 
 //--------------------------- Axial Shading ----------------------//
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

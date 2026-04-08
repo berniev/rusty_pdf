@@ -1,6 +1,6 @@
+use crate::{PdfResult, Resource, ResourceCategory};
 use std::collections::HashMap;
 use std::rc::Rc;
-use crate::{PdfResult, Resource, ResourceCategory};
 
 /// Manages resource registration, deduplication, and name generation.
 ///
@@ -115,11 +115,10 @@ impl Default for ResourceManager {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::any::Any;
     use super::*;
+    use std::any::Any;
 
     struct MockFont {
         name: String,

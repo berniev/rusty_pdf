@@ -96,7 +96,7 @@ XRef entry.
 The catalog dictionary contains only:
     Direct objects — names, booleans, strings, and small dictionaries/arrays embedded inline.
     Indirect references (N 0 R) — pointers to indirect objects defined elsewhere in the body.
-    
+
 The actual obj...endobj definitions are never inside the catalog — they're always elsewhere in the
 body. The catalog just holds the references to find them.
 
@@ -104,7 +104,7 @@ So the catalog is essentially a directory — it tells you where to find things,
 the things themselves (beyond trivial values).
 */
 
-/*        
+/*
 "AA",                1.4
 "AcroForm",          1.2
 "Collection",        1.7

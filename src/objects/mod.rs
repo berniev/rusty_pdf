@@ -1,12 +1,12 @@
 pub mod array;
 pub mod boolean;
 pub mod dictionary;
-pub mod object_status;
 pub mod name;
 pub mod null;
+pub mod number;
 pub mod number_type;
+pub mod object_status;
 pub mod pdf_object;
+pub mod reference;
 pub mod stream;
 pub mod string;
-pub mod number;
-pub mod reference;

@@ -103,7 +103,9 @@ impl CrossRefTable {
             return Err(CrossRefError::InvalidRootEntry);
         }
 
-        let mut vec = format!("xref\r\n0 {}\r\n", self.entries.len()).as_bytes().to_vec();
+        let mut vec = format!("xref\r\n0 {}\r\n", self.entries.len())
+            .as_bytes()
+            .to_vec();
 
         for entry in &self.entries {
             vec.extend(entry.serialise());

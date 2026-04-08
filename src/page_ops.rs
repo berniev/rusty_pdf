@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use crate::object_ops::ObjectOps;
 /// Page: (pdf dictionary)
 ///
@@ -74,16 +72,16 @@ use crate::object_ops::ObjectOps;
 use crate::objects::pdf_object::PdfObj;
 pub use crate::page_size::PageSize;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct PageOps {
-   obj_ops: Rc<RefCell<ObjectOps>>,
+    obj_ops: Rc<RefCell<ObjectOps>>,
 }
 
 impl PageOps {
     pub fn new(obj_ops: Rc<RefCell<ObjectOps>>) -> Self {
-        Self {
-            obj_ops,
-        }
+        Self { obj_ops }
     }
 
     pub fn new_page(&self) -> PdfDictionaryObject {

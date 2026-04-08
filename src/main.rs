@@ -18,7 +18,7 @@ fn main() {
     let obj_ops: Rc<RefCell<ObjectOps>> = Rc::new(RefCell::new(ObjectOps::new()));
     let page_ops = PageOps::new(obj_ops.clone());
 
-     let mut page_dict = page_ops.new_page();
+    let mut page_dict = page_ops.new_page();
     page_dict.add("MediaBox", PageSize::A4.to_rect());
 
     let resource_dict = PdfDictionaryObject::new();

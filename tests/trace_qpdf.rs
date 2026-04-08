@@ -2,7 +2,7 @@
 
 #[test]
 fn trace_qpdf_test_sequence() {
- /*   use rusty_pdf::{FileIdentifierMode, PageObject, PdfStreamObject, PdfFile};
+    /*   use rusty_pdf::{FileIdentifierMode, PageObject, PdfStreamObject, PdfFile};
     use rusty_pdf::page::PageSize;
 
     let mut pdf = PdfFile::new();

@@ -1,7 +1,6 @@
 use crate::PdfDictionaryObject;
 use crate::objects::pdf_object::PdfObj;
 
-
 #[allow(dead_code)]
 pub(crate) struct Fonts {}
 
