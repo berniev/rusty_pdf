@@ -1,14 +1,11 @@
-use rusty_pdf::PageSize;
-use rusty_pdf::PdfDictionaryObject;
-use rusty_pdf::color::{Color, RGB};
-use rusty_pdf::drawing_commands::DrawingCommands;
-use rusty_pdf::object_ops::ObjectOps;
-use rusty_pdf::objects::stream::{StrokeOrFill, WindingRule};
-use rusty_pdf::page_ops::PageOps;
-use rusty_pdf::util::{Dims, Posn};
-use rusty_pdf::{Pdf, PdfStreamObject};
 use std::cell::RefCell;
 use std::rc::Rc;
+use rusty_pdf::object_ops::ObjectOps;
+use rusty_pdf::page_ops::PageOps;
+use rusty_pdf::{PageSize, Pdf, PdfDictionaryObject, PdfStreamObject};
+use rusty_pdf::color::{Color, RGB};
+use rusty_pdf::drawing_commands::DrawingCommands;
+use rusty_pdf::util::{Dims, Posn, StrokeOrFill, WindingRule};
 
 fn main() {
     println!("rusty_pdf - PDF library for Rust");
