@@ -1,5 +1,4 @@
-use std::fs::File;
-use std::io::Write;
+use crate::PdfError;
 /// 7.5.4 Cross-Reference Table
 /// The cross-reference table contains information that permits random access to indirect objects
 /// within the file so that the entire file need not be read to locate any particular object. The
@@ -21,7 +20,8 @@ use std::io::Write;
 ///
 pub use crate::generation::Generation;
 pub use crate::objects::object_status::ObjectStatus;
-use crate::PdfError;
+use std::fs::File;
+use std::io::{Seek, Write};
 //--------------------------- CrossRefError -------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -56,7 +56,7 @@ impl CrossReferenceEntry {
     pub fn serialise(&self) -> Vec<u8> {
         format!(
             "{:010} {:05} {}\r\n",
-            self.offset_or_next_free, self.generation, self.object_status
+            self.offset_or_next_free, self.generation.as_u16(), self.object_status
         )
         .as_bytes()
         .to_vec()
@@ -68,17 +68,13 @@ impl Default for CrossReferenceEntry {
         Self::new(0, 0, ObjectStatus::Free, Generation::Root)
     }
 }
+
 //--------------------------- CrossRefTable -------------------------//
 
 pub struct CrossRefTable {
     entries: Vec<CrossReferenceEntry>, // contiguous, ordered by object number
-    pub xref_position: u64,
+    pub(crate) xref_position: u64,
 }
-
-/*        bytes.extend(b"\nstartxref\n");
-        bytes.extend(xref.xref_position.to_string().as_bytes());
-        bytes.extend(b"\n%%EOF\n");
-*/
 
 impl CrossRefTable {
     pub fn new() -> Self {
@@ -92,19 +88,27 @@ impl CrossRefTable {
     }
 
     pub fn add_entry(&mut self, entry: CrossReferenceEntry) {
-        self.entries.push(entry);
+        let idx = entry.object_number as usize;
+        // Grow the table if needed to ensure slot exists
+        while self.entries.len() <= entry.object_number as usize {
+            self.entries.push(CrossReferenceEntry::default());
+        }
+        self.entries[idx] = entry;
     }
 
-    pub fn serialise(&self, file:&mut File) -> Result<(), PdfError> {
+    pub fn serialise(&mut self, file: &mut File) -> Result<(), PdfError> {
         if self.entries.is_empty() {
             return Err(CrossRefError::EmptyTable.into());
         }
 
-        let first = self.entries.first().unwrap();
+        self.entries.sort_by_key(|e| e.object_number);
 
+        let first = self.entries.first().unwrap();
         if first.generation != Generation::Root || first.object_status != ObjectStatus::Free {
             return Err(CrossRefError::InvalidRootEntry.into());
         }
+
+        self.xref_position = file.stream_position()?;
 
         let mut vec = format!("xref\r\n0 {}\r\n", self.entries.len())
             .as_bytes()

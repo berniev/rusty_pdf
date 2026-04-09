@@ -1,3 +1,4 @@
+use std::fs::File;
 use crate::objects::pdf_object::PdfObj;
 /// Spec:
 /// Dictionary:
@@ -18,6 +19,7 @@ use crate::objects::pdf_object::PdfObj;
 ///
 ///
 use crate::{PdfError, PdfNameObject, PdfObject};
+use crate::cross_reference_table::CrossRefTable;
 //--------------------------- PdfDictionaryObject ----------------------//
 
 #[derive(Clone)]
@@ -126,20 +128,34 @@ impl PdfDictionaryObject {
         self.values.push((PdfNameObject::new(key), object.into()));
     }
 
+    pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
+        let tree_obj = PdfObject::from(self.clone());
+        tree_obj.serialise(xref, file)?;
+
+        // serialise any indirect values (e.g. streams embedded in this dict)
+        for (_name, value) in &self.values {
+            if value.get_object_number().is_some() {
+                value.serialise(xref, file)?;
+            }
+        }
+
+        for child in &self.children {
+            child.serialise(xref, file)?;
+        }
+
+        Ok(())
+    }
+
     pub fn encode(&self) -> Result<Vec<u8>, PdfError> {
         let mut arr = vec![];
-        arr.extend(b"<<");
+        arr.extend(b"<<\n");
         for (pdf_name_obj, pdf_object) in &self.values {
             arr.extend(pdf_name_obj.encode()?);
             arr.push(b' ');
-            arr.extend(pdf_object.encode()?);
+            arr.extend(pdf_object.encode_as_value()?);
             arr.extend(b"\n");
         }
-        arr.extend(b">>");
-
-        for child in &self.children {
-            arr.extend(child.encode()?); // indirect objects
-        }
+        arr.extend(b">>\n");
 
         Ok(arr)
     }

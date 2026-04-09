@@ -110,24 +110,31 @@ macro_rules! match_pdf_object {
 
 impl PdfObject {
     pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
+        if matches!(self, PdfObject::Reference(_)) {
+            return Ok(());
+        }
+
         let object_number = self.get_object_number();
         if object_number == None {
             return Ok(()); // direct object (no object number)
         }
 
+        let offset = file.stream_position()?;
+
         // indirect object
         let mut vec = vec![];
+        //vec.push(b'\n');
         vec.extend(object_number.unwrap().to_string().as_bytes());
         vec.extend(b" 0 obj\n");
         vec.extend(match_pdf_object!(self, x => x.encode())?);
-        vec.extend(b"\nendobj\n");
+        vec.extend(b"endobj\n\n");
         file.write_all(&*vec)?;
 
         let xref_ent = CrossReferenceEntry::new(
             object_number.unwrap(),
-            file.stream_position()?,
+            offset,
             ObjectStatus::InUse,
-            Generation::Root,
+            Generation::Normal,
         );
         xref.add_entry(xref_ent);
 
@@ -146,11 +153,25 @@ impl PdfObject {
         self
     }
 
-    //------------------ getters and setters --------------------------
+    /// Encode this object as it should appear when used as a value inside a dictionary or array.
+    /// If it's an indirect object, emit a reference (N 0 R); otherwise encode inline.
+    pub fn encode_as_value(&self) -> Result<Vec<u8>, PdfError> {
+        // References are always encoded inline — they ARE the reference
+        if matches!(self, PdfObject::Reference(_)) {
+            return self.encode();
+        }
+        if let Some(obj_num) = self.get_object_number() {
+            PdfReferenceObject::new(obj_num).encode()
+        } else {
+            self.encode()
+        }
+    }
 
     pub fn encode(&self) -> Result<Vec<u8>, PdfError> {
         match_pdf_object!(&self, x => x.encode())
     }
+
+    //------------------ getters and setters --------------------------
 
     pub fn get_object_number(&self) -> Option<u64> {
         match_pdf_object!(self, x => x.object_number)

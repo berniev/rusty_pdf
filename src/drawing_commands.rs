@@ -21,7 +21,8 @@ impl<'a> DrawingCommands<'a> {
 
     fn add(&mut self, cmd: Vec<u8>) {
         self.stream.add(cmd);
-    }
+        self.stream.add(b"\n".to_vec());
+  }
 
     fn add_windable_cmd(&mut self, cmd: char, even_odd: WindingRule) {
         let mut op_bytes = vec![cmd as u8];

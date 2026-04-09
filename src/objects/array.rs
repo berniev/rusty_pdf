@@ -39,7 +39,7 @@ impl PdfArrayObject {
         arr.push(b'[');
         arr.push(b' ');
         for pdf_object in &self.values {
-            arr.extend(pdf_object.encode()?);
+            arr.extend(pdf_object.encode_as_value()?);
             arr.push(b' ');
         }
         arr.push(b']');

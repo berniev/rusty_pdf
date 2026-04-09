@@ -123,7 +123,7 @@ impl PdfStreamObject {
         self.content.extend(bytes);
     }
 
-    pub fn encode(&self) -> Result<Vec<u8>, PdfError> {
+     pub fn encode(&self) -> Result<Vec<u8>, PdfError> {
         let stream_bytes: Vec<u8> = match self.compression_method {
             CompressionMethod::None => self.content.clone(),
             CompressionMethod::Flate => {
@@ -133,14 +133,14 @@ impl PdfStreamObject {
             }
         };
 
-        let mut dict = self.dict.clone(); // else self must be mut, which it can't be
+        let mut dict = self.dict.clone();
         dict.add("Length", stream_bytes.len() as f64);
 
         let mut vec = vec![];
-        vec.push(b'\n');
+        vec.extend(dict.encode()?);
         vec.extend(b"stream\n");
         vec.extend(stream_bytes);
-        vec.extend(b"endstream\n");
+        vec.extend(b"\nendstream\n");
 
         Ok(vec)
     }

@@ -11,10 +11,13 @@ ID       Array       Reqd*  If Encrypt entry present, else opt, but recommended.
                             A two-element array that uniquely identifies the document.
 Encrypt  Dictionary  Reqd*  If doc is encrypted. Specifies how the document is encrypted.
 */
+use std::fs::File;
+use std::io::Write;
 use crate::file_identifier::FileIdentifierMode;
 use crate::objects::pdf_object::PdfObj;
 use crate::string_functions::encode_pdf_string;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfError, PdfObject};
+use crate::cross_reference_table::CrossRefTable;
 
 pub struct Trailer {
     dict: PdfDictionaryObject,
@@ -54,10 +57,15 @@ impl Trailer {
         self
     }
 
-    pub fn serialise(&self) -> Result<Vec<u8>, PdfError> {
-        let bytes = self.dict.encode()?;
+    pub fn serialise(&self, xref:&mut CrossRefTable, file:&mut File) -> Result<(), PdfError> {
+        let mut bytes :Vec<u8>= vec![];
+        bytes.extend(b"\ntrailer\n");
+        bytes.extend(self.dict.encode()?);
+        bytes.extend(format!("startxref\n{}\n%%EOF\n", xref.xref_position).as_bytes());
 
-        Ok(bytes)
+    file.write_all(&bytes)?;
+
+        Ok(())
     }
 
     /// Formats two byte arrays into a PDF ID array string.

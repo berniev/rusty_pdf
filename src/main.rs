@@ -1,27 +1,19 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use rusty_pdf::object_ops::ObjectOps;
-use rusty_pdf::page_ops::PageOps;
-use rusty_pdf::{PageSize, Pdf, PdfDictionaryObject, PdfStreamObject};
 use rusty_pdf::color::{Color, RGB};
 use rusty_pdf::drawing_commands::DrawingCommands;
 use rusty_pdf::util::{Dims, Posn, StrokeOrFill, WindingRule};
+use rusty_pdf::{PageSize, Pdf, PdfDictionaryObject, PdfStreamObject};
 
 fn main() {
     println!("rusty_pdf - PDF library for Rust");
     println!("Originally based on Python rusty_pdf\n");
 
     let mut pdf = Pdf::new();
-    let obj_ops: Rc<RefCell<ObjectOps>> = Rc::new(RefCell::new(ObjectOps::new()));
-    let page_ops = PageOps::new(obj_ops.clone());
 
-    let mut page_dict = page_ops.new_page();
+    let mut page_dict = pdf.page_ops.new_page();
     page_dict.add("MediaBox", PageSize::A4.to_rect());
+    page_dict.add("Resources", PdfDictionaryObject::new());
 
-    let resource_dict = PdfDictionaryObject::new();
-    page_dict.add("Resources", resource_dict);
-
-    let mut stream = PdfStreamObject::new(obj_ops.borrow_mut().next_object_number());
+    let mut stream = PdfStreamObject::new(pdf.object_ops.borrow_mut().next_object_number());
 
     let mut cmd = DrawingCommands::new(&mut stream);
 
@@ -40,8 +32,8 @@ fn main() {
 
     page_dict.add("Contents", stream);
 
-    page_ops
-        .add_page_to_tree(page_dict, pdf.root_page_tree_dict_ref())
+    pdf.page_ops
+        .add_page_to_tree(page_dict, &mut pdf.root_page_tree_dict)
         .expect("Add page to tree failed");
 
     let path = "output.pdf";

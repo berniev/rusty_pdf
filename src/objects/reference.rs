@@ -37,8 +37,7 @@ impl PdfReferenceObject {
         vec.extend(self.object_number.unwrap().to_string().into_bytes());
         vec.push(b' ');
         vec.extend(gen_num.to_string().into_bytes());
-        vec.push(b' ');
-        vec.push(b'R');
+        vec.extend(" R ".as_bytes());
 
         Ok(vec)
     }

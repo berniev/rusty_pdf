@@ -1,10 +1,11 @@
 use crate::cross_reference_table::CrossRefTable;
 use crate::header::Header;
 use crate::object_ops::ObjectOps;
+use crate::objects::pdf_object::PdfObj;
 use crate::page_ops::PageOps;
-//use crate::trailer::Trailer;
+use crate::trailer::Trailer;
 use crate::version::Version;
-use crate::{PdfDictionaryObject, PdfError};
+use crate::{PdfDictionaryObject, PdfError, PdfObject};
 use std::cell::RefCell;
 use std::fs::File;
 use std::rc::Rc;
@@ -13,10 +14,10 @@ use std::rc::Rc;
 pub struct Pdf {
     pub header: Header,
     catalog_dict: PdfDictionaryObject,
-    root_page_tree_dict: PdfDictionaryObject,
+    pub root_page_tree_dict: PdfDictionaryObject,
     pub xref_table: CrossRefTable,
-    //object_ops: Rc<RefCell<ObjectOps>>,
-    page_ops: PageOps,
+    pub object_ops: Rc<RefCell<ObjectOps>>,
+    pub page_ops: PageOps,
 }
 
 impl Pdf {
@@ -29,7 +30,7 @@ impl Pdf {
             catalog_dict: PdfDictionaryObject::new().typed("Catalog"), // serialises into body
             root_page_tree_dict: PdfDictionaryObject::new(),
             xref_table: CrossRefTable::new(), // buffers xref until body is complete, then appended
-            //object_ops,
+            object_ops,
             page_ops,
         };
         pdf.root_page_tree_dict = pdf.page_ops.new_tree();
@@ -58,15 +59,31 @@ impl Pdf {
     pub fn finalise(&mut self, path: &str) -> Result<(), PdfError> {
         let mut file = File::create(path)?;
 
-        self.header.serialise(&mut self.xref_table, &mut file)?;
-        //let osiz = self.object_ops.borrow_mut().last_object_number();
-        //let onum = self.root_page_tree_dict_ref().object_number.unwrap();
+        self.header.serialise(&mut file)?;
+
+        // Give catalog an object number and link it to the page tree
+        let catalog_obj_num = self.object_ops.borrow_mut().next_object_number();
+        self.catalog_dict = PdfDictionaryObject::new()
+            .typed("Catalog")
+            .with_object_number(catalog_obj_num);
+        self.catalog_dict.add(
+            "Pages",
+            PdfObj::make_reference_obj(self.root_page_tree_dict.object_number.unwrap()),
+        );
+
+        // Serialise catalog
+        let catalog_obj = PdfObject::from(self.catalog_dict.clone());
+        catalog_obj.serialise(&mut self.xref_table, &mut file)?;
+
+        self.root_page_tree_dict
+            .serialise(&mut self.xref_table, &mut file)?;
 
         self.xref_table_ref().serialise(&mut file)?;
 
-        //let trailer = Trailer::new().with_size(osiz).with_root(onum);
+        let o_siz = self.object_ops.borrow_mut().last_object_number() + 1;
 
-        //trailer.serialise(&mut self.xref_table, &mut file)?;
+        let trailer = Trailer::new().with_size(o_siz).with_root(catalog_obj_num);
+        trailer.serialise(&mut self.xref_table, &mut file)?;
 
         Ok(())
     }
