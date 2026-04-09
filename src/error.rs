@@ -2,12 +2,14 @@ use std::fmt;
 use std::io;
 
 use crate::color::{CMYK, Color, RGB, RGBA};
+use crate::cross_reference_table::CrossRefError;
 
 #[derive(Debug)]
 pub enum PdfError {
     Io(io::Error),
     InvalidObjectReference(usize),
     CompressionError(String),
+    CrossRef(CrossRefError),
     InvalidFont(String),
     InvalidColorChannel { color: Color },
     InvalidRGB { rgb: RGB },
@@ -64,6 +66,7 @@ impl fmt::Display for PdfError {
             PdfError::StructureError(msg) => write!(f, "PDF structure error: {}", msg),
             PdfError::SerializeError(msg) => write!(f, "Serialization error: {}", msg),
             PdfError::StreamError(msg) => write!(f, "Stream error: {}", msg),
+            PdfError::CrossRef(err) => write!(f, "Cross-reference table error: {:?}", err),
         }
     }
 }
@@ -83,4 +86,10 @@ impl From<io::Error> for PdfError {
     }
 }
 
-pub type PdfResult<T> = std::result::Result<T, PdfError>;
+impl From<CrossRefError> for PdfError {
+    fn from(err: CrossRefError) -> Self {
+        PdfError::CrossRef(err)
+    }
+}
+
+pub type PdfResult<T> = Result<T, PdfError>;

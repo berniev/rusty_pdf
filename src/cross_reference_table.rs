@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Write;
 /// 7.5.4 Cross-Reference Table
 /// The cross-reference table contains information that permits random access to indirect objects
 /// within the file so that the entire file need not be read to locate any particular object. The
@@ -19,6 +21,7 @@
 ///
 pub use crate::generation::Generation;
 pub use crate::objects::object_status::ObjectStatus;
+use crate::PdfError;
 //--------------------------- CrossRefError -------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -92,15 +95,15 @@ impl CrossRefTable {
         self.entries.push(entry);
     }
 
-    pub fn serialise(&self) -> Result<Vec<u8>, CrossRefError> {
+    pub fn serialise(&self, file:&mut File) -> Result<(), PdfError> {
         if self.entries.is_empty() {
-            return Err(CrossRefError::EmptyTable);
+            return Err(CrossRefError::EmptyTable.into());
         }
 
         let first = self.entries.first().unwrap();
 
         if first.generation != Generation::Root || first.object_status != ObjectStatus::Free {
-            return Err(CrossRefError::InvalidRootEntry);
+            return Err(CrossRefError::InvalidRootEntry.into());
         }
 
         let mut vec = format!("xref\r\n0 {}\r\n", self.entries.len())
@@ -111,6 +114,8 @@ impl CrossRefTable {
             vec.extend(entry.serialise());
         }
 
-        Ok(vec)
+        file.write_all(&vec)?;
+
+        Ok(())
     }
 }

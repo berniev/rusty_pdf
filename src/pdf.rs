@@ -61,6 +61,9 @@ impl Pdf {
         self.header.serialise(&mut self.xref_table, &mut file)?;
         //let osiz = self.object_ops.borrow_mut().last_object_number();
         //let onum = self.root_page_tree_dict_ref().object_number.unwrap();
+
+        self.xref_table_ref().serialise(&mut file)?;
+
         //let trailer = Trailer::new().with_size(osiz).with_root(onum);
 
         //trailer.serialise(&mut self.xref_table, &mut file)?;

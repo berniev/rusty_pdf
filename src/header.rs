@@ -1,8 +1,9 @@
 use crate::PdfError;
-use crate::cross_reference_table::CrossRefTable;
+use crate::cross_reference_table::{CrossRefTable, CrossReferenceEntry, ObjectStatus};
+use crate::generation::Generation;
 use crate::version::Version;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Seek, Write};
 
 pub struct Header {
     version: Version,
@@ -24,6 +25,8 @@ impl Header {
     }
 
     pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
+        let xref_position = file.stream_position()?;
+
         let mut arr: Vec<u8> = vec![];
         arr.extend(b"%PDF-");
         arr.extend(self.version.as_bytes());
@@ -31,7 +34,13 @@ impl Header {
         arr.extend("âãÏÓ\r\n".as_bytes());
 
         file.write_all(&arr).map_err(PdfError::Io)?;
-        xref.xref_position += arr.len() as u64;
+
+        xref.add_entry(CrossReferenceEntry {
+            object_number: 0,
+            object_status: ObjectStatus::Free,
+            offset_or_next_free: xref_position,
+            generation: Generation::Normal,
+        });
 
         Ok(())
     }
