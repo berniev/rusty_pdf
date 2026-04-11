@@ -1,4 +1,3 @@
-use crate::object_ops::ObjectOps;
 /// Page: (pdf dictionary)
 ///
 /// The attributes of a page, organized into various categories (e.g., Font, ColorSpace, Pattern)
@@ -69,6 +68,7 @@ use crate::object_ops::ObjectOps;
 /// Rotate    Integer     Opt    Inh
 /// =============================================================================
 ///```
+use crate::object_ops::ObjectOps;
 use crate::objects::pdf_object::PdfObj;
 pub use crate::page_size::PageSize;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
@@ -105,17 +105,7 @@ impl PageOps {
         mut page_dict: PdfDictionaryObject,
         tree_dict: &mut PdfDictionaryObject,
     ) -> Result<(), PdfError> {
-        if !page_dict.contains_key("Resources") && !tree_dict.contains_key("Resources") {
-            return Err(PdfError::StructureError(
-                "Page must have, or inherit, a Resources dictionary".to_string(),
-            ));
-        }
-
-        if !page_dict.contains_key("MediaBox") && !tree_dict.contains_key("MediaBox") {
-            return Err(PdfError::StructureError(
-                "Page must have, or inherit, a MediaBox dictionary".to_string(),
-            ));
-        }
+        self.either_dict_has(&page_dict, tree_dict, vec!["Resources", "MediaBox"])?;
 
         let tree_dict_num = tree_dict.object_number.unwrap();
         page_dict.add("Parent", PdfObj::make_reference_obj(tree_dict_num));
@@ -130,16 +120,38 @@ impl PageOps {
         child_tree_dict: &PdfDictionaryObject,
         parent_tree_dict: &mut PdfDictionaryObject,
     ) -> Result<(), PdfError> {
-        if !parent_tree_dict.contains_key("Kids") {
-            return Err(PdfError::StructureError(
-                "Parent page tree must have a Kids array".to_string(),
-            ));
-        }
+        self.dict_has_kids(&parent_tree_dict)?;
+
         parent_tree_dict.push_to_array(
             "Kids",
             PdfObj::make_reference_obj(child_tree_dict.object_number.unwrap()),
         )?;
 
+        Ok(())
+    }
+
+    fn either_dict_has(
+        &self,
+        page_dict: &PdfDictionaryObject,
+        tree_dict: &PdfDictionaryObject,
+        expecteds: Vec<&str>,
+    ) -> Result<(), PdfError> {
+        for expected in expecteds {
+            if !page_dict.contains_key(expected) && !tree_dict.contains_key(expected) {
+                return Err(PdfError::StructureError(format!(
+                    "Page must have, or inherit, a {expected} dictionary"
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    fn dict_has_kids(&self, dict: &PdfDictionaryObject) -> Result<(), PdfError> {
+        if !dict.contains_key("Kids") {
+            return Err(PdfError::StructureError(
+                "Parent page tree must have a Kids array".to_string(),
+            ));
+        }
         Ok(())
     }
 }
