@@ -123,7 +123,6 @@ impl PdfObject {
 
         // indirect object
         let mut vec = vec![];
-        //vec.push(b'\n');
         vec.extend(object_number.unwrap().to_string().as_bytes());
         vec.extend(b" 0 obj\n");
         vec.extend(match_pdf_object!(self, x => x.encode())?);
@@ -144,9 +143,8 @@ impl PdfObject {
     /// Encode this object as it should appear when used as a value inside a dictionary or array.
     /// If it's an indirect object, emit a reference (N 0 R); otherwise encode inline.
     pub fn encode_as_value(&self) -> Result<Vec<u8>, PdfError> {
-        // References are always encoded inline — they ARE the reference
         if matches!(self, PdfObject::Reference(_)) {
-            return self.encode();
+            return self.encode(); // References are always encoded inline
         }
         if let Some(obj_num) = self.get_object_number() {
             PdfReferenceObject::new(obj_num).encode()
