@@ -26,6 +26,7 @@ impl Pdf {
     pub fn new() -> Self {
         let object_ops = Rc::new(RefCell::new(ObjectOps::new()));
         let page_ops = PageOps::new(Rc::clone(&object_ops));
+        let graphics_ops = GraphicsOps::new(Rc::clone(&object_ops));
 
         let mut pdf = Pdf {
             header: Header::new(),
@@ -34,7 +35,7 @@ impl Pdf {
             xref_table: CrossRefTable::new(), // buffers xref until body is complete, then appended
             object_ops,
             page_ops,
-            graphics_ops: GraphicsOps::new(),
+            graphics_ops,
         };
         pdf.root_page_tree_dict = pdf.page_ops.new_tree();
 

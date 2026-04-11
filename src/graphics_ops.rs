@@ -1,14 +1,16 @@
-use crate::PdfDictionaryObject;
+use std::cell::RefCell;
 use crate::drawing_commands::DrawingCommands;
-use crate::objects::stream::PdfStreamObject;
-use crate::pdf::Pdf;
+use crate::object_ops::ObjectOps;
+use crate::PdfDictionaryObject;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct GraphicsOps {
     opacity_states: HashMap<u32, u64>, // opacity values (scaled to u32) to object numbers
     resource_counter: u32,
     soft_masks: Vec<SoftMask>, // for transparent gradients
     drawing_commands: DrawingCommands,
+    object_ops: Rc<RefCell<ObjectOps>>,
 }
 
 /// for transparency effects.
@@ -18,12 +20,13 @@ pub struct SoftMask {
 }
 
 impl GraphicsOps {
-    pub fn new() -> Self {
+    pub fn new(object_ops: Rc<RefCell<ObjectOps>>) -> Self {
         GraphicsOps {
             opacity_states: HashMap::new(),
             resource_counter: 0,
             soft_masks: Vec::new(),
             drawing_commands: DrawingCommands::new(),
+            object_ops,
         }
     }
 
@@ -45,17 +48,15 @@ impl GraphicsOps {
         let mut gs_dict = PdfDictionaryObject::new().typed("/ExtGState");
         gs_dict.add("CA", alpha as f64); // Stroke alpha
         gs_dict.add("ca", alpha as f64); // Fill alpha
-        let obj_num = pdf.save_indirect_object(Pdf::dict(gs_dict));
-
+        let obj_num = self.object_ops.borrow_mut().next_object_number();
         self.opacity_states.insert(opacity_key, obj_num);
 
         resource_name
     }
 
-    pub fn apply_opacity(&mut self, stream: &mut PdfStreamObject, alpha: f32) {
-        let resource_name = self.get_or_create_opacity_state(pdf, alpha);
-        let mut cmd = DrawingCommands::new(stream);
-        cmd.set_state(&resource_name);
+    pub fn apply_opacity(&mut self, alpha: f32) {
+        let resource_name = self.get_or_create_opacity_state(alpha);
+        self.drawing_commands.set_state(&resource_name);
     }
 
     /// Returns a HashMap that can be used to build the page Resources dictionary.
@@ -95,9 +96,11 @@ impl GraphicsOps {
     }
 }
 
+//--------------------------- Tests -------------------------//
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::Pdf;
 
     #[test]
     fn test_opacity_state_creation() {
@@ -116,7 +119,7 @@ mod tests {
 
     #[test]
     fn test_extgstate_dict() {
-        let mut pdf = Pdf::new();
+        let pdf = Pdf::new();
         let mut gs_manager = pdf.graphics_ops;
 
         gs_manager.get_or_create_opacity_state(0.5);

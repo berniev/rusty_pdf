@@ -31,7 +31,7 @@ fn test_external_image_from_file() {
 
     let mut stream = Stream::new(1);
 
-    let mut cmd = DrawingCommands::new(&mut stream);
+    let mut cmd = DrawingCommands::new();
     cmd.push();
     cmd.set_transformation_matrix(Matrix {
         a: 200.0,

@@ -27,7 +27,7 @@ pub mod pattern;
 pub mod pdf;
 pub mod resource;
 pub mod resource_category;
-pub mod resource_manager;
+pub mod resource_ops;
 pub mod resources;
 pub mod string_functions;
 pub mod text;

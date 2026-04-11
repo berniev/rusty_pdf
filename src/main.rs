@@ -15,7 +15,7 @@ fn main() {
 
     let mut stream = PdfStreamObject::new(pdf.object_ops.borrow_mut().next_object_number());
 
-    let mut cmd = DrawingCommands::new(&mut stream);
+    let mut cmd = DrawingCommands::new();
 
     cmd.set_color_rgb(
         RGB::new(Color::new(0.0), Color::new(0.5), Color::new(1.0)),

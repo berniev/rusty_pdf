@@ -3,18 +3,13 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 /// Manages resource registration, deduplication, and name generation.
-///
-/// The ResourceManager ensures that:
-/// - Each unique resource is only embedded once in the PDF
-/// - Resources get consistent names across the document
-/// - Resource dictionaries are correctly populated
-pub struct ResourceManager {
+pub struct ResourceOps {
     registry: HashMap<String, (usize, String)>, // object_id, resource_name
     name_counters: HashMap<ResourceCategory, usize>,
     cache: HashMap<String, Rc<dyn Resource>>,
 }
 
-impl ResourceManager {
+impl ResourceOps {
     pub fn new() -> Self {
         Self {
             registry: HashMap::new(),
@@ -27,7 +22,7 @@ impl ResourceManager {
     ///
     /// If the resource was already registered (based on resource_id), returns the existing
     /// object_id and name. Otherwise, allocates a new object_id and generates a name.
-    pub fn register<F>(
+    pub fn register_or_fetch<F>(
         &mut self,
         resource: Rc<dyn Resource>,
         allocate_object_id: F,
@@ -41,7 +36,7 @@ impl ResourceManager {
             return Ok((obj_id, name.clone())); // already registered
         }
 
-        let name = if let Some(suggested) = resource.suggested_name() {
+        let name = if let Some(suggested) = resource.suggest_name() {
             suggested
         } else {
             self.generate_unique_category_name(resource.category())
@@ -109,7 +104,7 @@ impl ResourceManager {
     }
 }
 
-impl Default for ResourceManager {
+impl Default for ResourceOps {
     fn default() -> Self {
         Self::new()
     }
@@ -140,7 +135,7 @@ mod tests {
 
     #[test]
     fn test_resource_registration() {
-        let mut manager = ResourceManager::new();
+        let mut manager = ResourceOps::new();
         let mut next_id = 1;
 
         let font1 = Rc::new(MockFont {
@@ -148,7 +143,7 @@ mod tests {
         });
 
         let (obj_id, name) = manager
-            .register(font1.clone(), || {
+            .register_or_fetch(font1.clone(), || {
                 let id = next_id;
                 next_id += 1;
                 id
@@ -162,7 +157,7 @@ mod tests {
 
     #[test]
     fn test_resource_deduplication() {
-        let mut manager = ResourceManager::new();
+        let mut manager = ResourceOps::new();
         let mut next_id = 1;
 
         let font1 = Rc::new(MockFont {
@@ -170,7 +165,7 @@ mod tests {
         });
 
         let (obj_id1, name1) = manager
-            .register(font1.clone(), || {
+            .register_or_fetch(font1.clone(), || {
                 let id = next_id;
                 next_id += 1;
                 id
@@ -179,7 +174,7 @@ mod tests {
 
         // Register the same resource again
         let (obj_id2, name2) = manager
-            .register(font1.clone(), || {
+            .register_or_fetch(font1.clone(), || {
                 let id = next_id;
                 next_id += 1;
                 id
@@ -194,7 +189,7 @@ mod tests {
 
     #[test]
     fn test_multiple_categories() {
-        let mut manager = ResourceManager::new();
+        let mut manager = ResourceOps::new();
         let mut next_id = 1;
 
         let font = Rc::new(MockFont {
@@ -202,7 +197,7 @@ mod tests {
         });
 
         let (_, font_name) = manager
-            .register(font, || {
+            .register_or_fetch(font, || {
                 let id = next_id;
                 next_id += 1;
                 id
@@ -218,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_get_by_category() {
-        let mut manager = ResourceManager::new();
+        let mut manager = ResourceOps::new();
         let mut next_id = 1;
 
         let font1 = Rc::new(MockFont {
@@ -229,7 +224,7 @@ mod tests {
         });
 
         manager
-            .register(font1, || {
+            .register_or_fetch(font1, || {
                 let id = next_id;
                 next_id += 1;
                 id
@@ -237,7 +232,7 @@ mod tests {
             .unwrap();
 
         manager
-            .register(font2, || {
+            .register_or_fetch(font2, || {
                 let id = next_id;
                 next_id += 1;
                 id

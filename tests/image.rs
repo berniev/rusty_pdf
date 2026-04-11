@@ -10,7 +10,7 @@ fn test_inline_image() {
     let mut stream = Stream::new(1);
     let compression = stream.compression_method();
 
-    let mut cmd = DrawingCommands::new(&mut stream);
+    let mut cmd = DrawingCommands::new();
 
     cmd.push();
     cmd.set_transformation_matrix(Matrix {

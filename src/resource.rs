@@ -16,7 +16,7 @@ pub trait Resource: Any {
 
     /// Get the resource name to use in content streams (e.g., "F1", "Im1", "GS1").
     /// If None, the ResourceManager will auto-generate a name.
-    fn suggested_name(&self) -> Option<String> {
+    fn suggest_name(&self) -> Option<String> {
         None // todo: ?
     }
 
