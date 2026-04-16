@@ -30,31 +30,31 @@ impl Trailer {
         }
     }
 
-    pub fn with_size(mut self, size: u64) -> Self {
-        self.dict.add("Size", size);
+    pub fn with_size(mut self, size: u64) -> Result<Self, PdfError> {
+        self.dict.add("Size", size)?;
 
-        self
+        Ok(self)
     }
 
-    pub fn with_root(mut self, root: u64) -> Self {
-        self.dict.add("Root", PdfObj::make_reference_obj(root));
+    pub fn with_root(mut self, root: u64) -> Result<Self, PdfError> {
+        self.dict.add("Root", PdfObj::make_reference_obj(root))?;
 
-        self
+        Ok(self)
     }
 
-    pub fn encrypted(&mut self) -> &mut Self {
+    pub fn encrypted(&mut self) -> Result<&mut Self, PdfError> {
         let mut encryption_dict = PdfDictionaryObject::new(); // not typed, direct
-        encryption_dict.add("Filter", PdfObj::make_name_obj("Standard"));
+        encryption_dict.add("Filter", PdfObj::make_name_obj("Standard"))?;
 
-        self.dict.add("Encrypt", encryption_dict);
+        self.dict.add("Encrypt", encryption_dict)?;
 
         let mut id_array = PdfArrayObject::new();
         id_array.push(PdfObj::make_string_obj("1234567890"));
         id_array.push(PdfObj::make_string_obj("0987654321"));
 
-        self.dict.add("ID", id_array);
+        self.dict.add("ID", id_array)?;
 
-        self
+        Ok(self)
     }
 
     pub fn serialise(&self, xref:&mut CrossRefTable, file:&mut File) -> Result<(), PdfError> {

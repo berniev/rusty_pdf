@@ -27,7 +27,7 @@
  =====================================
  */
 use crate::objects::pdf_object::PdfObj;
-use crate::{PdfArrayObject, PdfDictionaryObject, PdfObject};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfError, PdfObject};
 
 ///Usage:
 /// ```
@@ -78,27 +78,33 @@ impl TreeNode {
         }
     }
 
-    pub fn set_kids(&mut self, kids: Vec<u64>) {
+    pub fn set_kids(&mut self, kids: Vec<u64>) -> Result<(), PdfError>{
         let mut arr = PdfArrayObject::new();
         for kid in kids {
             arr.push(PdfObj::make_reference_obj(kid));
         }
-        self.dict.add("Kids", arr);
+        self.dict.add("Kids", arr)?;
+        
+        Ok(())
     }
 
-    pub fn set_entries<K: TreeKey>(&mut self, entries: Vec<(K, PdfObject)>) {
+    pub fn set_entries<K: TreeKey>(&mut self, entries: Vec<(K, PdfObject)>) ->Result<(), PdfError>{
         let mut arr = PdfArrayObject::new();
         for (key, val) in entries {
             arr.push(key.to_pdf_obj());
             arr.push(val);
         }
-        self.dict.add(K::entry_key_name(), arr);
+        self.dict.add(K::entry_key_name(), arr)?;
+        
+        Ok(())
     }
 
-    pub fn set_limits<K: TreeKey>(&mut self, least: K, greatest: K) {
+    pub fn set_limits<K: TreeKey>(&mut self, least: K, greatest: K) -> Result<(),PdfError>{
         let mut arr = PdfArrayObject::new();
         arr.push(least.to_pdf_obj());
         arr.push(greatest.to_pdf_obj());
-        self.dict.add("Limits", arr);
+        self.dict.add("Limits", arr)?;
+        
+        Ok(())
     }
 }

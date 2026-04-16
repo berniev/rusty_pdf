@@ -42,7 +42,7 @@
 /// Stack           copy dup exch index pop roll
 /// ===============================================================================
 ///
-use crate::{PdfArrayObject, PdfDictionaryObject, PdfStreamObject};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfError, PdfStreamObject};
 
 //--------------------------- FunctionType ---------------------------//
 
@@ -71,19 +71,24 @@ fn make_func_dict(
     func_type: FunctionType,
     domain: PdfArrayObject,
     range: Option<PdfArrayObject>,
-) -> PdfDictionaryObject {
+) -> Result<PdfDictionaryObject, PdfError> {
     let mut dict = PdfDictionaryObject::new();
-    dict.add("FunctionType", func_type as i64);
-    dict.add("Domain", domain);
+    dict.add("FunctionType", func_type as i64)?;
+    dict.add("Domain", domain)?;
     if let Some(range) = range {
-        dict.add("Range", range);
+        dict.add("Range", range)?;
     }
 
-    dict
+    Ok(dict)
 }
 
 pub struct Function0Sampled {
     pub stream: PdfStreamObject,
+}
+
+pub enum OrderType {
+    Linear = 1,
+    CubicSpline = 3,
 }
 
 impl Function0Sampled {
@@ -91,41 +96,40 @@ impl Function0Sampled {
         domain: PdfArrayObject,
         range: PdfArrayObject,
         size: PdfArrayObject,
-        bits_per_sample: u8,
+        bits_per_sample: u32,
         code: Vec<u8>,
-    ) -> Self {
-        let mut dict = make_func_dict(FunctionType::Sampled, domain, Some(range));
-        dict.add("Size", size);
-        assert!(
-            matches!(bits_per_sample, 1 | 2 | 4 | 8 | 12 | 16 | 24 | 32),
-            "BitsPerSample must be one of: 1, 2, 4, 8, 12, 16, 24, 32"
-        );
-        dict.add("BitsPerSample", bits_per_sample);
+    ) -> Result<Self, PdfError> {
+        let mut dict = make_func_dict(FunctionType::Sampled, domain, Some(range))?;
+        dict.add("Size", size)?;
+        if !matches!(bits_per_sample, 1 | 2 | 4 | 8 | 12 | 16 | 24 | 32) {
+            return Err(PdfError::StructureError(format!(
+                "BitsPerSample must be 1, 2, 4, 8, 12, 16, 24, or 32, got {}",
+                bits_per_sample
+            )));
+        }
+        dict.add("BitsPerSample", bits_per_sample as i64)?;
+        dict.add("Length", code.len() as i64)?;
         let stream = PdfStreamObject::new().with_dict_and_content(dict, code);
 
-        Self { stream }
+        Ok(Self { stream })
     }
 
-    pub fn with_order(mut self, order: u8) -> Self {
-        assert!(
-            order == 1 || order == 3,
-            "Order must be 1 (linear) or 3 (cubic spline)"
-        );
-        self.stream.dict.add("Order", order);
+    pub fn with_order(mut self, order: OrderType) -> Result<Self, PdfError> {
+        self.stream.dict.add("Order", order as i64)?;
 
-        self
+        Ok(self)
     }
 
-    pub fn with_encode(mut self, encode: PdfArrayObject) -> Self {
-        self.stream.dict.add("Encode", encode);
+    pub fn with_encode(mut self, encode: PdfArrayObject) -> Result<Self, PdfError> {
+        self.stream.dict.add("Encode", encode)?;
 
-        self
+        Ok(self)
     }
 
-    pub fn with_decode(mut self, decode: PdfArrayObject) -> Self {
-        self.stream.dict.add("Decode", decode);
+    pub fn with_decode(mut self, decode: PdfArrayObject) -> Result<Self, PdfError> {
+        self.stream.dict.add("Decode", decode)?;
 
-        self
+        Ok(self)
     }
 }
 
@@ -134,25 +138,34 @@ pub struct Function2Exponential {
 }
 
 impl Function2Exponential {
-    pub fn new(domain: PdfArrayObject, interpolation_exponent: f64) -> Self {
+    pub fn new(domain: PdfArrayObject, interpolation_exponent: f64) -> Result<Self, PdfError> {
         let mut func = Function2Exponential {
-            dictionary: make_func_dict(FunctionType::Exponential, domain, None),
+            dictionary: make_func_dict(FunctionType::Exponential, domain, None)?,
         };
-        func.dictionary.add("N", interpolation_exponent);
+        func.dictionary.add("N", interpolation_exponent)?;
 
-        func
+        Ok(func)
     }
 
-    pub fn with_values_at_start(mut self, values_at_start: PdfArrayObject) -> Self {
-        self.dictionary.add("C0", values_at_start);
+    pub fn with_range(mut self, range: PdfArrayObject) -> Result<Self, PdfError> {
+        self.dictionary.add("Range", range)?;
 
-        self
+        Ok(self)
     }
 
-    pub fn with_values_at_end(mut self, values_at_end: PdfArrayObject) -> Self {
-        self.dictionary.add("C1", values_at_end);
+    pub fn with_values_at_start(
+        mut self,
+        values_at_start: PdfArrayObject,
+    ) -> Result<Self, PdfError> {
+        self.dictionary.add("C0", values_at_start)?;
 
-        self
+        Ok(self)
+    }
+
+    pub fn with_values_at_end(mut self, values_at_end: PdfArrayObject) -> Result<Self, PdfError> {
+        self.dictionary.add("C1", values_at_end)?;
+
+        Ok(self)
     }
 }
 
@@ -166,15 +179,21 @@ impl Function3Stitching {
         domain: PdfArrayObject,
         bounds: PdfArrayObject,
         encode: PdfArrayObject,
-    ) -> Self {
+    ) -> Result<Self, PdfError> {
         let mut func = Function3Stitching {
-            dictionary: make_func_dict(FunctionType::Stitching, domain, None),
+            dictionary: make_func_dict(FunctionType::Stitching, domain, None)?,
         };
-        func.dictionary.add("Functions", functions);
-        func.dictionary.add("Bounds", bounds);
-        func.dictionary.add("Encode", encode);
+        func.dictionary.add("Functions", functions)?;
+        func.dictionary.add("Bounds", bounds)?;
+        func.dictionary.add("Encode", encode)?;
 
-        func
+        Ok(func)
+    }
+
+    pub fn with_range(mut self, range: PdfArrayObject) -> Result<Self, PdfError> {
+        self.dictionary.add("Range", range)?;
+
+        Ok(self)
     }
 }
 
@@ -183,10 +202,15 @@ pub struct Function4PostScript {
 }
 
 impl Function4PostScript {
-    pub fn new(domain: PdfArrayObject, range: PdfArrayObject, code: Vec<u8>) -> Self {
-        let dict = make_func_dict(FunctionType::PostScript, domain, Some(range));
-        let stream = PdfStreamObject::new().with_dict_and_content(dict,code);
+    pub fn new(
+        domain: PdfArrayObject,
+        range: PdfArrayObject,
+        code: Vec<u8>,
+    ) -> Result<Self, PdfError> {
+        let mut dict = make_func_dict(FunctionType::PostScript, domain, Some(range))?;
+        dict.add("Length", code.len() as i64)?;
+        let stream = PdfStreamObject::new().with_dict_and_content(dict, code);
 
-        Self { stream }
+        Ok(Self { stream })
     }
 }

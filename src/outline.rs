@@ -145,12 +145,12 @@ impl DocumentOutline {
                     )?;
                 }
         */
-        let mut outline_dict = PdfDictionaryObject::new().typed("Outlines");
+        let mut outline_dict = PdfDictionaryObject::new().typed("Outlines")?;
 
         if !self.items.is_empty() {
-            outline_dict.add("First", item_ids[0]);
-            outline_dict.add("Last", item_ids[self.items.len() - 1]);
-            outline_dict.add("Count", self.total_count() as i64);
+            outline_dict.add("First", item_ids[0])?;
+            outline_dict.add("Last", item_ids[self.items.len() - 1])?;
+            outline_dict.add("Count", self.total_count() as i64)?;
         }
 
         Ok(OutlineDictionaries {
@@ -187,17 +187,17 @@ impl DocumentOutline {
         let current_id = all_ids[*idx];
         *idx += 1;
 
-        let mut dict = PdfDictionaryObject::new().typed(&*item.title);
+        let mut dict = PdfDictionaryObject::new().typed(&*item.title)?;
 
         if let Some(prev) = prev_id {
-            dict.add("Prev", prev);
+            dict.add("Prev", prev)?;
         }
         if let Some(next) = next_id {
-            dict.add("Next", next);
+            dict.add("Next", next)?;
         }
 
         if let Some(dest) = item.destination.clone() {
-            dict.add("Dest", dest.to_pdf_array());
+            dict.add("Dest", dest.to_pdf_array())?;
         }
 
         if !item.children.is_empty() {
@@ -222,21 +222,21 @@ impl DocumentOutline {
                 */
             }
 
-            dict.add("First", first_child_id);
-            dict.add("Last", all_ids[first_child_idx + item.children.len() - 1]);
+            dict.add("First", first_child_id)?;
+            dict.add("Last", all_ids[first_child_idx + item.children.len() - 1])?;
 
             // Count: positive if open, negative if closed
             let count = item.count_descendants();
             let count_val = if item.is_open { count } else { -count };
-            dict.add("Count", count_val as i64);
+            dict.add("Count", count_val as i64)?;
         }
 
         if let Some(rgb) = item.color {
-            dict.add("C", rgb.as_pdf_array());
+            dict.add("C", rgb.as_pdf_array())?;
         }
 
         if item.flags.bits() != 0 {
-            dict.add("F", item.flags.bits() as i64);
+            dict.add("F", item.flags.bits() as i64)?;
         }
 
         dicts.push((current_id, dict));

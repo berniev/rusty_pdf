@@ -4,7 +4,7 @@ use std::hash::{Hash, Hasher};
 
 use crate::objects::pdf_object::PdfObj;
 use crate::util::{Matrix, Rectangle};
-use crate::{PdfStreamObject, Resource, ResourceCategory};
+use crate::{PdfError, PdfStreamObject, Resource, ResourceCategory};
 
 //--------------------------- Axial Shading ----------------------//
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,19 +40,19 @@ impl TilingPattern {
         paint_type: PaintType,
         tiling_type: TilingType,
         content: Vec<u8>,
-    ) -> Self {
+    ) -> Result<Self, PdfError> {
         let mut pat = TilingPattern {
             stream: PdfStreamObject::new(),
             hash: "".to_string(),
         };
         pat.stream
             .dict
-            .add("Type", PdfObj::make_name_obj("Pattern"));
-        pat.stream.dict.add("BBox", bbox.as_pdf_array());
-        pat.stream.dict.add("XStep", x_step);
-        pat.stream.dict.add("YStep", y_step);
-        pat.stream.dict.add("PaintType", paint_type as i64);
-        pat.stream.dict.add("TilingType", tiling_type as i64);
+            .add("Type", PdfObj::make_name_obj("Pattern"))?;
+        pat.stream.dict.add("BBox", bbox.as_pdf_array())?;
+        pat.stream.dict.add("XStep", x_step)?;
+        pat.stream.dict.add("YStep", y_step)?;
+        pat.stream.dict.add("PaintType", paint_type as i64)?;
+        pat.stream.dict.add("TilingType", tiling_type as i64)?;
         pat.stream.content = content.clone();
         let mut hasher = DefaultHasher::new();
         content.hash(&mut hasher);
@@ -62,12 +62,13 @@ impl TilingPattern {
             hasher.finish()
         );
 
-        pat
+        Ok(pat)
     }
 
-    pub fn with_matrix(mut self, matrix: Matrix) -> Self {
-        self.stream.dict.add("Matrix", matrix.as_pdf_array());
-        self
+    pub fn with_matrix(mut self, matrix: Matrix) -> Result<Self, PdfError> {
+        self.stream.dict.add("Matrix", matrix.as_pdf_array())?;
+        
+        Ok(self)
     }
 }
 

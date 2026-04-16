@@ -11,7 +11,9 @@ pub mod encryption;
 pub mod error;
 pub mod extended_graphics_state;
 pub mod file_identifier;
+pub mod file_specification;
 pub mod fonts;
+pub mod function;
 pub mod generation;
 pub mod graphics_ops;
 pub mod header;
@@ -27,6 +29,8 @@ pub mod pdf;
 pub mod resource;
 pub mod resource_category;
 pub mod resources_ops;
+pub mod shading;
+pub mod soft_mask;
 pub mod string_functions;
 pub mod text;
 pub mod trailer;
@@ -34,10 +38,7 @@ pub mod tree_node;
 pub mod util;
 pub mod version;
 pub mod writer;
-pub mod file_specification;
-pub mod function;
-pub mod shading;
-pub mod soft_mask;
+pub mod xmp;
 
 // Re-export main types for user API convenience
 pub use action::{
@@ -50,7 +51,7 @@ pub use annotation::{
 pub use error::{PdfError, PdfResult};
 pub use extended_graphics_state::{BlendMode, ExtGState, RenderingIntent};
 pub use graphics_ops::GraphicsOps;
-pub use metadata::{DocumentInfo, TrappedState, XmpMetadata};
+pub use metadata::{Metadata, TrappedState};
 pub use objects::array::PdfArrayObject;
 pub use objects::boolean::PdfBooleanObject;
 pub use objects::dictionary::PdfDictionaryObject;

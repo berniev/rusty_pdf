@@ -39,10 +39,10 @@ impl PdfDictionaryObject {
         }
     }
 
-    pub(crate) fn typed(mut self, name: &str) -> Self {
-        self.add("Type", PdfObj::make_name_obj(name));
+    pub(crate) fn typed(mut self, name: &str) -> Result<Self,PdfError>  {
+        self.add("Type", PdfObj::make_name_obj(name))?;
 
-        self
+        Ok(self)
     }
 
     pub fn with_object_number(mut self, value: u64) -> Self {
@@ -86,7 +86,7 @@ impl PdfDictionaryObject {
             .find_map(|(k, v)| if k.value == key { Some(v) } else { None })
     }
 
-    // special case for page tree
+    // special case for page tree todo: move to page_tree.rs ??
     pub fn add_kid_to_page_tree(
         &mut self,
         kid_obj: Box<PdfDictionaryObject>,
@@ -133,11 +133,16 @@ impl PdfDictionaryObject {
         }
     }
 
-    pub fn add(&mut self, key: &str, object: impl Into<PdfObject>) {
+    pub fn add(&mut self, key: &str, object: impl Into<PdfObject>) -> Result<(), PdfError> {
         if self.contains_key(key) {
-            panic!("add: Duplicate key {} in dictionary",key);
+            return Err(PdfError::StructureError(format!(
+                "add: Attempt to make duplicate key {} in dictionary",
+                key
+            )));
         }
         self.values.push((PdfNameObject::new(key), object.into()));
+
+        Ok(())
     }
 
     pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
@@ -184,13 +189,13 @@ mod tests {
         assert!(dict.is_empty());
         assert_eq!(dict.len(), 0);
 
-        dict.add("Key1", *Box::from(PdfObj::make_name_obj("Value1")));
+        dict.add("Key1", *Box::from(PdfObj::make_name_obj("Value1"))).expect("fail");
         assert!(!dict.is_empty());
         assert_eq!(dict.len(), 1);
         assert!(dict.contains_key("Key1"));
         assert!(!dict.contains_key("Key2"));
 
-        dict.add("Key2", *Box::from(PdfObj::make_name_obj("Value2")));
+        dict.add("Key2", *Box::from(PdfObj::make_name_obj("Value2"))).expect("fail");
         assert_eq!(dict.len(), 2);
         assert!(dict.contains_key("Key2"));
     }
@@ -204,7 +209,7 @@ mod tests {
     #[test]
     fn encode_single_entry() {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("Type", PdfObj::make_name_obj("Catalog"));
+        dict.add("Type", PdfObj::make_name_obj("Catalog")).expect("fail");
         let output = String::from_utf8(dict.encode().unwrap()).unwrap();
         assert!(output.starts_with("<<\n"));
         assert!(output.contains("/Type /Catalog"));
@@ -214,8 +219,8 @@ mod tests {
     #[test]
     fn encode_multiple_entries() {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("Type", PdfObj::make_name_obj("Page"));
-        dict.add("Count", PdfObj::make_num_obj(3i64));
+        dict.add("Type", PdfObj::make_name_obj("Page")).expect("fail");
+        dict.add("Count", PdfObj::make_num_obj(3i64)).expect("fail");
         let output = String::from_utf8(dict.encode().unwrap()).unwrap();
         assert!(output.contains("/Type /Page"));
         assert!(output.contains("/Count 3"));
@@ -224,7 +229,7 @@ mod tests {
     #[test]
     fn encode_with_boolean_value() {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("Visible", PdfBooleanObject::new(true));
+        dict.add("Visible", PdfBooleanObject::new(true)).expect("fail");
         let output = String::from_utf8(dict.encode().unwrap()).unwrap();
         assert!(output.contains("/Visible true"));
     }
@@ -232,7 +237,7 @@ mod tests {
     #[test]
     fn encode_with_indirect_reference() {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("Pages", PdfObj::make_reference_obj(2));
+        dict.add("Pages", PdfObj::make_reference_obj(2)).expect("fail");
         let output = String::from_utf8(dict.encode().unwrap()).unwrap();
         assert!(output.contains("/Pages 2 0 R"));
     }

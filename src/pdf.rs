@@ -22,23 +22,23 @@ pub struct Pdf {
 }
 
 impl Pdf {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, PdfError> {
         let object_ops = Rc::new(RefCell::new(ObjectOps::new()));
         let page_ops = PageOps::new(Rc::clone(&object_ops));
         let graphics_ops = GraphicsOps::new(Rc::clone(&object_ops));
 
         let mut pdf = Pdf {
             header: Header::new(),
-            catalog_dict: PdfDictionaryObject::new().typed("Catalog"), // serialises into body
+            catalog_dict: PdfDictionaryObject::new().typed("Catalog")?, // serialises into body
             root_page_tree_dict: PdfDictionaryObject::new(),
             xref_table: CrossRefTable::new(), // buffers xref until body is complete, then appended
             object_ops,
             page_ops,
             graphics_ops,
         };
-        pdf.root_page_tree_dict = pdf.page_ops.new_tree();
+        pdf.root_page_tree_dict = pdf.page_ops.new_tree()?;
 
-        pdf
+        Ok(pdf)
     }
 
     pub fn version(mut self, version: Version) -> Self {
@@ -67,12 +67,12 @@ impl Pdf {
         // Give catalog an object number and link it to the page tree
         let catalog_obj_num = self.object_ops.borrow_mut().next_object_number();
         self.catalog_dict = PdfDictionaryObject::new()
-            .typed("Catalog")
+            .typed("Catalog")?
             .with_object_number(catalog_obj_num);
         self.catalog_dict.add(
             "Pages",
             PdfObj::make_reference_obj(self.root_page_tree_dict.object_number.unwrap()),
-        );
+        )?;
 
         // Serialise catalog
         let catalog_obj = PdfObject::from(self.catalog_dict.clone());
@@ -85,7 +85,7 @@ impl Pdf {
 
         let o_siz = self.object_ops.borrow_mut().last_object_number() + 1;
 
-        let trailer = Trailer::new().with_size(o_siz).with_root(catalog_obj_num);
+        let trailer = Trailer::new().with_size(o_siz)?.with_root(catalog_obj_num)?;
         trailer.serialise(&mut self.xref_table, &mut file)?;
 
         Ok(())

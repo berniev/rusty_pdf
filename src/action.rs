@@ -38,11 +38,11 @@ impl Action for UriAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::make_name_obj(self.action_type()));
-        dict.add("URI", PdfObj::make_string_obj(self.uri.as_str()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()))?;
+        dict.add("URI", PdfObj::make_string_obj(self.uri.as_str()))?;
 
         if self.is_map {
-            dict.add("IsMap", true);
+            dict.add("IsMap", true)?;
         }
 
         Ok(dict)
@@ -66,8 +66,9 @@ impl Action for GoToAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::make_name_obj(self.action_type()));
-        dict.add("D", self.destination.to_pdf_array());
+        dict.add("S", PdfObj::make_name_obj(self.action_type()))?;
+        dict.add("D", self.destination.to_pdf_array())?;
+        
         Ok(dict)
     }
 }
@@ -89,8 +90,8 @@ impl Action for JavaScriptAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::make_name_obj(self.action_type()));
-        dict.add("JS", PdfObj::make_string_obj(self.script.as_str()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()))?;
+        dict.add("JS", PdfObj::make_string_obj(self.script.as_str()))?;
 
         Ok(dict)
     }
@@ -122,14 +123,14 @@ impl Action for LaunchAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::make_name_obj(self.action_type()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()))?;
 
-        let mut file_dict = PdfDictionaryObject::new().typed("Filespec");
-        file_dict.add("F", PdfObj::make_string_obj(self.file.as_str()));
-        dict.add("F", file_dict);
+        let mut file_dict = PdfDictionaryObject::new().typed("Filespec")?;
+        file_dict.add("F", PdfObj::make_string_obj(self.file.as_str()))?;
+        dict.add("F", file_dict)?;
 
         if let Some(new_win) = self.new_window {
-            dict.add("NewWindow", new_win);
+            dict.add("NewWindow", new_win)?;
         }
 
         Ok(dict)
@@ -172,8 +173,8 @@ impl Action for NamedAction {
 
     fn to_dict(&self) -> PdfResult<PdfDictionaryObject> {
         let mut dict = PdfDictionaryObject::new();
-        dict.add("S", PdfObj::make_name_obj(self.action_type()));
-        dict.add("N", PdfObj::make_name_obj(self.name.as_str()));
+        dict.add("S", PdfObj::make_name_obj(self.action_type()))?;
+        dict.add("N", PdfObj::make_name_obj(self.name.as_str()))?;
 
         Ok(dict)
     }

@@ -7,13 +7,18 @@ fn main() {
     println!("rusty_pdf - PDF library for Rust");
     println!("Originally based on Python rusty_pdf\n");
 
-    let mut pdf = Pdf::new();
+    let mut pdf = Pdf::new().expect("Failed to create PDF");
 
-    let mut page_dict = pdf.page_ops.new_page();
-    page_dict.add("MediaBox", PageSize::A4.to_rect());
-    page_dict.add("Resources", PdfDictionaryObject::new());
+    let mut page_dict = pdf.page_ops.new_page().expect("Failed to create page");
+    page_dict
+        .add("MediaBox", PageSize::A4.to_rect())
+        .expect("failure:");
+    page_dict
+        .add("Resources", PdfDictionaryObject::new())
+        .expect("failure:");
 
-    let stream = PdfStreamObject::new().with_object_number(pdf.object_ops.borrow_mut().next_object_number());
+    let stream =
+        PdfStreamObject::new().with_object_number(pdf.object_ops.borrow_mut().next_object_number());
 
     let mut cmd = DrawingCommands::new();
 
@@ -30,7 +35,7 @@ fn main() {
     );
     cmd.fill(WindingRule::EvenOdd);
 
-    page_dict.add("Contents", stream);
+    page_dict.add("Contents", stream).expect("failure:");
 
     pdf.page_ops
         .add_page_to_tree(page_dict, &mut pdf.root_page_tree_dict)

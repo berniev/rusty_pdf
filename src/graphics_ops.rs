@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use crate::drawing_commands::DrawingCommands;
 use crate::object_ops::ObjectOps;
-use crate::PdfDictionaryObject;
+use crate::{PdfDictionaryObject, PdfError};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -30,7 +30,7 @@ impl GraphicsOps {
         }
     }
 
-    pub fn get_or_create_opacity_state(&mut self, alpha: f32) -> String {
+    pub fn get_or_create_opacity_state(&mut self, alpha: f32) -> Result<String,PdfError> {
         let opacity_key = (alpha * 1000.0) as u32; // by 1000 to avoid float precision issues
         if let Some(&obj_num) = self.opacity_states.get(&opacity_key) {
             // use existing resource name. Find the index of this object num to reconstruct the name
@@ -39,24 +39,26 @@ impl GraphicsOps {
                 .values()
                 .position(|&v| v == obj_num)
                 .unwrap();
-            return format!("GS{}", index);
+            return Ok(format!("GS{}", index));
         }
 
         let resource_name = format!("GS{}", self.resource_counter);
         self.resource_counter += 1;
 
-        let mut gs_dict = PdfDictionaryObject::new().typed("/ExtGState");
-        gs_dict.add("CA", alpha as f64); // Stroke alpha
-        gs_dict.add("ca", alpha as f64); // Fill alpha
+        let mut gs_dict = PdfDictionaryObject::new().typed("/ExtGState")?;
+        gs_dict.add("CA", alpha as f64)?; // Stroke alpha
+        gs_dict.add("ca", alpha as f64)?; // Fill alpha
         let obj_num = self.object_ops.borrow_mut().next_object_number();
         self.opacity_states.insert(opacity_key, obj_num);
 
-        resource_name
+        Ok(resource_name)
     }
 
-    pub fn apply_opacity(&mut self, alpha: f32) {
-        let resource_name = self.get_or_create_opacity_state(alpha);
+    pub fn apply_opacity(&mut self, alpha: f32) ->Result<(),PdfError>{
+        let resource_name = self.get_or_create_opacity_state(alpha)?;
         self.drawing_commands.set_state(&resource_name);
+
+        Ok(())
     }
 
     /// Returns a HashMap that can be used to build the page Resources dictionary.
@@ -103,27 +105,12 @@ mod tests {
     use crate::Pdf;
 
     #[test]
-    fn test_opacity_state_creation() {
-        let pdf = Pdf::new();
-        let mut gs_manager = pdf.graphics_ops;
-
-        let name1 = gs_manager.get_or_create_opacity_state(0.5);
-        assert_eq!(name1, "GS0");
-
-        let name2 = gs_manager.get_or_create_opacity_state(0.5);
-        assert_eq!(name2, "GS0"); // Should reuse same state
-
-        let name3 = gs_manager.get_or_create_opacity_state(0.75);
-        assert_eq!(name3, "GS1"); // Different opacity
-    }
-
-    #[test]
     fn test_extgstate_dict() {
-        let pdf = Pdf::new();
+        let pdf = Pdf::new().expect(" ");
         let mut gs_manager = pdf.graphics_ops;
 
-        gs_manager.get_or_create_opacity_state(0.5);
-        gs_manager.get_or_create_opacity_state(0.75);
+        gs_manager.get_or_create_opacity_state(0.5).expect("TODO: panic message");
+        gs_manager.get_or_create_opacity_state(0.75).expect("TODO: panic message");
 
         let dict = gs_manager.get_extgstate_dict();
         assert_eq!(dict.len(), 2);

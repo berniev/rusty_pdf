@@ -4,7 +4,7 @@
 //! visible or hidden, commonly used for layers in technical drawings.
 
 use crate::objects::pdf_object::PdfObj;
-use crate::{PdfArrayObject, PdfDictionaryObject};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
 
 //------------------ VisibilityInitialState -----------------------
 
@@ -82,20 +82,20 @@ impl OptionalContentGroup {
         self
     }
 
-    pub fn to_dict(&self) -> PdfDictionaryObject {
-        let mut dict = PdfDictionaryObject::new().typed("OCG");
-        dict.add("Name", PdfObj::make_string_obj(self.name.as_str()));
+    pub fn to_dict(&self) -> Result<PdfDictionaryObject, PdfError> {
+        let mut dict = PdfDictionaryObject::new().typed("OCG")?;
+        dict.add("Name", PdfObj::make_string_obj(self.name.as_str()))?;
         //dict.add_name("Name", self.name.clone());
 
         if let Some(ref intent) = self.intent {
             if intent.len() == 1 {
-                dict.add("Intent", PdfObj::make_name_obj(&intent[0]));
+                dict.add("Intent", PdfObj::make_name_obj(&intent[0]))?;
             } else {
                 let mut arr = PdfArrayObject::new();
                 for i in intent {
                     arr.push(PdfObj::make_name_obj(i.as_str()));
                 }
-                dict.add("Intent", arr);
+                dict.add("Intent", arr)?;
             }
         }
 
@@ -110,14 +110,14 @@ impl OptionalContentGroup {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
                     }),
-                );
-                usage_dict.add("Print", print_dict);
+                )?;
+                usage_dict.add("Print", print_dict)?;
             }
 
             if let Some(ref view) = usage.view {
                 let mut view_dict = PdfDictionaryObject::new();
-                view_dict.add("ViewState", PdfObj::make_name_obj(&*view.state.to_string()));
-                usage_dict.add("View", view_dict);
+                view_dict.add("ViewState", PdfObj::make_name_obj(&*view.state.to_string()))?;
+                usage_dict.add("View", view_dict)?;
             }
 
             if let Some(ref export) = usage.export {
@@ -128,14 +128,14 @@ impl OptionalContentGroup {
                         VisibilityInitialState::On => "ON",
                         VisibilityInitialState::Off => "OFF",
                     }),
-                );
-                usage_dict.add("Export", export_dict);
+                )?;
+                usage_dict.add("Export", export_dict)?;
             }
 
-            dict.add("Usage", usage_dict);
+            dict.add("Usage", usage_dict)?;
         }
 
-        dict
+        Ok(dict)
     }
 }
 
@@ -194,13 +194,13 @@ impl OptionalContentConfig {
         self
     }
 
-    pub fn to_dict(&self) -> PdfDictionaryObject {
+    pub fn to_dict(&self) -> Result<PdfDictionaryObject, PdfError> {
         let mut dict = PdfDictionaryObject::new();
 
-        dict.add("Name", PdfObj::make_string_obj(self.name.as_str()));
+        dict.add("Name", PdfObj::make_string_obj(self.name.as_str()))?;
 
         if let Some(ref creator) = self.creator {
-            dict.add("Creator", PdfObj::make_string_obj(creator));
+            dict.add("Creator", PdfObj::make_string_obj(creator))?;
         }
 
         dict.add(
@@ -209,14 +209,14 @@ impl OptionalContentConfig {
                 VisibilityInitialState::On => "ON",
                 VisibilityInitialState::Off => "OFF",
             }),
-        );
+        )?;
 
         if !self.on_list.is_empty() {
             let arr = PdfArrayObject::new();
             /*for &id in &self.on_list {
                 //arr.push(Pdf::indirect(id));
             }*/
-            dict.add("ON", arr);
+            dict.add("ON", arr)?;
         }
 
         if !self.off_list.is_empty() {
@@ -224,15 +224,15 @@ impl OptionalContentConfig {
             //for &id in &self.off_list {
             //arr.push(Pdf::indirect(id));
             //}
-            dict.add("OFF", arr);
+            dict.add("OFF", arr)?;
         }
 
         // Order array (simplified - full implementation would handle nested groups)
         if !self.order.is_empty() {
-            dict.add("Order", self.build_order_array(&self.order));
+            dict.add("Order", self.build_order_array(&self.order))?;
         }
 
-        dict
+        Ok(dict)
     }
 
     fn build_order_array(&self, orders: &[LayerOrder]) -> PdfArrayObject {
@@ -275,14 +275,30 @@ mod tests {
     }
 
     #[test]
-    fn test_ocg_to_dict() {
+    fn test_ocg_to_dict1() {
         let ocg = OptionalContentGroup::new("Test Layer".to_string())
             .with_print_state(VisibilityInitialState::Off);
 
         let dict = ocg.to_dict();
-        assert!(dict.contains_key("Type"));
-        assert!(dict.contains_key("Name"));
-        assert!(dict.contains_key("Usage"));
+        assert!(dict.expect("REASON").contains_key("Type"));
+    }
+
+    #[test]
+    fn test_ocg_to_dict2() {
+        let ocg = OptionalContentGroup::new("Test Layer".to_string())
+            .with_print_state(VisibilityInitialState::Off);
+
+        let dict = ocg.to_dict();
+        assert!(dict.expect("REASON").contains_key("Name"));
+    }
+
+    #[test]
+    fn test_ocg_to_dict3() {
+        let ocg = OptionalContentGroup::new("Test Layer".to_string())
+            .with_print_state(VisibilityInitialState::Off);
+
+        let dict = ocg.to_dict();
+        assert!(dict.expect("REASON").contains_key("Usage"));
     }
 
     #[test]
@@ -297,16 +313,36 @@ mod tests {
     }
 
     #[test]
-    fn test_oc_config_to_dict() {
+    fn test_oc_config_to_dict1() {
         let config = OptionalContentConfig::new("Config".to_string())
             .with_base_state(VisibilityInitialState::Off)
             .add_on(1)
             .add_on(2);
 
         let dict = config.to_dict();
-        assert!(dict.contains_key("Name"));
-        assert!(dict.contains_key("BaseState"));
-        assert!(dict.contains_key("ON"));
+        assert!(dict.expect("REASON").contains_key("Name"));
+    }
+
+    #[test]
+    fn test_oc_config_to_dict2() {
+        let config = OptionalContentConfig::new("Config".to_string())
+            .with_base_state(VisibilityInitialState::Off)
+            .add_on(1)
+            .add_on(2);
+
+        let dict = config.to_dict();
+        assert!(dict.expect("REASON").contains_key("BaseState"));
+    }
+
+    #[test]
+    fn test_oc_config_to_dict3() {
+        let config = OptionalContentConfig::new("Config".to_string())
+            .with_base_state(VisibilityInitialState::Off)
+            .add_on(1)
+            .add_on(2);
+
+        let dict = config.to_dict();
+        assert!(dict.expect("REASON").contains_key("ON"));
     }
 
     #[test]

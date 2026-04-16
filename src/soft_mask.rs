@@ -1,4 +1,4 @@
-use crate::{PdfArrayObject, PdfDictionaryObject, PdfStreamObject};
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfError, PdfStreamObject};
 use crate::objects::pdf_object::PdfObj;
 
 pub enum MaskSubType {
@@ -20,38 +20,38 @@ pub struct SoftMask {
 }
 
 impl SoftMask {
-    pub fn new(sub_type: MaskSubType, stream: PdfStreamObject) -> Self {
+    pub fn new(sub_type: MaskSubType, stream: PdfStreamObject) -> Result<Self, PdfError> {
         let mut msk = SoftMask {
             dictionary: PdfDictionaryObject::new(),
         };
         msk.dictionary
-            .add("S", PdfObj::make_name_obj(sub_type.as_str()));
-        msk.dictionary.add("G", stream);
+            .add("S", PdfObj::make_name_obj(sub_type.as_str()))?;
+        msk.dictionary.add("G", stream)?;
 
-        msk
+        Ok(msk)
     }
 
-    pub fn typed(mut self) -> Self {
-        self.dictionary.add("Type", PdfObj::make_name_obj("Mask"));
+    pub fn typed(mut self) -> Result<Self, PdfError> {
+        self.dictionary.add("Type", PdfObj::make_name_obj("Mask"))?;
 
-        self
+        Ok(self)
     }
 
-    pub fn with_backdrop(mut self, backdrop: PdfArrayObject) -> Self {
-        self.dictionary.add("BG", backdrop);
+    pub fn with_backdrop(mut self, backdrop: PdfArrayObject) -> Result<Self, PdfError> {
+        self.dictionary.add("BG", backdrop)?;
 
-        self
+        Ok(self)
     }
 
-    pub fn with_function(mut self, function: PdfDictionaryObject) -> Self {
-        self.dictionary.add("TR", function);
+    pub fn with_function(mut self, function: PdfDictionaryObject) -> Result<Self, PdfError> {
+        self.dictionary.add("TR", function)?;
 
-        self
+        Ok(self)
     }
 
-    pub fn with_function_identity(mut self) -> Self {
-        self.dictionary.add("TR", PdfObj::make_name_obj("Identity"));
+    pub fn with_function_identity(mut self) -> Result<Self, PdfError> {
+        self.dictionary.add("TR", PdfObj::make_name_obj("Identity"))?;
 
-        self
+        Ok(self)
     }
 }

@@ -4,7 +4,7 @@
 //! transparency, blend modes, and rendering intent.
 
 use crate::objects::pdf_object::PdfObj;
-use crate::{PdfDictionaryObject, Resource, ResourceCategory};
+use crate::{PdfDictionaryObject, PdfError, Resource, ResourceCategory};
 use std::any::Any;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -149,74 +149,74 @@ impl ExtGState {
         self
     }
 
-    pub fn to_dict(&self) -> PdfDictionaryObject {
-        let mut dict = PdfDictionaryObject::new().typed("ExtGState");
+    pub fn to_dict(&self) -> Result<PdfDictionaryObject, PdfError> {
+        let mut dict = PdfDictionaryObject::new().typed("ExtGState")?;
 
         if let Some(lw) = self.line_width {
-            dict.add("LW", lw);
+            dict.add("LW", lw)?;
         }
 
         if let Some(lc) = self.line_cap {
-            dict.add("LC", lc);
+            dict.add("LC", lc)?;
         }
 
         if let Some(lj) = self.line_join {
-            dict.add("LJ", lj as i64);
+            dict.add("LJ", lj as i64)?;
         }
 
         if let Some(ml) = self.miter_limit {
-            dict.add("ML", ml);
+            dict.add("ML", ml)?;
         }
 
         if let Some(ca) = self.stroke_alpha {
-            dict.add("CA", ca);
+            dict.add("CA", ca)?;
         }
 
         if let Some(ca) = self.fill_alpha {
-            dict.add("ca", ca);
+            dict.add("ca", ca)?;
         }
 
         if let Some(bm) = self.blend_mode {
-            dict.add("BM", PdfObj::make_name_obj(bm.as_str()));
+            dict.add("BM", PdfObj::make_name_obj(bm.as_str()))?;
         }
 
         if let Some(ri) = self.rendering_intent {
-            dict.add("RI", PdfObj::make_name_obj(ri.as_str()));
+            dict.add("RI", PdfObj::make_name_obj(ri.as_str()))?;
         }
 
         if let Some(op) = self.overprint_stroke {
-            dict.add("OP", op);
+            dict.add("OP", op)?;
         }
 
         if let Some(op) = self.overprint_fill {
-            dict.add("op", op);
+            dict.add("op", op)?;
         }
 
         if let Some(opm) = self.overprint_mode {
-            dict.add("OPM", opm);
+            dict.add("OPM", opm)?;
         }
 
         if let Some(fl) = self.flatness {
-            dict.add("FL", fl);
+            dict.add("FL", fl)?;
         }
 
         if let Some(sm) = self.smoothness {
-            dict.add("SM", sm);
+            dict.add("SM", sm)?;
         }
 
         if let Some(sa) = self.stroke_adjust {
-            dict.add("SA", sa);
+            dict.add("SA", sa)?;
         }
 
         if let Some(ais) = self.alpha_is_shape {
-            dict.add("AIS", ais);
+            dict.add("AIS", ais)?;
         }
 
         if let Some(tk) = self.text_knockout {
-            dict.add("TK", tk);
+            dict.add("TK", tk)?;
         }
 
-        dict
+        Ok(dict)
     }
 
     fn generate_unique_id(&self) -> String {
@@ -278,17 +278,47 @@ mod tests {
     }
 
     #[test]
-    fn test_extgstate_to_dict() {
+    fn test_extgstate_to_dict1() {
         let gs = ExtGState::new()
             .set_stroke_alpha(0.5)
             .set_fill_alpha(0.8)
             .set_blend_mode(BlendMode::Screen);
 
         let dict = gs.to_dict();
-        assert!(dict.contains_key("Type"));
-        assert!(dict.contains_key("CA"));
-        assert!(dict.contains_key("ca"));
-        assert!(dict.contains_key("BM"));
+        assert!(dict.expect("REASON").contains_key("Type"));
+    }
+
+    #[test]
+    fn test_extgstate_to_dict2() {
+        let gs = ExtGState::new()
+            .set_stroke_alpha(0.5)
+            .set_fill_alpha(0.8)
+            .set_blend_mode(BlendMode::Screen);
+
+        let dict = gs.to_dict();
+        assert!(dict.expect("REASON").contains_key("CA"));
+    }
+
+    #[test]
+    fn test_extgstate_to_dict3() {
+        let gs = ExtGState::new()
+            .set_stroke_alpha(0.5)
+            .set_fill_alpha(0.8)
+            .set_blend_mode(BlendMode::Screen);
+
+        let dict = gs.to_dict();
+        assert!(dict.expect("REASON").contains_key("ca"));
+    }
+
+    #[test]
+    fn test_extgstate_to_dict4() {
+        let gs = ExtGState::new()
+            .set_stroke_alpha(0.5)
+            .set_fill_alpha(0.8)
+            .set_blend_mode(BlendMode::Screen);
+
+        let dict = gs.to_dict();
+        assert!(dict.expect("REASON").contains_key("BM"));
     }
 
     #[test]

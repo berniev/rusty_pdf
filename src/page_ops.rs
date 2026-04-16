@@ -84,20 +84,21 @@ impl PageOps {
         Self { obj_ops }
     }
 
-    pub fn new_page(&self) -> PdfDictionaryObject {
-        PdfDictionaryObject::new()
-            .typed("Page")
-            .with_object_number(self.obj_ops.borrow_mut().next_object_number())
+    pub fn new_page(&self) -> Result<PdfDictionaryObject, PdfError> {
+        Ok(PdfDictionaryObject::new()
+            .typed("Page")?
+            .with_object_number(self.obj_ops.borrow_mut().next_object_number()))
+        
     }
 
-    pub fn new_tree(&self) -> PdfDictionaryObject {
+    pub fn new_tree(&self) -> Result<PdfDictionaryObject, PdfError> {
         let mut tree = PdfDictionaryObject::new()
-            .typed("Pages")
+            .typed("Pages")?
             .with_object_number(self.obj_ops.borrow_mut().next_object_number());
-        tree.add("Kids", PdfArrayObject::new());
-        tree.add("Count", 0);
+        tree.add("Kids", PdfArrayObject::new())?;
+        tree.add("Count", 0)?;
 
-        tree
+        Ok(tree)
     }
 
     pub fn add_page_to_tree(
@@ -108,7 +109,7 @@ impl PageOps {
         self.either_dict_has(&page_dict, tree_dict, vec!["Resources", "MediaBox"])?;
 
         let tree_dict_num = tree_dict.object_number.unwrap();
-        page_dict.add("Parent", PdfObj::make_reference_obj(tree_dict_num));
+        page_dict.add("Parent", PdfObj::make_reference_obj(tree_dict_num))?;
         tree_dict.update_or_add("Count", tree_dict.get_integer("Count").unwrap_or(0) + 1);
         tree_dict.add_kid_to_page_tree(Box::new(page_dict))?;
 
