@@ -21,7 +21,7 @@ impl XmpMetadata {
 <rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">"#,
         );
 
-        if let Some(ref title) = info.dictionary.get_string("Title") {
+        if let Some(ref title) = info.dictionary.get("Title") {
             xmp.push_str(&format!(
                 r#"
   <dc:title>
@@ -29,11 +29,11 @@ impl XmpMetadata {
       <rdf:li xml:lang="x-default">{}</rdf:li>
     </rdf:Alt>
   </dc:title>"#,
-                Self::escape_xml(title)
+                Self::escape_xml(title.as_string().unwrap())
             ));
         }
 
-        if let Some(ref author) = info.dictionary.get_string("Author") {
+        if let Some(author) = info.dictionary.get("Author") {
             xmp.push_str(&format!(
                 r#"
   <dc:creator>
@@ -41,11 +41,11 @@ impl XmpMetadata {
       <rdf:li>{}</rdf:li>
     </rdf:Seq>
   </dc:creator>"#,
-                Self::escape_xml(author)
+                Self::escape_xml(author.as_string().unwrap())
             ));
         }
 
-        if let Some(ref subject) = info.dictionary.get_string("Subject") {
+        if let Some(ref subject) = info.dictionary.get("Subject") {
             xmp.push_str(&format!(
                 r#"
   <dc:description>
@@ -53,7 +53,7 @@ impl XmpMetadata {
       <rdf:li xml:lang="x-default">{}</rdf:li>
     </rdf:Alt>
   </dc:description>"#,
-                Self::escape_xml(subject)
+                Self::escape_xml(subject.as_string().unwrap())
             ));
         }
 

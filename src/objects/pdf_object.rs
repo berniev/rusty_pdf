@@ -108,7 +108,53 @@ macro_rules! match_pdf_object {
 }
 
 impl PdfObject {
-    pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            PdfObject::Array(_) => "Array",
+            PdfObject::Boolean(_) => "Boolean",
+            PdfObject::Dictionary(_) => "Dictionary",
+            PdfObject::Name(_) => "Name",
+            PdfObject::Null(_) => "Null",
+            PdfObject::Number(_) => "Number",
+            PdfObject::Reference(_) => "Reference",
+            PdfObject::Stream(_) => "Stream",
+            PdfObject::String(_) => "String",
+        }
+    }
+
+     pub fn as_integer(&self) -> Result<i64, PdfError> {
+        match self {
+            PdfObject::Number(n) => Ok(n.as_int()),
+            other => Err(Self::unexpected_type(other)),
+        }
+    }
+
+    pub fn as_string(&self) -> Result<&str, PdfError> {
+        match self {
+            PdfObject::String(s) => Ok(s.value.as_str()),
+            other => Err(Self::unexpected_type(other)),
+        }
+    }
+
+    pub fn as_name(&self) -> Result<&str, PdfError> {
+        match self {
+            PdfObject::Name(n) => Ok(n.value.as_str()),
+            other => Err(Self::unexpected_type(other)),
+        }
+    }
+
+    pub fn as_dict(&self) -> Result<&PdfDictionaryObject, PdfError> {
+        match self {
+            PdfObject::Dictionary(d) => Ok(d),
+            other => Err(Self::unexpected_type(other)),
+        }
+    }
+
+    fn unexpected_type(&self) -> PdfError {
+        PdfError::StructureError(format!("Unexpected type: {}", self.type_name()))
+    }
+
+   pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
         if matches!(self, PdfObject::Reference(_)) {
             return Ok(());
         }

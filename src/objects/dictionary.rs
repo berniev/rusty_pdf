@@ -111,34 +111,47 @@ impl PdfDictionaryObject {
         }
     }
 
-    pub fn get_integer(&self, key: &str) -> Option<i64> {
-        match self.get(key) {
-            Some(PdfObject::Number(n)) => Some(n.as_int()),
-            _ => None,
+    fn require(&self, key: &str) -> Result<&PdfObject, PdfError> {
+        self.get(key)
+            .ok_or_else(|| PdfError::StructureError(format!("Key '{}' not found", key)))
+    }
+
+    fn type_error(key: &str, obj: &PdfObject) -> PdfError {
+        PdfError::StructureError(format!(
+            "Unexpected type for key '{}': found {}",
+            key,
+            obj.type_name()
+        ))
+    }
+
+    pub fn get_integer(&self, key: &str) -> Result<i64, PdfError> {
+        match self.require(key)? {
+            PdfObject::Number(n) => Ok(n.as_int()),
+            other => Err(Self::type_error(key, other)),
         }
     }
 
-    pub fn get_string(&self, key: &str) -> Option<&str> {
-        match self.get(key) {
-            Some(PdfObject::String(s)) => Some(&s.value),
-            _ => None,
+    pub fn get_string(&self, key: &str) -> Result<&str, PdfError> {
+        match self.require(key)? {
+            PdfObject::String(s) => Ok(s.value.as_str()),
+            other => Err(Self::type_error(key, other)),
         }
     }
 
-    pub fn get_name(&self, key: &str) -> Option<&str> {
-        match self.get(key) {
-            Some(PdfObject::Name(n)) => Some(&n.value),
-            _ => None,
+    pub fn get_name(&self, key: &str) -> Result<&str, PdfError> {
+        match self.require(key)? {
+            PdfObject::Name(n) => Ok(n.value.as_str()),
+            other => Err(Self::type_error(key, other)),
         }
     }
 
-    pub fn get_dict(&self, key: &str) -> Option<&PdfDictionaryObject> {
-        match self.get(key) {
-            Some(PdfObject::Dictionary(d)) => Some(d),
-            _ => None,
+    pub fn get_dict(&self, key: &str) -> Result<&PdfDictionaryObject, PdfError> {
+        match self.require(key)? {
+            PdfObject::Dictionary(d) => Ok(d),
+            other => Err(Self::type_error(key, other)),
         }
     }
-    
+
     pub fn update_or_add(&mut self, key: &str, object: impl Into<PdfObject>) {
         if let Some((_, value)) = self.values.iter_mut().find(|(k, _)| k.value == key) {
             *value = object.into();

@@ -19,17 +19,18 @@ impl ResourcesDict {
         let mut cat_dict = self
             .dictionary
             .get_dict(cat_str)
+            .ok()
             .cloned()
             .unwrap_or_else(PdfDictionaryObject::new);
 
-        cat_dict.update_or_add(&*name.clone(), object_id);
+        cat_dict.update_or_add(&*name, object_id);
         self.dictionary.update_or_add(cat_str, cat_dict);
 
         name
     }
 
     pub fn get(&self, cat: ResourceCategory) -> Option<&PdfDictionaryObject> {
-        self.dictionary.get_dict(cat.as_str())
+        self.dictionary.get_dict(cat.as_str()).ok()
     }
 
     pub fn contains(&self, cat: ResourceCategory) -> bool {
@@ -39,7 +40,8 @@ impl ResourcesDict {
     pub fn category_count(&self, cat: ResourceCategory) -> usize {
         self.dictionary
             .get_dict(cat.as_str())
-            .map_or(0, |d| d.len())
+            .map_or(0, |d| d.len()) 
+        // todo bad to rely on len (eg an entry is deleted) use HashMap<ResourceCategory, usize> ?
     }
 
     pub fn is_empty(&self) -> bool {

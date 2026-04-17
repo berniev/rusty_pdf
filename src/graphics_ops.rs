@@ -1,8 +1,8 @@
-use std::cell::RefCell;
 use crate::drawing_commands::DrawingCommands;
 use crate::object_ops::ObjectOps;
 use crate::{PdfDictionaryObject, PdfError};
 use std::collections::HashMap;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct GraphicsOps {
