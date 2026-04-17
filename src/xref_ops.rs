@@ -25,23 +25,23 @@ use std::io::{Seek, Write};
 //--------------------------- CrossRefError -------------------------//
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CrossRefError {
+pub enum XRefError {
     EmptyTable,
     InvalidRootEntry,
 }
 
 //--------------------------- Entry -------------------------//
 
-pub struct CrossReferenceEntry {
+pub struct XRefEntry {
     pub object_number: u64,
     pub object_status: ObjectStatus, // determines treatment of offset
     pub offset_or_next_free: u64,    // InUse: offset in stream. Free: next free object number
     pub generation: Generation,      // 65535 for root entry, otherwise 0
 }
 
-impl CrossReferenceEntry {
+impl XRefEntry {
     pub fn new(number: u64, offset: u64, status: ObjectStatus, generation: Generation) -> Self {
-        CrossReferenceEntry {
+        XRefEntry {
             object_number: number,
             object_status: status,
             offset_or_next_free: offset,
@@ -63,52 +63,41 @@ impl CrossReferenceEntry {
     }
 }
 
-impl Default for CrossReferenceEntry {
-    fn default() -> Self {
-        Self::new(0, 0, ObjectStatus::Free, Generation::Root)
-    }
+//--------------------------- XRefTable -------------------------//
+
+pub struct XRefOps {
+    entries: Vec<XRefEntry>, // contiguous, ordered by object number
+    pub(crate) position: u64,
 }
 
-//--------------------------- CrossRefTable -------------------------//
-
-pub struct CrossRefTable {
-    entries: Vec<CrossReferenceEntry>, // contiguous, ordered by object number
-    pub(crate) xref_position: u64,
-}
-
-impl CrossRefTable {
+impl XRefOps {
     pub fn new() -> Self {
-        let mut table = CrossRefTable {
+        let mut table = XRefOps {
             entries: Vec::new(),
-            xref_position: 0,
+            position: 0,
         };
-        table.add_entry(CrossReferenceEntry::default());
+        table.add_entry(XRefEntry::new(0, 0, ObjectStatus::Free, Generation::Root));
 
         table
     }
 
-    pub fn add_entry(&mut self, entry: CrossReferenceEntry) {
-        let idx = entry.object_number as usize;
-        // Grow the table if needed to ensure slot exists
-        while self.entries.len() <= entry.object_number as usize {
-            self.entries.push(CrossReferenceEntry::default());
-        }
-        self.entries[idx] = entry;
+    pub fn add_entry(&mut self, entry: XRefEntry) {
+            self.entries.push(entry);
     }
 
-    pub fn serialise(&mut self, file: &mut File) -> Result<(), PdfError> {
+    pub fn serialise(&mut self, file:&mut File) -> Result<(), PdfError> {
         if self.entries.is_empty() {
-            return Err(CrossRefError::EmptyTable.into());
+            return Err(XRefError::EmptyTable.into());
         }
 
         self.entries.sort_by_key(|e| e.object_number);
 
         let first = self.entries.first().unwrap();
         if first.generation != Generation::Root || first.object_status != ObjectStatus::Free {
-            return Err(CrossRefError::InvalidRootEntry.into());
+            return Err(XRefError::InvalidRootEntry.into());
         }
 
-        self.xref_position = file.stream_position()?;
+        self.position = file.stream_position()?;
 
         let mut vec = format!("xref\r\n0 {}\r\n", self.entries.len())
             .as_bytes()

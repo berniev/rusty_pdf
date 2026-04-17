@@ -4,7 +4,7 @@ pub mod body;
 pub mod catalog;
 pub mod color;
 pub mod cross_ref_stream;
-pub mod cross_reference_table;
+pub mod xref_ops;
 pub mod drawing_commands;
 pub mod encoding;
 pub mod encryption;

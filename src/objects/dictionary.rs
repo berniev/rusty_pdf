@@ -1,4 +1,4 @@
-use crate::cross_reference_table::CrossRefTable;
+use crate::xref_ops::XRefOps;
 use crate::objects::pdf_object::PdfObj;
 /// Spec:
 /// Dictionary:
@@ -172,7 +172,7 @@ impl PdfDictionaryObject {
         Ok(())
     }
 
-    pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
+    pub fn serialise(&self, xref: &mut XRefOps, file: &mut File) -> Result<(), PdfError> {
         let tree_obj = PdfObject::from(self.clone());
         tree_obj.serialise(xref, file)?;
 

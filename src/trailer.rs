@@ -17,7 +17,7 @@ use crate::file_identifier::FileIdentifierMode;
 use crate::objects::pdf_object::PdfObj;
 use crate::string_functions::encode_pdf_string;
 use crate::{PdfArrayObject, PdfDictionaryObject, PdfError, PdfObject};
-use crate::cross_reference_table::CrossRefTable;
+use crate::xref_ops::XRefOps;
 
 pub struct Trailer {
     dict: PdfDictionaryObject,
@@ -57,11 +57,11 @@ impl Trailer {
         Ok(self)
     }
 
-    pub fn serialise(&self, xref:&mut CrossRefTable, file:&mut File) -> Result<(), PdfError> {
+    pub fn serialise(&self, xref:&mut XRefOps, file:&mut File) -> Result<(), PdfError> {
         let mut bytes :Vec<u8>= vec![];
         bytes.extend(b"\ntrailer\n");
         bytes.extend(self.dict.encode()?);
-        bytes.extend(format!("startxref\n{}\n%%EOF\n", xref.xref_position).as_bytes());
+        bytes.extend(format!("startxref\n{}\n%%EOF\n", xref.position).as_bytes());
 
     file.write_all(&bytes)?;
 

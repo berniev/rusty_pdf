@@ -66,7 +66,7 @@ pub struct SerialLocation {
 }
 
 */
-use crate::cross_reference_table::{CrossRefTable, CrossReferenceEntry, ObjectStatus};
+use crate::xref_ops::{XRefOps, XRefEntry, ObjectStatus};
 use crate::generation::Generation;
 use crate::objects::number::PdfNumberObject;
 use crate::objects::reference::PdfReferenceObject;
@@ -154,7 +154,7 @@ impl PdfObject {
         PdfError::StructureError(format!("Unexpected type: {}", self.type_name()))
     }
 
-   pub fn serialise(&self, xref: &mut CrossRefTable, file: &mut File) -> Result<(), PdfError> {
+   pub fn serialise(&self, xref: &mut XRefOps, file: &mut File) -> Result<(), PdfError> {
         if matches!(self, PdfObject::Reference(_)) {
             return Ok(());
         }
@@ -174,7 +174,7 @@ impl PdfObject {
         vec.extend(b"endobj\n\n");
         file.write_all(&*vec)?;
 
-        let xref_ent = CrossReferenceEntry::new(
+        let xref_ent = XRefEntry::new(
             object_number.unwrap(),
             offset,
             ObjectStatus::InUse,

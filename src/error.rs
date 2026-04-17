@@ -2,14 +2,14 @@ use std::fmt;
 use std::io;
 
 use crate::color::{CMYK, Color, RGB, RGBA};
-use crate::cross_reference_table::CrossRefError;
+use crate::xref_ops::XRefError;
 
 #[derive(Debug)]
 pub enum PdfError {
     Io(io::Error),
     InvalidObjectReference(usize),
     CompressionError(String),
-    CrossRef(CrossRefError),
+    CrossRef(XRefError),
     InvalidColorChannel { color: Color },
     InvalidFont(String),
     InvalidFunctionSpecification,
@@ -88,8 +88,8 @@ impl From<io::Error> for PdfError {
     }
 }
 
-impl From<CrossRefError> for PdfError {
-    fn from(err: CrossRefError) -> Self {
+impl From<XRefError> for PdfError {
+    fn from(err: XRefError) -> Self {
         PdfError::CrossRef(err)
     }
 }

@@ -1,4 +1,4 @@
-use crate::cross_reference_table::{Generation, ObjectStatus};
+use crate::xref_ops::{Generation, ObjectStatus};
 
 /// Cross-Reference Streams
 /// Beginning with PDF 1.5, cross-reference information may be stored in a cross-reference stream

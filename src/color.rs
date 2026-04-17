@@ -154,6 +154,68 @@ impl RGB {
     pub fn b(&self) -> Color {
         self.blue
     }
+
+pub const RED: RGB = RGB {
+    red: Color { color: 1.0 },
+    green: Color { color: 0.0 },
+    blue: Color { color: 0.0 },
+};
+pub const ORANGE: RGB = RGB {
+    red: Color { color: 0.5 },
+    green: Color { color: 0.25 },
+    blue: Color { color: 0.0 },
+};
+pub const YELLOW: RGB = RGB {
+    red: Color { color: 1.0 },
+    green: Color { color: 1.0 },
+    blue: Color { color: 0.0 },
+};
+pub const GREEN: RGB = RGB {
+    red: Color { color: 0.0 },
+    green: Color { color: 1.0 },
+    blue: Color { color: 0.0 },
+};
+pub const CYAN: RGB = RGB {
+    red: Color { color: 0.0 },
+    green: Color { color: 1.0 },
+    blue: Color { color: 1.0 },
+};
+pub const BLUE: RGB = RGB {
+    red: Color { color: 0.0 },
+    green: Color { color: 0.0 },
+    blue: Color { color: 1.0 },
+};
+pub const MAGENTA: RGB = RGB {
+    red: Color { color: 1.0 },
+    green: Color { color: 0.0 },
+    blue: Color { color: 1.0 },
+};
+pub const PURPLE: RGB = RGB {
+    red: Color { color: 1.0 },
+    green: Color { color: 0.0 },
+    blue: Color { color: 0.5 },
+};
+pub const BROWN: RGB = RGB {
+    red: Color { color: 0.6 },
+    green: Color { color: 0.4 },
+    blue: Color { color: 0.2 },
+};
+pub const GREY: RGB = RGB {
+    red: Color { color: 0.5 },
+    green: Color { color: 0.5 },
+    blue: Color { color: 0.5 },
+};
+pub const WHITE: RGB = RGB {
+    red: Color { color: 1.0 },
+    green: Color { color: 1.0 },
+    blue: Color { color: 1.0 },
+};
+pub const BLACK: RGB = RGB {
+    red: Color { color: 0.0 },
+    green: Color { color: 0.0 },
+    blue: Color { color: 0.0 },
+};
+
 }
 
 impl_color_logic!(RGB, InvalidRGB, rgb, red: "r", green: "g", blue: "b");

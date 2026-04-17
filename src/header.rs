@@ -14,8 +14,10 @@ impl Header {
         }
     }
 
-    pub fn set_version(&mut self, version: Version) {
+    pub fn with_version(mut self, version: Version) -> Self {
         self.version = version;
+
+        self
     }
 
     pub fn version(&self) -> Version {

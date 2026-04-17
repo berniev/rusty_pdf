@@ -1,4 +1,4 @@
-use rusty_pdf::cross_reference_table::CrossRefError;
+use rusty_pdf::xref_ops::XRefError;
 use rusty_pdf::generation::Generation;
 
 /*#[test]
@@ -91,11 +91,11 @@ fn test_free_entry_formatting() {
 #[test]
 fn test_cross_ref_error_types() {
     // Test that error enum has expected variants
-    let err1 = CrossRefError::EmptyTable;
-    let err2 = CrossRefError::InvalidRootEntry;
+    let err1 = XRefError::EmptyTable;
+    let err2 = XRefError::InvalidRootEntry;
 
-    assert_eq!(err1, CrossRefError::EmptyTable);
-    assert_eq!(err2, CrossRefError::InvalidRootEntry);
+    assert_eq!(err1, XRefError::EmptyTable);
+    assert_eq!(err2, XRefError::InvalidRootEntry);
     assert_ne!(err1, err2);
 }
 

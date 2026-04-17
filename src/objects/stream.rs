@@ -123,8 +123,8 @@ impl PdfStreamObject {
         Ok(self)
     }
 
-    pub fn with_data(mut self, stream: Vec<u8>, dict: PdfDictionaryObject) -> Self {
-        self.content = stream;
+    pub fn with_data(mut self, data: Vec<u8>, dict: PdfDictionaryObject) -> Self {
+        self.content = data;
         self.dict = dict;
 
         self
