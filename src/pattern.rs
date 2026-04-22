@@ -1,12 +1,10 @@
-use std::any::Any;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 use crate::objects::pdf_object::PdfObj;
 use crate::util::{Matrix, Rectangle};
-use crate::{PdfError, PdfStreamObject, Resource, ResourceCategory};
+use crate::{PdfError, PdfStreamObject};
 
-//--------------------------- Axial Shading ----------------------//
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PatternType {
     Tiling = 1,
@@ -26,10 +24,14 @@ pub enum PaintType {
     Uncolored = 2,
 }
 
+//----------------------------- TilingPattern --------------------------//
+
 #[derive(Clone)]
 pub struct TilingPattern {
     stream: PdfStreamObject,
-    hash: String, // ?
+    x_step: f64,
+    y_step: f64,
+    paint_type: PaintType,
 }
 
 impl TilingPattern {
@@ -43,7 +45,9 @@ impl TilingPattern {
     ) -> Result<Self, PdfError> {
         let mut pat = TilingPattern {
             stream: PdfStreamObject::new(),
-            hash: "".to_string(),
+            x_step,
+            y_step,
+            paint_type,
         };
         pat.stream
             .dict
@@ -53,35 +57,27 @@ impl TilingPattern {
         pat.stream.dict.add("YStep", y_step)?;
         pat.stream.dict.add("PaintType", paint_type as i64)?;
         pat.stream.dict.add("TilingType", tiling_type as i64)?;
-        pat.stream.content = content.clone();
-        let mut hasher = DefaultHasher::new();
-        content.hash(&mut hasher);
-        pat.hash = format!(
-            "tiling:{x_step}:{y_step}:{}:{}",
-            paint_type as u8,
-            hasher.finish()
-        );
+        pat.stream.content = content;
 
         Ok(pat)
     }
 
     pub fn with_matrix(mut self, matrix: Matrix) -> Result<Self, PdfError> {
         self.stream.dict.add("Matrix", matrix.as_pdf_array())?;
-        
+
         Ok(self)
     }
-}
 
-impl Resource for TilingPattern {
-    fn category(&self) -> ResourceCategory {
-        ResourceCategory::Pattern
-    }
+    pub fn hash(&self) ->String {
+        let mut hasher = DefaultHasher::new();
+        self.stream.content.hash(&mut hasher);
 
-    fn resource_unique_id(&self) -> String {
-        "".to_string()//self.generate_id()
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
+        format!(
+            "tiling:{}:{}:{}:{}",
+            self.x_step,
+            self.y_step,
+            self.paint_type as u64,
+            hasher.finish()
+        )
     }
 }

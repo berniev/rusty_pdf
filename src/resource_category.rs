@@ -49,26 +49,6 @@ impl ResourceCategory {
     }
 }
 /*
-The operands supplied to operators in a content stream shall be direct objects.
-
-In some cases, an operator shall refer to a PDF object that is defined outside the content stream,
-such as a font dictionary or a stream containing image data. This shall be accomplished by defining
-such objects as named resources and referring to them by name from within the content stream.
-
-Named resources shall be meaningful only in the context of a content stream.
-The scope of a resource name shall be local to a particular content stream and shall be unrelated to
-externally known identifiers for objects such as fonts. References from one object outside of
-content streams to another outside of content streams shall be made by means of indirect object
-references rather than named resources.
-
-A content stream’s named resources shall be defined by a resource dictionary, which shall enumerate
-the named resources needed by the operators in the content stream and the names by which they can
-be referred to.
-
-EXAMPLE 1 If a text operator appearing within the content stream needs a certain font, the content
-stream’s resource dictionary can associate the name F42 with the corresponding font dictionary. The
-text operator can use this name to refer to the font.
-
 A resource dictionary shall be associated with a content stream in one of the following ways:
 • For a content stream that is the value of a page’s Contents entry (or is an element of an array
   that is the value of that entry), the resource dictionary shall be designated by the page

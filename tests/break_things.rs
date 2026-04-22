@@ -1,9 +1,8 @@
-use rusty_pdf::Pdf;
-use rusty_pdf::PdfStreamObject;
 use rusty_pdf::color::{Color, RGB};
 use rusty_pdf::drawing_commands::DrawingCommands;
 use rusty_pdf::objects::stream::StrokeOrFill;
 use rusty_pdf::util::Matrix;
+use rusty_pdf::Pdf;
 /*fn create_page_with_content(page_size: PageSize, content_index: usize) -> PdfDictionaryObject {
     let page = make_page_dict(content_index as u64);
     page.add_content(content_index);
@@ -270,7 +269,7 @@ fn test_compressed_empty() {
 */
 #[test]
 fn test_extreme_font_sizes() {
-    let pdf = Pdf::new().expect("Failed to create PDF");
+    let _pdf = Pdf::new().expect("Failed to create PDF");
     let mut cmd = DrawingCommands::new();
 
     cmd.set_color_rgb(

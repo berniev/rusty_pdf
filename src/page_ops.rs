@@ -1,3 +1,13 @@
+use crate::fonts;
+use crate::object_ops::ObjectOps;
+use crate::objects::pdf_object::PdfObj;
+pub use crate::page_size::PageSize;
+use crate::xref_ops::XRefOps;
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
+use std::cell::RefCell;
+use std::fs::File;
+use std::rc::Rc;
+
 /// Page: (pdf dictionary)
 ///
 /// The attributes of a page, organized into various categories (e.g., Font, ColorSpace, Pattern)
@@ -68,15 +78,6 @@
 /// Rotate    Integer     Opt    Inh
 /// =============================================================================
 ///```
-use crate::object_ops::ObjectOps;
-use crate::objects::pdf_object::PdfObj;
-pub use crate::page_size::PageSize;
-use crate::xref_ops::XRefOps;
-use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
-use std::cell::RefCell;
-use std::fs::File;
-use std::rc::Rc;
-
 pub struct PageOps {
     obj_ops: Rc<RefCell<ObjectOps>>,
     pub root_page_tree_dict: PdfDictionaryObject,
@@ -84,26 +85,34 @@ pub struct PageOps {
 
 impl PageOps {
     pub fn new(object_ops: Rc<RefCell<ObjectOps>>) -> Result<Self, PdfError> {
-        let root_page_tree_dict = Self::make_tree_dict(&object_ops)?;
-
-        Ok(PageOps {
+        let mut page_ops = PageOps {
             obj_ops: object_ops,
-            root_page_tree_dict,
-        })
+            root_page_tree_dict: PdfDictionaryObject::new(),
+        };
+
+        page_ops.root_page_tree_dict = page_ops.make_tree_dict()?;
+        let mut resources = PdfDictionaryObject::new();
+        resources.add("Font", fonts::standard_fonts_dict()?)?;
+        page_ops.root_page_tree_dict.add("Resources", resources)?;
+
+        Ok(page_ops)
     }
 
-    fn make_tree_dict(obj_ops: &Rc<RefCell<ObjectOps>>) -> Result<PdfDictionaryObject, PdfError> {
+    fn make_tree_dict(&self) -> Result<PdfDictionaryObject, PdfError> {
         let mut tree = PdfDictionaryObject::new()
             .typed("Pages")?
-            .with_object_number(obj_ops.borrow_mut().next_object_number());
+            .with_object_number(self.obj_ops.borrow_mut().next_object_number());
         tree.add("Kids", PdfArrayObject::new())?;
         tree.add("Count", 0)?;
 
         Ok(tree)
     }
 
-    pub fn new_page_dict(&self, page_size: PageSize, content: Vec<u8> ) -> Result<PdfDictionaryObject, PdfError> {
-
+    pub fn new_page_dict(
+        &self,
+        page_size: PageSize,
+        content: Vec<u8>,
+    ) -> Result<PdfDictionaryObject, PdfError> {
         let mut obj_ops = self.obj_ops.borrow_mut();
         let mut dict = PdfDictionaryObject::new()
             .typed("Page")?
@@ -118,14 +127,6 @@ impl PageOps {
         Ok(dict)
     }
 
-    pub fn new_tree_dict(&self) -> Result<PdfDictionaryObject, PdfError> {
-        Self::make_tree_dict(&self.obj_ops)
-    }
-
-    pub fn root_page_tree_dict_mut_ref(&mut self) -> &mut PdfDictionaryObject {
-        &mut self.root_page_tree_dict
-    }
-
     pub fn serialise(&self, xref: &mut XRefOps, file: &mut File) -> Result<(), PdfError> {
         self.root_page_tree_dict.serialise(xref, file)
     }
@@ -134,15 +135,20 @@ impl PageOps {
         self.root_page_tree_dict.object_number.unwrap() // must succeed
     }
 
-    pub fn add_page_dict_to_root(&mut self, page_dict: PdfDictionaryObject) -> Result<(), PdfError> {
+    pub fn add_page_dict_to_root(
+        &mut self,
+        page_dict: PdfDictionaryObject,
+    ) -> Result<(), PdfError> {
         Self::add_page_dict_to_tree_dict(page_dict, &mut self.root_page_tree_dict)
     }
 
+    // static funcs
+    
     pub fn add_page_dict_to_tree_dict(
         mut page_dict: PdfDictionaryObject,
         tree_dict: &mut PdfDictionaryObject,
     ) -> Result<(), PdfError> {
-        either_dict_has(&page_dict, tree_dict, vec!["Resources", "MediaBox"])?;
+        Self::either_dict_has(&page_dict, tree_dict, vec!["Resources", "MediaBox"])?;
 
         let tree_dict_num = tree_dict.object_number.unwrap();
         page_dict.add("Parent", PdfObj::make_reference_obj(tree_dict_num))?;
@@ -151,44 +157,44 @@ impl PageOps {
 
         Ok(())
     }
-}
 
-fn either_dict_has(
-    page_dict: &PdfDictionaryObject,
-    tree_dict: &PdfDictionaryObject,
-    expecteds: Vec<&str>,
-) -> Result<(), PdfError> {
-    for expected in expecteds {
-        if !page_dict.contains_key(expected) && !tree_dict.contains_key(expected) {
-            return Err(PdfError::StructureError(format!(
-                "Page must have, or inherit, a {expected} dictionary"
-            )));
+    fn either_dict_has(
+        page_dict: &PdfDictionaryObject,
+        tree_dict: &PdfDictionaryObject,
+        expecteds: Vec<&str>,
+    ) -> Result<(), PdfError> {
+        for expected in expecteds {
+            if !page_dict.contains_key(expected) && !tree_dict.contains_key(expected) {
+                return Err(PdfError::StructureError(format!(
+                    "Page must have, or inherit, a {expected} dictionary"
+                )));
+            }
         }
+
+        Ok(())
     }
 
-    Ok(())
-}
+    pub fn add_tree_dict_to_tree_dict(
+        child_tree_dict: &PdfDictionaryObject,
+        parent_tree_dict: &mut PdfDictionaryObject,
+    ) -> Result<(), PdfError> {
+        Self::dict_has_kids(&parent_tree_dict)?;
 
-pub fn add_tree_dict_to_tree_dict(
-    child_tree_dict: &PdfDictionaryObject,
-    parent_tree_dict: &mut PdfDictionaryObject,
-) -> Result<(), PdfError> {
-    dict_has_kids(&parent_tree_dict)?;
+        parent_tree_dict.push_to_array(
+            "Kids",
+            PdfObj::make_reference_obj(child_tree_dict.object_number.unwrap()),
+        )?;
 
-    parent_tree_dict.push_to_array(
-        "Kids",
-        PdfObj::make_reference_obj(child_tree_dict.object_number.unwrap()),
-    )?;
-
-    Ok(())
-}
-
-fn dict_has_kids(dict: &PdfDictionaryObject) -> Result<(), PdfError> {
-    if !dict.contains_key("Kids") {
-        return Err(PdfError::StructureError(
-            "Parent page tree must have a Kids array".to_string(),
-        ));
+        Ok(())
     }
 
-    Ok(())
+    fn dict_has_kids(dict: &PdfDictionaryObject) -> Result<(), PdfError> {
+        if !dict.contains_key("Kids") {
+            return Err(PdfError::StructureError(
+                "Parent page tree must have a Kids array".to_string(),
+            ));
+        }
+
+        Ok(())
+    }
 }

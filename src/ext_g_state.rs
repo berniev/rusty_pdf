@@ -4,8 +4,7 @@
 //! transparency, blend modes, and rendering intent.
 
 use crate::objects::pdf_object::PdfObj;
-use crate::{PdfDictionaryObject, PdfError, Resource, ResourceCategory};
-use std::any::Any;
+use crate::{PdfDictionaryObject, PdfError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BlendMode {
@@ -219,6 +218,7 @@ impl ExtGState {
         Ok(dict)
     }
 
+    #[allow(dead_code)]
     fn generate_unique_id(&self) -> String {
         format!(
             "extgs:lw={:?}:lc={:?}:lj={:?}:ml={:?}:ca={:?}:CA={:?}:bm={:?}",
@@ -236,20 +236,6 @@ impl ExtGState {
 impl Default for ExtGState {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl Resource for ExtGState {
-    fn category(&self) -> ResourceCategory {
-        ResourceCategory::ExtGState
-    }
-
-    fn resource_unique_id(&self) -> String {
-        self.generate_unique_id()
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
     }
 }
 
@@ -319,13 +305,6 @@ mod tests {
 
         let dict = gs.to_dict();
         assert!(dict.expect("REASON").contains_key("BM"));
-    }
-
-    #[test]
-    fn test_extgstate_resource_trait() {
-        let gs = ExtGState::with_alpha(0.5, 0.5);
-        assert_eq!(gs.category(), ResourceCategory::ExtGState);
-        assert!(!gs.resource_unique_id().is_empty());
     }
 
     #[test]
