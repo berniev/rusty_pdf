@@ -1,7 +1,7 @@
 use image::{Rgb, RgbImage};
 use rusty_pdf::drawing_commands::DrawingCommands;
 use rusty_pdf::util::{Matrix, Posn};
-use rusty_pdf::{CompressionMethod, Pdf};
+use rusty_pdf::{CompressionMethod, Pdf, PdfStreamObject};
 
 /*fn create_page_with_content(content_stream_ref: Vec<u8>) -> Page {
     let content_index = String::from_utf8(content_stream_ref).unwrap();
@@ -30,7 +30,8 @@ fn test_external_image_from_file() {
     img.save("/tmp/pydyf_test/gradient.png").unwrap();
 
     let pdf = Pdf::new().expect("Failed to create PDF");
-    let mut _stream = pdf.object_ops.borrow_mut().new_stream();
+    let mut _stream =
+        PdfStreamObject::new().with_object_number(pdf.object_ops.borrow_mut().next_object_number());
 
     let mut cmd = DrawingCommands::new();
     cmd.push();

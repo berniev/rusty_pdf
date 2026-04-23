@@ -1,11 +1,11 @@
 use crate::PdfDictionaryObject;
 use crate::error::PdfError;
+use crate::object_ops::ObjectNumber;
 use crate::objects::pdf_object::PdfObj;
 pub use crate::util::{CompressionMethod, Dims, Matrix, Posn, StrokeOrFill, ToPdf, WindingRule};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
 use std::io::Write as IoWrite;
-use crate::object_ops::ObjectNumber;
 
 /// PDF content stream
 ///
@@ -50,8 +50,8 @@ use crate::object_ops::ObjectNumber;
 /// ===========================================================================
 /// ```
 /// Stream Filters:
-/// Indicate how the data in the stream should be decoded before it is used. Used in "Filter" and
-/// "FFilter" dict entries.
+/// Indicate how the data in the stream should be decoded before it is used.
+/// Used in "Filter" and "FFilter" dict entries.
 /// ```
 /// Stream Filters:
 /// =============================================================================
@@ -88,8 +88,7 @@ pub struct PdfStreamObject {
 }
 
 impl PdfStreamObject {
-    
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             dict: PdfDictionaryObject::new(),
             content: Vec::new(),
@@ -106,7 +105,7 @@ impl PdfStreamObject {
         self
     }
 
-    pub(crate) fn with_object_number(mut self, value: ObjectNumber) -> Self {
+    pub fn with_object_number(mut self, value: ObjectNumber) -> Self {
         self.object_number = Some(value);
 
         self
@@ -186,7 +185,7 @@ mod tests {
         assert!(output.contains("stream\nsome data\nendstream\n"));
     }
 
-   #[test]
+    #[test]
     fn encode_stream_with_content2() {
         let mut stream = PdfStreamObject::new().with_object_number(ObjectNumber::new(1));
         stream.add(b"some data".to_vec());
@@ -207,7 +206,9 @@ mod tests {
 
     #[test]
     fn encode_compressed_stream_has_filter() {
-        let stream = PdfStreamObject::new().with_object_number(ObjectNumber::new(1)).compressed();
+        let stream = PdfStreamObject::new()
+            .with_object_number(ObjectNumber::new(1))
+            .compressed();
         let encoded = stream.expect("REASON").encode().unwrap();
         let contains = |needle: &[u8]| encoded.windows(needle.len()).any(|w| w == needle);
         assert!(contains(b"/Filter /FlateDecode"));
