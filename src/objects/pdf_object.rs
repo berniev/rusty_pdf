@@ -183,7 +183,7 @@ impl PdfObject {
     }
 
     pub fn encode_as_value(&self) -> Result<Vec<u8>, PdfError> {
-        if !self.is_reference() && self.is_indirect() {
+        if self.is_indirect() && !self.is_reference() {
             return PdfReferenceObject::new(self.get_object_number().unwrap()).encode();
         }
         self.encode()
