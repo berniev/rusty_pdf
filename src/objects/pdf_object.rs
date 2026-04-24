@@ -156,7 +156,7 @@ impl PdfObject {
     }
 
     pub fn serialise(&self, xref: &mut XRefOps, file: &mut File) -> Result<(), PdfError> {
-        if self.is_reference() || !self.is_indirect() {
+        if self.is_reference() || self.is_direct() {
             return Ok(());
         }
 
@@ -209,6 +209,10 @@ impl PdfObject {
 
     pub fn is_reference(&self) -> bool {
         matches!(self, PdfObject::Reference(_))
+    }
+
+    pub fn is_direct(&self) -> bool {
+        !self.is_indirect()
     }
 }
 
