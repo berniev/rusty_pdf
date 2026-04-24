@@ -156,7 +156,7 @@ impl PdfObject {
     }
 
     pub fn serialise(&self, xref: &mut XRefOps, file: &mut File) -> Result<(), PdfError> {
-        if matches!(self, PdfObject::Reference(_)) || !self.is_indirect(){
+        if self.is_reference() || !self.is_indirect() {
             return Ok(());
         }
 
@@ -183,12 +183,10 @@ impl PdfObject {
     }
 
     pub fn encode_as_value(&self) -> Result<Vec<u8>, PdfError> {
-        if !matches!(self, PdfObject::Reference(_)) // is not a reference
-            && let Some(obj_num) = self.get_object_number() // is indirect
-        {
-            return PdfReferenceObject::new(obj_num).encode(); // emit a reference (N 0 R)
+        if !self.is_reference() && self.is_indirect() {
+            return PdfReferenceObject::new(self.get_object_number().unwrap()).encode();
         }
-        self.encode() // encode inline
+        self.encode()
     }
 
     pub fn encode(&self) -> Result<Vec<u8>, PdfError> {
@@ -207,6 +205,10 @@ impl PdfObject {
 
     pub fn is_indirect(&self) -> bool {
         self.get_object_number().is_some()
+    }
+
+    pub fn is_reference(&self) -> bool {
+        matches!(self, PdfObject::Reference(_))
     }
 }
 
