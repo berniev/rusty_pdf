@@ -5,7 +5,7 @@ use crate::page_ops::PageOps;
 use crate::trailer::Trailer;
 use crate::version::Version;
 use crate::xref_ops::XRefOps;
-use crate::{GraphicsOps, PdfError};
+use crate::{GraphicsOps, PageSize, PdfError};
 use std::cell::RefCell;
 use std::fs::File;
 use std::rc::Rc;
@@ -39,6 +39,11 @@ impl Pdf {
         self
     }
 
+    pub fn with_page_size(mut self, page_size: PageSize) -> Self {
+        self.page_ops.set_default_page_size(page_size);
+        
+        self
+    }
     pub fn finalise(&mut self, path: &str) -> Result<(), PdfError> {
         let mut build = || {
             let header = Header::new().with_version(self.version.unwrap_or_default());

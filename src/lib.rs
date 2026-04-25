@@ -36,7 +36,6 @@ pub mod trailer;
 pub mod tree;
 pub mod util;
 pub mod version;
-pub mod writer;
 pub mod xmp;
 pub mod encryption_ops;
 
