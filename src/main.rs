@@ -1,7 +1,7 @@
 use rusty_pdf::color::RGB;
 use rusty_pdf::drawing_commands::DrawingCommands;
 use rusty_pdf::util::StrokeOrFill::Fill;
-use rusty_pdf::util::{Dims, Posn, StrokeOrFill, WindingRule};
+use rusty_pdf::util::{Dims, Posn, WindingRule};
 use rusty_pdf::{PageSize, Pdf};
 
 fn main() {
@@ -11,7 +11,7 @@ fn main() {
     let mut pdf = Pdf::new().expect("Failed to create PDF");
 
     let mut cmd = DrawingCommands::new();
-    cmd.set_color_rgb(RGB::BLUE, StrokeOrFill::Fill);
+    cmd.set_color_rgb(RGB::BLUE, Fill);
     cmd.add_rectangle(
         Posn { x: 50.0, y: 50.0 },
         Dims {
@@ -21,7 +21,7 @@ fn main() {
     );
     cmd.fill(WindingRule::EvenOdd);
 
-    cmd.set_color_rgb(RGB::RED, StrokeOrFill::Fill);
+    cmd.set_color_rgb(RGB::RED, Fill);
     cmd.add_rectangle(
         Posn { x: 50.0, y: 100.0 },
         Dims {
@@ -48,24 +48,23 @@ fn main() {
 
     let data = cmd.flush();
 
-    let page_dict = pdf
-        .page_ops
-        .new_page_dict(PageSize::A4, data.clone())
-        .expect("Failed to create page");
+    let root_tree = pdf.page_ops.root_tree();
 
-    let page_dict2 = pdf
-        .page_ops
-        .new_page_dict(PageSize::A4, data)
-        .expect("Failed to create page");
-
-    pdf.page_ops
-        .add_page_dict_to_root(page_dict)
+    let page = root_tree.make_page(PageSize::A4, data.clone()).expect("Failed to create page");
+    root_tree
+        .add_page(page)
         .expect("Add page to tree failed");
 
-    pdf.page_ops
-        .add_page_dict_to_root(page_dict2)
-        .expect("Add page to tree failed");
+    let page2 = root_tree.make_page(PageSize::A4, data.clone()).expect("Failed to create page");
+    root_tree.add_page(page2).expect("Add page to tree failed");
 
+    let mut new_tree = root_tree.make_tree().expect("Faied to create tree");
+
+    let page3 = new_tree.make_page(PageSize::A4, data.clone()).expect("Failed to create page");
+    new_tree.add_page(page3).expect("Add page to tree failed");
+
+    root_tree.add_tree(new_tree).expect("Faied to add page to tree");
+    
     let path = "output.pdf";
     pdf.finalise(path).expect("finalise failed");
 

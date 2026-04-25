@@ -40,9 +40,9 @@ impl Pdf {
     }
 
     pub fn finalise(&mut self, path: &str) -> Result<(), PdfError> {
-        let build = || {
+        let mut build = || {
             let header = Header::new().with_version(self.version.unwrap_or_default());
-            let mut catalog_ops = CatalogOps::new(Rc::clone(&self.object_ops), &self.page_ops)?;
+            let mut catalog_ops = CatalogOps::new(Rc::clone(&self.object_ops), &mut self.page_ops)?;
             let trailer = Trailer::new(Rc::clone(&self.object_ops), &catalog_ops)?;
             let mut xref_ops = XRefOps::new();
             let mut file = File::create(path)?;

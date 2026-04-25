@@ -149,13 +149,13 @@ pub struct CatalogOps {
 }
 
 impl CatalogOps {
-    pub fn new(object_ops: Rc<RefCell<ObjectOps>>, page_ops: &PageOps) -> Result<Self, PdfError> {
+    pub fn new(object_ops: Rc<RefCell<ObjectOps>>, page_ops: &mut PageOps) -> Result<Self, PdfError> {
         let num = object_ops.borrow_mut().next_object_number();
        let mut dictionary = PdfDictionaryObject::new()
             .typed("Catalog")?
             .with_object_number(num);
 
-        dictionary.add("Pages", PdfObj::make_reference_obj(page_ops.root_page_tree_dict_id()))?;
+        dictionary.add("Pages", PdfObj::make_reference_obj(page_ops.root_tree().object_number()))?;
 
         Ok(Self { dictionary })
     }
