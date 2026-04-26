@@ -161,8 +161,8 @@ pub const RED: RGB = RGB {
     blue: Color { color: 0.0 },
 };
 pub const ORANGE: RGB = RGB {
-    red: Color { color: 0.5 },
-    green: Color { color: 0.25 },
+    red: Color { color: 1.0 },
+    green: Color { color: 0.5 },
     blue: Color { color: 0.0 },
 };
 pub const YELLOW: RGB = RGB {

@@ -36,9 +36,11 @@ fn main() -> Result<(), PdfError> {
     cmd.set_color_rgb_fill(RGB::BLUE);
     cmd.set_text_position(Posn { x: 50.0, y: 250.0 });
     cmd.show_single_text_string("Hello, Blue World");
+    cmd.set_font_name_and_size("Helvetica-Bold", 12.0);
     cmd.set_text_position(Posn { x: 70.0, y: 270.0 });
     cmd.show_single_text_string("Second text line");
     cmd.set_color_rgb_fill(RGB::PURPLE);
+    cmd.set_font_name_and_size("Helvetica-Bold", 14.0);
     cmd.set_text_position(Posn { x: 90.0, y: 290.0 });
     cmd.show_single_text_string("Third text line");
     cmd.end_text();
