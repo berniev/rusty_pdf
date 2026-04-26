@@ -77,9 +77,8 @@ fn main() -> Result<(), PdfError> {
     cmd.show_single_text_string("Page 3, A5");
     cmd.end_text();
 
-    let data = cmd.flush();
     let mut new_tree = root_tree.make_tree()?.with_default_page_size(PageSize::A5);
-    new_tree.add_page_using(data)?;
+    new_tree.add_page_using(cmd.flush())?;
 
     root_tree.add_tree(new_tree)?;
 
