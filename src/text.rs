@@ -143,7 +143,7 @@ pub enum WrapMode {
 ///
 /// # Example
 ///
-/// ```rust
+///
 /// use rusty_pdf::text::{wrap_text, StandardFont, WrapMode};
 ///
 /// let lines = wrap_text(
@@ -153,7 +153,7 @@ pub enum WrapMode {
 ///     12.0,
 ///     WrapMode::WordWrap
 /// );
-/// ```
+///
 pub fn wrap_text(
     text: &str,
     max_width: f64,

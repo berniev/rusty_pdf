@@ -8,14 +8,14 @@
 ///   /First 74
 ///
 /// Stream content (decoded):
-/// ```
+///
 /// 2 0
 /// 3 97
 /// 4 212
 /// <object 2 data starting at offset 0 from /First>
 /// <object 3 data starting at offset 97 from /First>
 /// <object 4 data starting at offset 212 from /First>
-/// ```
+///
 ///
 /// This shows:
 /// - Header contains N pairs: "obj_num offset"

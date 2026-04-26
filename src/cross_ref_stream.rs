@@ -13,7 +13,7 @@ use crate::xref_ops::{Generation, ObjectStatus};
 /// Each cross-reference stream contains the information equivalent
 /// to the cross-reference table (see 7.5.4, "Cross-Reference Table") and trailer (see 7.5.5, "File
 /// Trailer") for one cross-reference section.
-///  ```
+/// 
 ///  Entry types:
 ///  =========================================================================
 ///  Type                  Num  Field2         Field3
@@ -22,7 +22,7 @@ use crate::xref_ops::{Generation, ObjectStatus};
 ///  Uncompressed          1    Byte offset    Generation
 ///  Compressed in objstm  2    objstm number  Index within objstm
 ///  =========================================================================
-/// ```
+///
 
 //--------------------------- CrossRefEntry -------------------------//
 

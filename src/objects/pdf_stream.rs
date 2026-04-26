@@ -25,7 +25,7 @@ use std::io::Write as IoWrite;
 /// A stream shall be an indirect object and consist of a direct dictionary object (known as the
 /// Stream Extent) followed by zero or more bytes bracketed between the keywords'stream' and
 /// 'endstream'.
-/// ```
+///
 ///     5 0 obj          ← object number + generation number
 ///     <<
 ///       /Length 42
@@ -35,8 +35,8 @@ use std::io::Write as IoWrite;
 ///     ...bytes...
 ///     endstream
 ///     endobj
-///```
-/// ```
+///
+///
 /// Stream dictionary (Stream Extent) Entries:
 /// ==========================================================================
 /// Name          Type     Reqd Description
@@ -50,11 +50,11 @@ use std::io::Write as IoWrite;
 /// FFilter       nam or arr  O A filter or sequence of filters to file data
 /// FDecodeParms  dic or arr  O Parameters for the filter(s) in FFilter
 /// ==========================================================================
-/// ```
+///
 /// Stream Filters:
 /// Indicate how the data in the stream should be decoded before it is used.
 /// Used in "Filter" and "FFilter" dict entries.
-/// ```
+///
 /// Stream Filters:
 /// =============================================================================
 /// Name            P V Type    Decode/Decompress
@@ -73,7 +73,7 @@ use std::io::Write as IoWrite;
 /// JPXDecode       n 5 image   Wwavelet-based JPEG2000 standard
 /// Crypt           y 5 data    Data encrypted by a security handler
 /// =============================================================================
-/// ```
+///
 /// Beginning with PDF 1.5, indirect objects may reside in object streams.
 /// They are referred to in the same way; however, their definition shall not include the keywords
 /// obj and endobj, and their generation number shall be zero.

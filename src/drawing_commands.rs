@@ -11,7 +11,7 @@
 /// stream is not a program to be interpreted; rather, it is a static description of a sequence of
 /// graphics objects. There are specific rules, described below, for writing the operands and
 /// operators that describe a graphics object
-///```
+///
 /// Graphics Objects
 /// ============================================================
 /// Type          Notes
@@ -23,8 +23,8 @@
 /// Inline Image  For small image directly within content stream
 /// External      (XObject) Referenced as a named Resource
 /// ============================================================
-/// ```
-/// ```
+///
+///
 /// Graphics Operator Categories
 /// =========================================================
 /// Category                    Operators               Table
@@ -47,7 +47,7 @@
 /// Marked content              Mp,DP,BMC,BDC,EMC         320
 /// Compatibility               BX,EX                      32
 /// =========================================================
-/// ```
+///
 ///
 /// Coordinate Systems
 ///
@@ -59,7 +59,7 @@
 /// • The location of the origin
 /// • The orientation of the x and y axes
 /// • The lengths of the units along each axis
-/// ```
+///
 /// Coordinate Spaces
 /// =========================================================================
 /// Name     Description
@@ -72,7 +72,7 @@
 /// User     Device-independent. Always same relationship to the current page
 /// Device   For raster output device such as display or printer
 /// =========================================================================
-/// ```
+///
 /// Heiarchy (transformation flow is right to left):
 /// Device
 ///   User

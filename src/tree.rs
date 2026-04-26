@@ -33,7 +33,7 @@ use crate::{PdfArrayObject, PdfDictionaryObject, PdfError, PdfObject};
 use crate::object_ops::ObjectNumber;
 
 ///Usage:
-/// ```
+///
 ///  let mut name_node: NameTreeNode = TreeNode::new(ObjectNumber::new(1));
 ///  node.set_entries(vec![("first_key".to_string(), val)]);
 ///  node.set_limits("a".to_string(), "z".to_string());
@@ -41,7 +41,7 @@ use crate::object_ops::ObjectNumber;
 ///  let mut num_node: NumTreeNode = TreeNode::new(ObjectNumber::new(2));
 ///  node.set_entries(vec![(42, val)]);
 ///  node.set_limits(1, 99);
-/// ```
+///
 
 //------------------------ Tree -----------------------------//
 

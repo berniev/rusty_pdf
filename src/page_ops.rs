@@ -17,7 +17,7 @@ use std::rc::Rc;
 /// I = Can be inherited from parent pageTree heirarchy, which satisfies R (Reqd).
 ///
 
-///```
+///
 /// Page dict entries:
 /// ==============================================================================
 /// Name                  Ver  R  I  Type      Value
@@ -60,9 +60,9 @@ use std::rc::Rc;
 /// UserUnit              1.6  O     numb
 /// VP                    1.6  O     dict
 /// ==============================================================================
-///```
+///
 
-///```
+///
 /// PageTreeNode dict entries:
 /// ========  ==========  =====  ===  ===========================================
 /// Name      PdfObjType  Reqd   Inh  Value
@@ -77,7 +77,6 @@ use std::rc::Rc;
 /// CropBox   Rectangle   Opt    Inh
 /// Rotate    Integer     Opt    Inh
 /// =============================================================================
-///```
 ///
 
 pub struct PageOps {
@@ -182,7 +181,7 @@ impl PageTree {
     pub fn add_page_using(&mut self, data: Vec<u8>) -> Result<(), PdfError> {
         self.add_page(self.make_page(data.clone())?)
     }
-    
+
     pub fn add_resources() {}
 
     fn add_kid(&mut self, kid_obj: Box<PdfDictionaryObject>) -> Result<(), PdfError> {
