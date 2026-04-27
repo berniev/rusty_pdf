@@ -69,8 +69,8 @@ fn main() -> Result<(), PdfError> {
         },
     );
 
-    cmd.fill_even_odd();
     cmd.begin_text();
+    cmd.fill_even_odd();
     cmd.set_font_name_and_size("Helvetica-Bold", 16.0);
     cmd.set_color_rgb_fill(RGB::RED);
     cmd.set_text_position(Posn { x: 50.0, y: 200.0 });

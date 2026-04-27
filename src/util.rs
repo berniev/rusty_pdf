@@ -32,11 +32,6 @@ impl Posn {
 
         arr
     }
-
-    /*    fn as_vec(&self) -> Vec<f64> {
-            vec![self.x.clone().into(), self.y.into()]
-        }
-    */
 }
 
 impl ToPdf for Posn {
@@ -110,6 +105,7 @@ impl Rectangle {
     }
 }
 
+// todo: should be PdfArrayObject
 impl ToPdf for Rectangle {
     fn to_pdf(&self) -> String {
         format!(
@@ -120,6 +116,7 @@ impl ToPdf for Rectangle {
             f_to_pdf_num(self.y2),
         )
     }
+
     fn as_string(&self) -> String {
         format!("[{} {} {} {}]", self.x1, self.y1, self.x2, self.y2)
     }
