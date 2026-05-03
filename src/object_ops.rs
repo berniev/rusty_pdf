@@ -190,14 +190,11 @@ impl PdfObject {
         Ok(())
     }
 
-    pub fn encode_as_value(&self) -> Result<Vec<u8>, PdfError> {
+    pub fn encode(&self) -> Result<Vec<u8>, PdfError> {
         if self.is_indirect() && !self.is_reference() {
             return PdfReferenceObject::new(self.get_object_number().unwrap()).encode();
         }
-        self.encode()
-    }
-
-    pub fn encode(&self) -> Result<Vec<u8>, PdfError> {
+        
         match_pdf_object!(&self, x => x.encode())
     }
 
@@ -253,7 +250,6 @@ impl PdfObject {
     pub fn string_text_obj(value: &str) -> PdfObject {
         PdfObject::String(PdfStringObject::new(value))
     }
-
 }
 
 //--------------------------- From impl -------------------------//

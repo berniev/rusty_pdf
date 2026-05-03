@@ -178,7 +178,7 @@ impl PdfDictionaryObject {
         for (pdf_name_obj, pdf_object) in &self.values {
             arr.extend(pdf_name_obj.encode()?);
             arr.push(b' ');
-            arr.extend(pdf_object.encode_as_value()?);
+            arr.extend(pdf_object.encode()?);
             arr.extend(b"\n");
         }
         arr.extend(b">>\n");
