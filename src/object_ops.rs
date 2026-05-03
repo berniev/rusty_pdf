@@ -171,7 +171,6 @@ impl PdfObject {
         // indirect object
 
         let object_number = self.get_object_number().unwrap();
-        let offset = file.stream_position()?;
 
         let mut vec = vec![];
         vec.extend(object_number.to_string().as_bytes());
@@ -182,7 +181,7 @@ impl PdfObject {
 
         let xref_ent = XRefEntry::new(
             object_number,
-            offset,
+            file.stream_position()?,
             ObjectStatus::InUse,
             Generation::Normal,
         );
