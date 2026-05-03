@@ -18,8 +18,6 @@ impl PdfStringObject {
     }
 }
 
-// PDFEncoding matches ASCII for 32 -> 126 only. Only for use outside content streams
-
 fn encode_text_string(string: &str, version: Version) -> Vec<u8> { // todo: fixversion hack
     if string.is_ascii() {
         // < 128
