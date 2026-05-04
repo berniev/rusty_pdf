@@ -285,7 +285,7 @@ impl DrawingCommands {
         self.add(b"\nEI\n".to_vec()); // End Image marker
     }
 
-    /// image converted to RGB format and embedded.
+    /// converted image to RGB format and embed.
     /// Use `push_state()` and `set_matrix()` before this call to position and scale the image.
     pub fn add_inline_image_from_file(
         &mut self,
