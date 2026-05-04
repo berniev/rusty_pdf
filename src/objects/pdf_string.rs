@@ -18,7 +18,7 @@ impl PdfStringObject {
     }
 }
 
-fn encode_text_string(string: &str, version: Version) -> Vec<u8> { // todo: fixversion hack
+fn encode_text_string(string: &str, version: Version) -> Vec<u8> {
     if string.is_ascii() {
         // < 128
         encode_ascii(string)
