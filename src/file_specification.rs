@@ -1,5 +1,5 @@
-use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
 use crate::object_ops::PdfObject;
+use crate::{PdfArrayObject, PdfDictionaryObject, PdfError};
 
 pub struct FileSpecification {
     dict: PdfDictionaryObject,
@@ -26,20 +26,17 @@ impl FileSpecification {
     }
 
     pub fn with_dos_name(mut self, dos_name: &str) -> Result<Self, PdfError> {
-        self.dict
-            .add("EF", dos_name)?;
+        self.dict.add("EF", dos_name)?;
         Ok(self)
     }
 
     pub fn with_mac_name(mut self, mac_name: &str) -> Result<Self, PdfError> {
-        self.dict
-            .add("Mac", mac_name)?;
+        self.dict.add("Mac", mac_name)?;
         Ok(self)
     }
 
     pub fn with_unix_name(mut self, unix_name: &str) -> Result<Self, PdfError> {
-        self.dict
-            .add("Unix", unix_name)?;
+        self.dict.add("Unix", unix_name)?;
         Ok(self)
     }
 
@@ -78,7 +75,10 @@ impl FileSpecification {
         Ok(self)
     }
 
-    pub fn with_collection_items(mut self, collection_items: CollectionItems) -> Result<Self, PdfError> {
+    pub fn with_collection_items(
+        mut self,
+        collection_items: CollectionItems,
+    ) -> Result<Self, PdfError> {
         self.dict.add("Collection", collection_items.dict)?;
         Ok(self)
     }

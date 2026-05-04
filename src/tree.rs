@@ -96,6 +96,9 @@ pub trait TreeKey: Sized {
     fn entry_key_name() -> &'static str;
 }
 
+const NUM_TREE_KEY_NAME: &str = "Nums";
+const NAME_TREE_KEY_NAME: &str = "Names";
+
 impl TreeKey for String {
     fn to_pdf_obj(self) -> PdfObject {
         PdfObject::string(&self)

@@ -236,7 +236,7 @@ impl PdfObject {
 
     pub fn num_or_null<T: Into<NumberType>>(value: Option<T>) -> PdfObject {
         match value {
-            Some(v) => Self::num(v),
+            Some(v) => PdfObject::Number(PdfNumberObject::new(v.into())),
             None => PdfObject::Null(PdfNullObject::new()),
         }
     }
