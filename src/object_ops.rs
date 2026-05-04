@@ -229,7 +229,7 @@ impl PdfObject {
     }
 
     // ----------------- builders ----------------------
-    
+
     pub fn num(value: impl Into<NumberType>) -> PdfObject {
         PdfObject::Number(PdfNumberObject::new(value.into()))
     }

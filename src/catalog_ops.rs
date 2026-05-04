@@ -148,7 +148,7 @@ pub struct CatalogOps {
 
 impl CatalogOps {
     pub fn new(object_number: ObjectNumber, page_ops: &mut PageOps) -> Result<Self, PdfError> {
-       let mut dictionary = PdfDictionaryObject::new()
+        let mut dictionary = PdfDictionaryObject::new()
             .typed("Catalog")?
             .with_object_number(object_number);
 
@@ -161,7 +161,12 @@ impl CatalogOps {
         self.dictionary.object_number.unwrap() // must succeed
     }
 
-    pub fn serialize(&mut self, version: Version, xref_ops: &mut XRefOps, file: &mut File) -> Result<(), PdfError> {
+    pub fn serialize(
+        &mut self,
+        version: Version,
+        xref_ops: &mut XRefOps,
+        file: &mut File,
+    ) -> Result<(), PdfError> {
         self.dictionary.serialize(version, xref_ops, file)
     }
 }
