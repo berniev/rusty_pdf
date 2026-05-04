@@ -12,14 +12,12 @@ use std::io::{Seek, Write};
 //--------------------------- ObjectOps -------------------------//
 
 pub struct ObjectOps {
-    version: Version,
     last_object_number: ObjectNumber,
 }
 
 impl ObjectOps {
-    pub fn new(version: Version) -> Self {
+    pub fn new() -> Self {
         Self {
-            version,
             // 0 is in xref table as 'free'. is gen# 65535, else 0 for new
             last_object_number: ObjectNumber::new(0),
         }
@@ -37,10 +35,6 @@ impl ObjectOps {
 
     pub fn make_obj<T: Into<PdfObject>>(&self, value: T) -> PdfObject {
         value.into()
-    }
-
-    pub fn version(&self) -> Version {
-        self.version
     }
 }
 

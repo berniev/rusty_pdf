@@ -18,13 +18,12 @@ pub struct Pdf {
 
 impl Pdf {
     pub fn new() -> Result<Self, PdfError> {
-        let def_ver = Version::default();
-        let object_ops = Rc::new(RefCell::new(ObjectOps::new(def_ver.clone())));
+        let object_ops = Rc::new(RefCell::new(ObjectOps::new()));
         let page_ops = PageOps::new(Rc::clone(&object_ops))?;
         let graphics_ops = GraphicsOps::new(Rc::clone(&object_ops));
 
         let pdf = Pdf {
-            version: def_ver,
+            version: Version::default(),
             object_ops,
             page_ops,
             graphics_ops,
