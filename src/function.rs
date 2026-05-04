@@ -67,13 +67,13 @@ fn make_func_dict(
     Ok(dict)
 }
 
-pub struct Function0Sampled {
-    pub stream: PdfStreamObject,
-}
-
 pub enum OrderType {
     Linear = 1,
     CubicSpline = 3,
+}
+
+pub struct Function0Sampled {
+    pub stream: PdfStreamObject,
 }
 
 impl Function0Sampled {
